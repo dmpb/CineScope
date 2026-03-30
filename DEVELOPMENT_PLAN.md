@@ -200,9 +200,83 @@
   - Depende de `Phase 3.A`.
   - Tiempos de CI pueden aumentar sin cachés/configuración posterior.
 
+### Phase 4 — UI polish y hardening
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 4.A -> Phase 4.B -> Phase 4.C`
+
+#### Phase 4.A — UI polish del MVP
+
+- `Status`: `Pending`
+- **Objective**
+  - Mejorar consistencia visual y legibilidad en Home, Detail y Search sin cambiar arquitectura.
+- **Definition of done**
+  - Espaciado, tipografía y jerarquía visual consistentes entre pantallas.
+  - Estados `loading`, `empty` y `error` con estilo uniforme y reusable.
+  - Mejoras responsive en mobile/tablet para cards, grillas y detalle.
+- **Chunks**
+  1. **Unificar tokens visuales base y patrones de feedback**
+     - Áreas/archivos: `src/app/globals.css`, componentes de estados UI.
+     - Verificación: checklist visual consistente en Home/Detail/Search.
+  2. **Refinar layout responsive en vistas principales**
+     - Áreas/archivos: `src/app/page.tsx`, `src/app/movie/[id]/page.tsx`, `src/app/search/page.tsx`.
+     - Verificación: revisión manual en breakpoints mobile/tablet/desktop.
+  3. **Reducir inconsistencias de componentes de contenido**
+     - Áreas/archivos: `src/components/MovieCard.tsx`, `src/components/MovieSection.tsx`, `src/components/MovieDetail.tsx`.
+     - Verificación: no hay saltos visuales entre listados y detalle.
+- **Risks / dependencies**
+  - Riesgo bajo de regresiones visuales.
+  - Depende de `Phase 2.*` completadas.
+
+#### Phase 4.B — Accesibilidad y UX mínima
+
+- `Status`: `Pending`
+- **Objective**
+  - Mejorar accesibilidad básica y navegabilidad sin introducir complejidad innecesaria.
+- **Definition of done**
+  - Semántica y jerarquía de headings corregidas.
+  - Foco visible y navegación por teclado en controles principales.
+  - Contraste y textos alternativos revisados en componentes críticos.
+- **Chunks**
+  1. **Revisar semántica y estructura de encabezados**
+     - Áreas/archivos: páginas de Home/Detail/Search.
+     - Verificación: checklist manual de semántica por pantalla.
+  2. **Mejorar accesibilidad de inputs, links y cards**
+     - Áreas/archivos: `src/components/SearchBar.tsx`, `src/components/MovieCard.tsx`, `src/components/MovieDetail.tsx`.
+     - Verificación: navegación por teclado y foco visible funcionando.
+  3. **Aplicar checklist a11y MVP**
+     - Áreas/archivos: componentes y páginas principales.
+     - Verificación: checklist de contraste/labels/alt text completado.
+- **Risks / dependencies**
+  - Riesgo medio de ajustes visuales colaterales.
+  - Recomendado después de `Phase 4.A`.
+
+#### Phase 4.C — E2E mínimo de smoke
+
+- `Status`: `Pending`
+- **Objective**
+  - Añadir validación end-to-end mínima para proteger flujos críticos del MVP.
+- **Definition of done**
+  - Smoke E2E de Home -> Detail.
+  - Smoke E2E de Search con query param.
+  - Ejecución E2E integrada al pipeline (o preparada con comando/documentación).
+- **Chunks**
+  1. **Configurar base de Playwright para el proyecto**
+     - Áreas/archivos: config de Playwright y scripts de ejecución.
+     - Verificación: comando E2E corre localmente.
+  2. **Implementar specs de smoke críticos**
+     - Áreas/archivos: tests E2E de Home/Detail/Search.
+     - Verificación: escenarios principales pasan de forma estable.
+  3. **Integrar ejecución E2E al flujo de calidad**
+     - Áreas/archivos: workflow CI y README.
+     - Verificación: pipeline ejecuta E2E en rama/PR (o queda habilitado por etapa).
+- **Risks / dependencies**
+  - Dependencia de estabilidad de datos externos (TMDb).
+  - Recomendado definir mocking o criterios flexibles para evitar flakes.
+
 ### Recommended next subphase
 
-- **N/A (fases actuales completadas)** — siguiente paso sugerido: definir nuevas fases (por ejemplo, UI polish o cobertura E2E ampliada).
+- **`Phase 4.A`** — mayor impacto inmediato en calidad percibida, con bajo riesgo y sin cambiar arquitectura.
 
 ### Alternative paths
 
