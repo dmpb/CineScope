@@ -55,3 +55,13 @@ Variables en `.env.local` (no se suben a git):
 - `TMDB_API_KEY` (opcional; la app actual usa solo Bearer)
 
 No hace falta un archivo `.env` aparte: Next.js y Docker usan `.env.local` según las reglas del proyecto.
+
+## ✅ Validaciones de calidad
+
+Ejecuta estos comandos antes de abrir PR:
+
+```bash
+npm run lint
+npm run type-check
+npm run test
+```

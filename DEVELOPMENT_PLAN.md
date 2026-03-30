@@ -7,7 +7,7 @@
 - Existe descripción funcional de alto nivel en `README.md` (home/listados, detalle, búsqueda, ISR, Docker).
 - Existe capa de datos TMDb en `src/lib/tmdb.ts` (Phase 1.B). Aún no hay UI de listados/detalles/búsqueda conectada (Phase 2).
 - No hay auth (alineado con reglas: frontend-only con API externa).
-- Cliente TMDb implementado; UI de consumo, tests y CI siguen pendientes.
+- Cliente TMDb, UI MVP, tests criticos y pipeline CI base implementados.
 - `Assumption`: tampoco existe configuración Docker operativa versionada en este estado inicial.
 
 ## 2) Goals (from rules + repo)
@@ -21,7 +21,7 @@
 
 ## 3) Phases
 
-### Phase 1 — Base técnica y arquitectura 
+### Phase 1 — Base técnica y arquitectura ✅
 
 - `Status`: `Completed`
 - `Execution order`: `Phase 1.A -> Phase 1.B`
@@ -50,7 +50,7 @@
   - Credenciales TMDb no disponibles al inicio.
   - Configuración inicial de contenedor para desarrollo (`docker-compose.yml`) debe quedar operativa en esta subfase.
 
-#### Phase 1.B — Capa de datos TMDb y normalización
+#### Phase 1.B — Capa de datos TMDb y normalización ✅
 
 - `Status`: `Completed`
 - `Implemented`: 2026-03-30 — `src/lib/tmdb.ts` con fetch ISR (`revalidate: 60`), mapeo DTO → `Movie`/`SearchResult`, URLs de imagen completas, fallbacks y logs de error sin datos sensibles; `getOptionalTmdbBearerToken` en `env.ts`; ajuste `tsconfig` para no tipar `.next/dev`.
@@ -74,14 +74,15 @@
   - Depende de `Phase 1.A`.
   - Cambios/rate-limit de TMDb.
 
-### Phase 2 — Entrega de flujos UI MVP
+### Phase 2 — Entrega de flujos UI MVP ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 2.A -> Phase 2.B -> Phase 2.C`
 
-#### Phase 2.A — Home con listados reutilizables
+#### Phase 2.A — Home con listados reutilizables ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-30 — Home server component conectado a `lib/tmdb.ts`, componentes reutilizables `MovieCard`/`MovieSection`, uso de `<Image />`, y estados `loading`, `empty` y `error` para flujo principal.
 - **Objective**
   - Construir Home server-driven con secciones de tendencias, populares y mejor valoradas.
 - **Definition of done**
@@ -101,9 +102,10 @@
 - **Risks / dependencies**
   - Depende de `Phase 1.B`.
 
-#### Phase 2.B — Movie Detail por ruta dinámica
+#### Phase 2.B — Movie Detail por ruta dinámica ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-30 — Ruta dinámica `src/app/movie/[id]/page.tsx`, componente reutilizable `MovieDetail`, estado loading por segmento y fallbacks para ID inválido/errores de API/token faltante.
 - **Objective**
   - Entregar vista de detalle por `id` con manejo robusto de errores.
 - **Definition of done**
@@ -123,9 +125,10 @@
 - **Risks / dependencies**
   - Depende de `Phase 2.A` (reuso de UI) y `Phase 1.B` (getMovieById).
 
-#### Phase 2.C — Search por query params
+#### Phase 2.C — Search por query params ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-30 — `src/app/search/page.tsx` leyendo `?q=` por ruta, `SearchBar` orientada a URL sin persistencia en estado global, resultados reutilizando `MovieSection`/`MovieCard`, y estado loading del segmento.
 - **Objective**
   - Implementar búsqueda basada en URL (`?q=`) sin persistencia en estado global.
 - **Definition of done**
@@ -145,14 +148,15 @@
 - **Risks / dependencies**
   - Depende de `Phase 2.A` y `Phase 1.B`.
 
-### Phase 3 — Calidad mínima y ejecución continua
+### Phase 3 — Calidad mínima y ejecución continua ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 3.A -> Phase 3.B`
 
-#### Phase 3.A — Testing de flujos críticos MVP
+#### Phase 3.A — Testing de flujos críticos MVP ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-30 — Setup de Vitest + Testing Library + jsdom + MSW base, scripts `test`/`test:watch`, y pruebas criticas para Home, Movie Detail y Search.
 - **Objective**
   - Asegurar estabilidad básica de Home, Detail y Search.
 - **Definition of done**
@@ -173,9 +177,10 @@
   - Depende de `Phase 2.*` completadas.
   - Dependencia de definir alcance de E2E para no sobredimensionar tiempos de CI.
 
-#### Phase 3.B — Pipeline CI mínima
+#### Phase 3.B — Pipeline CI mínima ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-30 — Workflow `.github/workflows/ci.yml` con `lint`, `type-check` y `test`; comandos de calidad documentados en `README.md`.
 - **Objective**
   - Automatizar validaciones básicas en cada PR.
 - **Definition of done**
@@ -197,7 +202,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 2.A`** — Home con datos reales usando la capa `tmdb` ya lista.
+- **N/A (fases actuales completadas)** — siguiente paso sugerido: definir nuevas fases (por ejemplo, UI polish o cobertura E2E ampliada).
 
 ### Alternative paths
 
