@@ -40,4 +40,14 @@ Este proyecto demuestra:
 El proyecto utiliza Docker para garantizar un entorno de desarrollo consistente y reproducible.
 
 ```bash
+cp .env.example .env.local
 docker compose up --build
+```
+
+Luego abre:
+
+- http://localhost:3000
+
+Variables requeridas en `.env.local`:
+
+- `TMDB_BEARER_TOKEN`
