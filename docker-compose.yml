@@ -6,8 +6,8 @@ services:
     container_name: cinescope-web
     ports:
       - "3000:3000"
-    environment:
-      - TMDB_BEARER_TOKEN=${TMDB_BEARER_TOKEN:-}
+    env_file:
+      - .env.local
     volumes:
       - .:/app
       - /app/node_modules

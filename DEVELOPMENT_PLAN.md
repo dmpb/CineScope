@@ -5,9 +5,9 @@
 - `Status`: `In Progress` (proyecto inicial).
 - Existe definición de arquitectura, stack, reglas de capa y endpoints en `PROJECT_RULES.md`.
 - Existe descripción funcional de alto nivel en `README.md` (home/listados, detalle, búsqueda, ISR, Docker).
-- No hay implementación visible de aplicación en `src/` (módulos UI, data layer, rutas, tipos).
+- Existe capa de datos TMDb en `src/lib/tmdb.ts` (Phase 1.B). Aún no hay UI de listados/detalles/búsqueda conectada (Phase 2).
 - No hay auth (alineado con reglas: frontend-only con API externa).
-- API/TMDb, UI, tests y CI están en estado `Pending` (no implementados en archivos del repo).
+- Cliente TMDb implementado; UI de consumo, tests y CI siguen pendientes.
 - `Assumption`: tampoco existe configuración Docker operativa versionada en este estado inicial.
 
 ## 2) Goals (from rules + repo)
@@ -23,7 +23,7 @@
 
 ### Phase 1 — Base técnica y arquitectura 
 
-- `Status`: `In Progress`
+- `Status`: `Completed`
 - `Execution order`: `Phase 1.A -> Phase 1.B`
 
 #### Phase 1.A — Bootstrap de proyecto y estructura mínima ✅
@@ -52,7 +52,8 @@
 
 #### Phase 1.B — Capa de datos TMDb y normalización
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-30 — `src/lib/tmdb.ts` con fetch ISR (`revalidate: 60`), mapeo DTO → `Movie`/`SearchResult`, URLs de imagen completas, fallbacks y logs de error sin datos sensibles; `getOptionalTmdbBearerToken` en `env.ts`; ajuste `tsconfig` para no tipar `.next/dev`.
 - **Objective**
   - Implementar la capa de acceso a TMDb en un único punto con ISR y mapeos de dominio.
 - **Definition of done**
@@ -196,7 +197,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 1.A`** — desbloquea estructura, entorno y contratos base necesarios para cualquier implementación posterior.
+- **`Phase 2.A`** — Home con datos reales usando la capa `tmdb` ya lista.
 
 ### Alternative paths
 

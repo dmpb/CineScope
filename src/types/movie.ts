@@ -11,3 +11,8 @@ export interface Movie {
 export interface MovieListResult {
   results: Movie[];
 }
+
+export interface SearchResult {
+  results: Movie[];
+  totalResults: number;
+}

@@ -41,6 +41,7 @@ El proyecto utiliza Docker para garantizar un entorno de desarrollo consistente 
 
 ```bash
 cp .env.example .env.local
+# Edita .env.local y pega tu Read Access Token y (opcional) API Key de TMDb
 docker compose up --build
 ```
 
@@ -48,6 +49,9 @@ Luego abre:
 
 - http://localhost:3000
 
-Variables requeridas en `.env.local`:
+Variables en `.env.local` (no se suben a git):
 
-- `TMDB_BEARER_TOKEN`
+- `TMDB_BEARER_TOKEN` (obligatorio para la capa `tmdb`)
+- `TMDB_API_KEY` (opcional; la app actual usa solo Bearer)
+
+No hace falta un archivo `.env` aparte: Next.js y Docker usan `.env.local` según las reglas del proyecto.
