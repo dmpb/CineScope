@@ -24,6 +24,20 @@ type TmdbSearchResponse = {
   total_results?: number;
 };
 
+type TmdbGenreDto = {
+  id: number;
+  name?: string;
+};
+
+type TmdbGenreListResponse = {
+  genres?: TmdbGenreDto[];
+};
+
+export type MovieGenre = {
+  id: number;
+  name: string;
+};
+
 const MOCK_MOVIES: TmdbMovieDto[] = [
   {
     id: 603,
@@ -106,6 +120,14 @@ function getMockMovies(): Movie[] {
   return MOCK_MOVIES.map(mapMovieDto);
 }
 
+function getMockGenres(): MovieGenre[] {
+  return [
+    { id: 28, name: "Action" },
+    { id: 35, name: "Comedy" },
+    { id: 18, name: "Drama" }
+  ];
+}
+
 async function tmdbFetchJson<T>(path: string): Promise<T | null> {
   const token = getOptionalTmdbBearerToken();
   if (!token) {
@@ -172,6 +194,77 @@ export async function getTopRatedMovies(): Promise<Movie[]> {
   }
 
   const data = await tmdbFetchJson<TmdbMovieListResponse>("/movie/top_rated");
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  return data.results.map(mapMovieDto);
+}
+
+export async function getNowPlayingMovies(): Promise<Movie[]> {
+  if (isTmdbMockMode) {
+    const movies = getMockMovies();
+    return [movies[2], movies[0], movies[4], movies[1], movies[3]].filter(Boolean);
+  }
+
+  const data = await tmdbFetchJson<TmdbMovieListResponse>("/movie/now_playing");
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  return data.results.map(mapMovieDto);
+}
+
+export async function getUpcomingMovies(): Promise<Movie[]> {
+  if (isTmdbMockMode) {
+    const movies = getMockMovies();
+    return [movies[5], movies[1], movies[3], movies[0], movies[2]].filter(Boolean);
+  }
+
+  const data = await tmdbFetchJson<TmdbMovieListResponse>("/movie/upcoming");
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  return data.results.map(mapMovieDto);
+}
+
+export async function getMovieGenres(): Promise<MovieGenre[]> {
+  if (isTmdbMockMode) {
+    return getMockGenres();
+  }
+
+  const data = await tmdbFetchJson<TmdbGenreListResponse>("/genre/movie/list");
+  if (!data?.genres?.length) {
+    return [];
+  }
+
+  return data.genres
+    .filter((genre) => Number.isInteger(genre.id))
+    .map((genre) => ({
+      id: genre.id,
+      name: genre.name ?? `Genre ${genre.id}`
+    }));
+}
+
+export async function getMoviesByGenre(genreId: number): Promise<Movie[]> {
+  if (!Number.isInteger(genreId) || genreId <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    const movies = getMockMovies();
+    if (genreId === 28) {
+      return [movies[0], movies[2], movies[3]].filter(Boolean);
+    }
+    if (genreId === 35) {
+      return [movies[4], movies[1], movies[5]].filter(Boolean);
+    }
+    return movies.slice(0, 5);
+  }
+
+  const path = `/discover/movie?${new URLSearchParams({ with_genres: String(genreId) }).toString()}`;
+  const data = await tmdbFetchJson<TmdbMovieListResponse>(path);
   if (!data?.results?.length) {
     return [];
   }

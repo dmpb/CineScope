@@ -279,12 +279,13 @@
 
 ### Phase 5 — Home Experience Enhancement
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 5.A -> Phase 5.B -> Phase 5.C`
 
-#### Phase 5.A — Multi-category Home (HIGH PRIORITY)
+#### Phase 5.A — Multi-category Home (HIGH PRIORITY) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Integración de `getNowPlayingMovies()` y `getUpcomingMovies()` en `src/lib/tmdb.ts`, actualización de `src/app/page.tsx` para resolver y renderizar 5 secciones server-side (`Trending`, `Popular`, `Top Rated`, `Now Playing`, `Upcoming`), y ajuste de pruebas de Home.
 - **Objective**
   - Expandir Home para mostrar múltiples categorías de películas y elevar percepción de producto.
 - **Definition of done**
@@ -305,9 +306,10 @@
   - Aumento de llamadas API; validar impacto en latencia y caché ISR.
   - Depende de `Phase 1.B` y componentes de listado existentes.
 
-#### Phase 5.B — Featured Banner (CRITICAL UX)
+#### Phase 5.B — Featured Banner (CRITICAL UX) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Componente `src/components/Banner.tsx` con `<Image />`, overlays y CTA accesible, selección de destacada desde Home (prioridad `Trending`) e integración en la parte superior de `src/app/page.tsx` con ajuste de tests de Home.
 - **Objective**
   - Agregar hero banner destacado para mejorar impacto visual inicial del Home.
 - **Definition of done**
@@ -327,9 +329,10 @@
   - Riesgo de contraste/legibilidad en fondos oscuros; validar a11y visual.
   - Requiere `Phase 5.A` para fuente principal de datos.
 
-#### Phase 5.C — Genre-based Rows (OPTIONAL HIGH VALUE)
+#### Phase 5.C — Genre-based Rows (OPTIONAL HIGH VALUE) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Nuevas funciones `getMovieGenres()` y `getMoviesByGenre()` en `src/lib/tmdb.ts` (incluyendo modo mock), integración en `src/app/page.tsx` para render dinámico de al menos 2 filas por género (`Action` y `Comedy`) reutilizando `MovieSection`, y actualización de pruebas de Home.
 - **Objective**
   - Añadir filas dinámicas por género para ampliar descubrimiento de contenido.
 - **Definition of done**
@@ -494,7 +497,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 5.A`** — mayor impacto inmediato en experiencia de Home y base para extensiones posteriores.
+- **`Phase 6.A`** — integrar búsqueda global en header para elevar navegación y descubrimiento en todas las pantallas.
 
 ### Alternative paths
 
