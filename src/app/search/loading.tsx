@@ -1,13 +1,18 @@
 export default function LoadingSearch() {
   return (
     <main className="page-shell">
-      <div className="h-5 w-32 animate-pulse rounded bg-zinc-800" />
-      <div className="h-10 w-48 animate-pulse rounded-xl bg-zinc-800" />
-      <div className="h-11 w-full max-w-2xl animate-pulse rounded-xl bg-zinc-800" />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-        {Array.from({ length: 10 }).map((_, idx) => (
-          <div key={idx} className="aspect-[2/3] animate-pulse rounded-xl bg-zinc-800" />
-        ))}
+      <div className="skeleton-shimmer h-5 w-32 rounded" />
+      <div className="skeleton-shimmer h-10 w-48 rounded-xl" />
+      <div className="skeleton-shimmer h-5 w-56 rounded-lg" />
+      <div className="space-y-3">
+        <div className="skeleton-shimmer h-8 w-72 rounded-lg" />
+        <div className="horizontal-scroll-row">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <div key={idx} className="skeleton-shimmer min-w-[45%] rounded-xl sm:min-w-[31%] md:min-w-[23%] lg:min-w-[19%] xl:min-w-[16%]">
+              <div className="aspect-[2/3] w-full rounded-xl" />
+            </div>
+          ))}
+        </div>
       </div>
     </main>
   );

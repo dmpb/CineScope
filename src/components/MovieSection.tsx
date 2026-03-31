@@ -20,9 +20,9 @@ export function MovieSection({ title, movies, emptyMessage }: MovieSectionProps)
         {title}
       </h2>
       {movies.length > 0 ? (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+        <ul className="horizontal-scroll-row" role="list">
           {movies.map((movie) => (
-            <li key={movie.id}>
+            <li key={movie.id} className="min-w-[45%] sm:min-w-[31%] md:min-w-[23%] lg:min-w-[19%] xl:min-w-[16%]">
               <MovieCard movie={movie} />
             </li>
           ))}

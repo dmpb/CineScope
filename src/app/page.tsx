@@ -13,7 +13,6 @@ import {
   getUpcomingMovies
 } from "@/lib/tmdb";
 import type { Movie } from "@/types/movie";
-import Link from "next/link";
 
 type HomeGenreSection = {
   genre: MovieGenre;
@@ -85,19 +84,6 @@ export default async function HomePage() {
 
   return (
     <main className="page-shell">
-      <header className="space-y-3">
-        <h1 className="page-title">CineScope</h1>
-        <p className="page-subtitle">
-          Explora tendencias, estrenos en cartelera, proximos lanzamientos y los titulos mejor valorados.
-        </p>
-        <Link
-          href="/search"
-          className="focus-ring inline-block rounded-md text-sm text-zinc-300 underline-offset-4 hover:text-zinc-100 hover:underline"
-        >
-          Ir a busqueda →
-        </Link>
-      </header>
-
       {!hasToken && (
         <StateMessage variant="warning">
           Falta configurar <code>TMDB_BEARER_TOKEN</code> en <code>.env.local</code>.

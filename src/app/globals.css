@@ -46,4 +46,23 @@ body {
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950;
   }
+
+  .skeleton-shimmer {
+    @apply animate-pulse bg-zinc-800/90;
+  }
+
+  .horizontal-scroll-row {
+    @apply flex gap-3 overflow-x-auto pb-2 pr-2 sm:gap-4;
+    scrollbar-width: thin;
+    scrollbar-color: #3f3f46 transparent;
+  }
+
+  .horizontal-scroll-row::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .horizontal-scroll-row::-webkit-scrollbar-thumb {
+    background-color: rgb(63 63 70);
+    border-radius: 9999px;
+  }
 }

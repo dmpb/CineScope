@@ -442,30 +442,33 @@
   - Aumento de requests por página de detalle.
   - Requiere estrategia de fallback para datasets vacíos.
 
-### Phase 8 — UI/UX Polish (Post-MVP)
+### Phase 8 — UI/UX Polish (Post-MVP) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 8.A -> Phase 8.B -> Phase 8.C`
 
-#### Phase 8.A — Horizontal Scroll Rows
+#### Phase 8.A — Horizontal Scroll Rows ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Conversión de listados a filas horizontales con `overflow-x` en `src/components/MovieSection.tsx` y estilos base reutilizables en `src/app/globals.css`.
 - **Objective**
   - Convertir listados de secciones en filas con scroll horizontal tipo streaming app.
 - **Definition of done**
   - Filas scrollables con `overflow-x` y comportamiento usable en mobile/desktop.
 
-#### Phase 8.B — Hover Effects
+#### Phase 8.B — Hover Effects ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Mejora de interacciones en `src/components/MovieCard.tsx` con escala/levantamiento, sombreado y overlay informativo visible en hover/focus.
 - **Objective**
   - Añadir interacciones hover tipo Netflix para mejorar feedback visual.
 - **Definition of done**
   - Animación de escala y overlay informativo visible al hover/focus.
 
-#### Phase 8.C — Skeleton Loaders
+#### Phase 8.C — Skeleton Loaders ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Reemplazo de loaders por skeletons consistentes de banner y cards en `src/app/loading.tsx`, `src/app/search/loading.tsx` y `src/app/movie/[id]/loading.tsx` usando estilos compartidos.
 - **Objective**
   - Sustituir loaders básicos por skeletons para cards y banner.
 - **Definition of done**
@@ -502,7 +505,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 8.A`** — iniciar polish visual post-MVP con filas horizontales scrollables.
+- **`Phase 9.A`** — comenzar exploración de favoritos en cliente (`localStorage`) como extensión opcional.
 
 ### Alternative paths
 
