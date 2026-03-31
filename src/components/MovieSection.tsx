@@ -1,5 +1,6 @@
 import type { Movie } from "@/types/movie";
 import { MovieCard } from "@/components/MovieCard";
+import { StateMessage } from "@/components/StateMessage";
 
 type MovieSectionProps = {
   title: string;
@@ -8,19 +9,26 @@ type MovieSectionProps = {
 };
 
 export function MovieSection({ title, movies, emptyMessage }: MovieSectionProps) {
+  const sectionId = `section-${title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")}`;
+
   return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-semibold text-zinc-100">{title}</h2>
+    <section className="space-y-4 sm:space-y-5" aria-labelledby={sectionId}>
+      <h2 id={sectionId} className="text-xl font-semibold text-zinc-100 sm:text-2xl">
+        {title}
+      </h2>
       {movies.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
           {movies.map((movie) => (
-            <MovieCard key={movie.id} movie={movie} />
+            <li key={movie.id}>
+              <MovieCard movie={movie} />
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
-        <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900/40 px-4 py-6 text-sm text-zinc-300">
-          {emptyMessage}
-        </div>
+        <StateMessage variant="empty">{emptyMessage}</StateMessage>
       )}
     </section>
   );

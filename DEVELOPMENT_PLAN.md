@@ -202,12 +202,13 @@
 
 ### Phase 4 — UI polish y hardening
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 4.A -> Phase 4.B -> Phase 4.C`
 
-#### Phase 4.A — UI polish del MVP
+#### Phase 4.A — UI polish del MVP ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Tokens visuales base en `globals.css`, componente reutilizable `StateMessage` para `warning/error/empty`, refinamiento responsive y consistencia visual en Home/Detail/Search, `MovieCard`, `MovieSection`, `MovieDetail` y `SearchBar`.
 - **Objective**
   - Mejorar consistencia visual y legibilidad en Home, Detail y Search sin cambiar arquitectura.
 - **Definition of done**
@@ -228,9 +229,10 @@
   - Riesgo bajo de regresiones visuales.
   - Depende de `Phase 2.*` completadas.
 
-#### Phase 4.B — Accesibilidad y UX mínima
+#### Phase 4.B — Accesibilidad y UX mínima ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Mejora de semántica de secciones y navegación, foco visible reusable (`focus-ring`), roles/`aria-live` en feedback states, label explícito en búsqueda y revisión de textos alternativos en componentes críticos.
 - **Objective**
   - Mejorar accesibilidad básica y navegabilidad sin introducir complejidad innecesaria.
 - **Definition of done**
@@ -251,9 +253,10 @@
   - Riesgo medio de ajustes visuales colaterales.
   - Recomendado después de `Phase 4.A`.
 
-#### Phase 4.C — E2E mínimo de smoke
+#### Phase 4.C — E2E mínimo de smoke ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Setup de Playwright (`playwright.config.ts`) con modo mock de TMDb para estabilidad, specs smoke de Home->Detail y Search por query param, scripts E2E en `package.json`, documentación en `README.md` e integración en workflow CI.
 - **Objective**
   - Añadir validación end-to-end mínima para proteger flujos críticos del MVP.
 - **Definition of done**
@@ -276,7 +279,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 4.A`** — mayor impacto inmediato en calidad percibida, con bajo riesgo y sin cambiar arquitectura.
+- **Sin subfases pendientes de Phase 4** — listo para iterar en mejoras futuras fuera del MVP.
 
 ### Alternative paths
 

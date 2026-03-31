@@ -9,3 +9,41 @@
 body {
   @apply bg-zinc-950 text-zinc-100 antialiased;
 }
+
+@layer components {
+  .page-shell {
+    @apply mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:gap-10 lg:py-12;
+  }
+
+  .page-title {
+    @apply text-3xl font-semibold tracking-tight text-zinc-100 sm:text-4xl;
+  }
+
+  .page-subtitle {
+    @apply max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base;
+  }
+
+  .state-card {
+    @apply rounded-xl border px-4 py-4 text-sm leading-relaxed;
+  }
+
+  .state-card--info {
+    @apply border-zinc-700 bg-zinc-900/60 text-zinc-200;
+  }
+
+  .state-card--empty {
+    @apply border-dashed border-zinc-700 bg-zinc-900/40 text-zinc-300;
+  }
+
+  .state-card--error {
+    @apply border-amber-900 bg-amber-950/50 text-amber-200;
+  }
+
+  .state-card--warning {
+    @apply border-red-900 bg-red-950/50 text-red-200;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950;
+  }
+}

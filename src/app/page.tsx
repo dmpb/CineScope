@@ -1,4 +1,5 @@
 import { MovieSection } from "@/components/MovieSection";
+import { StateMessage } from "@/components/StateMessage";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { getPopularMovies, getTopRatedMovies, getTrendingMovies } from "@/lib/tmdb";
 import type { Movie } from "@/types/movie";
@@ -31,27 +32,30 @@ export default async function HomePage() {
   const hasAnyMovies = trending.length > 0 || popular.length > 0 || topRated.length > 0;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 px-6 py-12">
+    <main className="page-shell">
       <header className="space-y-3">
-        <h1 className="text-4xl font-semibold tracking-tight">CineScope</h1>
-        <p className="max-w-2xl text-zinc-300">
+        <h1 className="page-title">CineScope</h1>
+        <p className="page-subtitle">
           Explora tendencias semanales, catalogo popular y peliculas mejor valoradas.
         </p>
-        <Link href="/search" className="inline-block text-sm text-zinc-300 underline-offset-4 hover:underline">
+        <Link
+          href="/search"
+          className="focus-ring inline-block rounded-md text-sm text-zinc-300 underline-offset-4 hover:text-zinc-100 hover:underline"
+        >
           Ir a busqueda →
         </Link>
       </header>
 
       {!hasToken && (
-        <div className="rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-200">
+        <StateMessage variant="warning">
           Falta configurar <code>TMDB_BEARER_TOKEN</code> en <code>.env.local</code>.
-        </div>
+        </StateMessage>
       )}
 
       {hasError && (
-        <div className="rounded-lg border border-amber-900 bg-amber-950/50 px-4 py-3 text-sm text-amber-200">
+        <StateMessage variant="error">
           Ocurrio un error al cargar datos de TMDb. Intenta nuevamente en unos segundos.
-        </div>
+        </StateMessage>
       )}
 
       <MovieSection
@@ -73,9 +77,7 @@ export default async function HomePage() {
       />
 
       {!hasError && hasToken && !hasAnyMovies && (
-        <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900/40 px-4 py-6 text-sm text-zinc-300">
-          No hay resultados para mostrar por ahora.
-        </div>
+        <StateMessage variant="empty">No hay resultados para mostrar por ahora.</StateMessage>
       )}
     </main>
   );

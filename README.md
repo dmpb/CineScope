@@ -61,7 +61,22 @@ No hace falta un archivo `.env` aparte: Next.js y Docker usan `.env.local` segú
 Ejecuta estos comandos antes de abrir PR:
 
 ```bash
-npm run lint
-npm run type-check
-npm run test
+docker compose exec web npm run lint
+docker compose exec web npm run type-check
+docker compose exec web npm run test
+```
+
+## 🧪 Smoke E2E (Playwright)
+
+Se incluyen pruebas smoke para los flujos criticos:
+
+- Home -> Detail
+- Search con query param
+
+Ejecucion local:
+
+```bash
+docker compose build web
+docker compose up -d web
+docker compose exec web npm run test:e2e:docker
 ```

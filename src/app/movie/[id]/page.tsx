@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { getMovieById } from "@/lib/tmdb";
 import { MovieDetail } from "@/components/MovieDetail";
+import { StateMessage } from "@/components/StateMessage";
 
 type MoviePageProps = {
   params: Promise<{ id: string }>;
@@ -23,27 +24,30 @@ export default async function MoviePage({ params }: MoviePageProps) {
   const movie = movieId ? await getMovieById(movieId) : null;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-6 py-12">
-      <Link href="/" className="w-fit text-sm text-zinc-300 underline-offset-4 hover:underline">
-        ← Volver al inicio
-      </Link>
+    <main className="page-shell">
+      <nav aria-label="Navegacion de pagina">
+        <Link
+          href="/"
+          className="focus-ring w-fit rounded-md text-sm text-zinc-300 underline-offset-4 hover:text-zinc-100 hover:underline"
+        >
+          ← Volver al inicio
+        </Link>
+      </nav>
 
       {!hasToken && (
-        <div className="rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-200">
+        <StateMessage variant="warning">
           Falta configurar <code>TMDB_BEARER_TOKEN</code> en <code>.env.local</code>.
-        </div>
+        </StateMessage>
       )}
 
       {!movieId && (
-        <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900/40 px-4 py-6 text-sm text-zinc-300">
-          El ID de la pelicula no es valido.
-        </div>
+        <StateMessage variant="empty">El ID de la pelicula no es valido.</StateMessage>
       )}
 
       {movieId && !movie && (
-        <div className="rounded-lg border border-amber-900 bg-amber-950/50 px-4 py-6 text-sm text-amber-200">
+        <StateMessage variant="error">
           No se pudo cargar la pelicula solicitada. Puede no existir o estar temporalmente no disponible.
-        </div>
+        </StateMessage>
       )}
 
       {movie && <MovieDetail movie={movie} />}

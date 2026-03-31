@@ -1,12 +1,12 @@
 export default function LoadingSearch() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-6 py-12">
+    <main className="page-shell">
       <div className="h-5 w-32 animate-pulse rounded bg-zinc-800" />
-      <div className="h-10 w-48 animate-pulse rounded bg-zinc-800" />
-      <div className="h-10 w-full max-w-2xl animate-pulse rounded bg-zinc-800" />
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="h-10 w-48 animate-pulse rounded-xl bg-zinc-800" />
+      <div className="h-11 w-full max-w-2xl animate-pulse rounded-xl bg-zinc-800" />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
         {Array.from({ length: 10 }).map((_, idx) => (
-          <div key={idx} className="aspect-[2/3] animate-pulse rounded-lg bg-zinc-800" />
+          <div key={idx} className="aspect-[2/3] animate-pulse rounded-xl bg-zinc-800" />
         ))}
       </div>
     </main>
