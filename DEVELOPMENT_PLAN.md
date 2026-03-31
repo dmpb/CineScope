@@ -277,15 +277,231 @@
   - Dependencia de estabilidad de datos externos (TMDb).
   - Recomendado definir mocking o criterios flexibles para evitar flakes.
 
+### Phase 5 — Home Experience Enhancement
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 5.A -> Phase 5.B -> Phase 5.C`
+
+#### Phase 5.A — Multi-category Home (HIGH PRIORITY)
+
+- `Status`: `Pending`
+- **Objective**
+  - Expandir Home para mostrar múltiples categorías de películas y elevar percepción de producto.
+- **Definition of done**
+  - Home incluye mínimo 5 secciones: `Trending`, `Popular`, `Top Rated`, `Now Playing`, `Upcoming`.
+  - No hay fetch directo en componentes de UI.
+- **Chunks**
+  1. **Integrar endpoints adicionales de TMDb**
+     - Áreas/archivos: `src/lib/tmdb.ts`.
+     - Endpoints: `/movie/now_playing`, `/movie/upcoming`.
+     - Verificación: existen `getNowPlayingMovies()` y `getUpcomingMovies()` con salida normalizada.
+  2. **Actualizar fetch de Home**
+     - Áreas/archivos: `src/app/page.tsx`.
+     - Verificación: Home resuelve datasets en server component sin romper ISR.
+  3. **Renderizar secciones múltiples**
+     - Áreas/archivos: composición Home y `src/components/MovieSection.tsx`.
+     - Verificación: al menos 5 secciones visibles con estados `loading/empty/error`.
+- **Risks / dependencies**
+  - Aumento de llamadas API; validar impacto en latencia y caché ISR.
+  - Depende de `Phase 1.B` y componentes de listado existentes.
+
+#### Phase 5.B — Featured Banner (CRITICAL UX)
+
+- `Status`: `Pending`
+- **Objective**
+  - Agregar hero banner destacado para mejorar impacto visual inicial del Home.
+- **Definition of done**
+  - Banner visible en la parte superior del Home.
+  - Usa imagen `backdrop`, muestra título, overview y CTA al detalle.
+- **Chunks**
+  1. **Seleccionar película destacada**
+     - Fuente: resultados de `Trending`.
+     - Verificación: selección estable (primer elemento) o aleatoria controlada.
+  2. **Crear componente Banner**
+     - Áreas/archivos: `src/components/Banner.tsx`.
+     - Verificación: uso de `<Image />`, overlay legible y CTA accesible.
+  3. **Integrar Banner en Home**
+     - Áreas/archivos: `src/app/page.tsx`.
+     - Verificación: Banner renderiza antes de las secciones y mantiene responsive.
+- **Risks / dependencies**
+  - Riesgo de contraste/legibilidad en fondos oscuros; validar a11y visual.
+  - Requiere `Phase 5.A` para fuente principal de datos.
+
+#### Phase 5.C — Genre-based Rows (OPTIONAL HIGH VALUE)
+
+- `Status`: `Pending`
+- **Objective**
+  - Añadir filas dinámicas por género para ampliar descubrimiento de contenido.
+- **Definition of done**
+  - Existen al menos 2 secciones por género (ejemplo: Action, Comedy).
+- **Chunks**
+  1. **Obtener catálogo de géneros**
+  2. **Obtener películas por género**
+  3. **Renderizar secciones dinámicas reutilizando componentes existentes**
+- **Risks / dependencies**
+  - Mayor complejidad de rate-limit y número de requests.
+  - Recomendado ejecutar después de `Phase 5.A` y `Phase 5.B`.
+
+### Phase 6 — Search & Navigation UX
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 6.A -> Phase 6.B`
+
+#### Phase 6.A — Header Search Integration (HIGH PRIORITY)
+
+- `Status`: `Pending`
+- **Objective**
+  - Mover la búsqueda a un header global visible en todas las páginas.
+- **Definition of done**
+  - Input de búsqueda visible en Home, Detail y Search.
+  - Submit navega a `/search?q=` usando query params.
+- **Chunks**
+  1. **Crear componente Navbar**
+     - Áreas/archivos: `src/components/Navbar.tsx`.
+  2. **Integrar `SearchBar` sin estado global**
+     - Verificación: mantiene regla de query params y arquitectura server-driven.
+  3. **Conectar Navbar en layout**
+     - Áreas/archivos: `src/app/layout.tsx`.
+     - Verificación: navegación consistente sin duplicar header en páginas.
+- **Risks / dependencies**
+  - Posibles regresiones visuales entre layouts existentes.
+  - Requiere coordinación con estilos de `Phase 4.*`.
+
+#### Phase 6.B — Improve Search Results Page
+
+- `Status`: `Pending`
+- **Objective**
+  - Mejorar layout y UX de resultados para claridad y escaneabilidad.
+- **Definition of done**
+  - Grid optimizada en breakpoints.
+  - Conteo de resultados visible y consistente.
+  - Empty state más expresivo y reutilizable.
+- **Chunks**
+  1. **Agregar metadata de resultados**
+  2. **Refinar layout de grilla y espaciado**
+  3. **Mejorar UI del empty state**
+- **Risks / dependencies**
+  - Riesgo bajo de ajustes visuales colaterales en `Search`.
+
+### Phase 7 — Movie Detail Enhancement
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 7.A -> Phase 7.B -> Phase 7.C`
+
+#### Phase 7.A — Enriched Movie Metadata (HIGH PRIORITY)
+
+- `Status`: `Pending`
+- **Objective**
+  - Expandir información del detalle con metadata clave de película.
+- **Definition of done**
+  - Detail muestra `genres`, `runtime`, `language` y `vote count`.
+- **Chunks**
+  1. **Extender consumo del endpoint `/movie/{id}`**
+  2. **Actualizar Domain Model y tipos en `src/types/movie.ts`**
+  3. **Renderizar metadata enriquecida en `src/components/MovieDetail.tsx`**
+- **Risks / dependencies**
+  - Cambios en contrato de tipos pueden requerir ajustes de tests.
+  - Depende de mantener normalización en `src/lib/tmdb.ts`.
+
+#### Phase 7.B — Trailer Integration (HIGH VALUE)
+
+- `Status`: `Pending`
+- **Objective**
+  - Mostrar trailer principal de la película para enriquecer la experiencia.
+- **Definition of done**
+  - Trailer visible inline o en modal cuando exista fuente compatible.
+- **Chunks**
+  1. **Consumir `/movie/{id}/videos` desde `src/lib/tmdb.ts`**
+  2. **Seleccionar trailer de YouTube con criterio determinístico**
+  3. **Embebido seguro del player en UI**
+- **Risks / dependencies**
+  - Dependencia de disponibilidad de videos por película.
+  - Considerar fallback explícito si no hay trailer.
+
+#### Phase 7.C — Cast & Similar Movies
+
+- `Status`: `Pending`
+- **Objective**
+  - Añadir contexto de reparto y películas relacionadas en la vista de detalle.
+- **Definition of done**
+  - Lista de cast visible.
+  - Sección de `similar movies` renderizada.
+- **Chunks**
+  1. **Consumir `/movie/{id}/credits`**
+  2. **Consumir `/movie/{id}/similar`**
+  3. **Renderizar secciones reutilizando `MovieCard`/`MovieSection`**
+- **Risks / dependencies**
+  - Aumento de requests por página de detalle.
+  - Requiere estrategia de fallback para datasets vacíos.
+
+### Phase 8 — UI/UX Polish (Post-MVP)
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 8.A -> Phase 8.B -> Phase 8.C`
+
+#### Phase 8.A — Horizontal Scroll Rows
+
+- `Status`: `Pending`
+- **Objective**
+  - Convertir listados de secciones en filas con scroll horizontal tipo streaming app.
+- **Definition of done**
+  - Filas scrollables con `overflow-x` y comportamiento usable en mobile/desktop.
+
+#### Phase 8.B — Hover Effects
+
+- `Status`: `Pending`
+- **Objective**
+  - Añadir interacciones hover tipo Netflix para mejorar feedback visual.
+- **Definition of done**
+  - Animación de escala y overlay informativo visible al hover/focus.
+
+#### Phase 8.C — Skeleton Loaders
+
+- `Status`: `Pending`
+- **Objective**
+  - Sustituir loaders básicos por skeletons para cards y banner.
+- **Definition of done**
+  - Skeletons consistentes visibles en estados de carga de Home/Search/Detail.
+
+### Phase 9 — Optional Features (Low Priority)
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 9.A -> Phase 9.B`
+
+#### Phase 9.A — Favorites (localStorage)
+
+- `Status`: `Pending`
+- **Objective**
+  - Permitir guardar/eliminar favoritas en cliente sin backend.
+- **Definition of done**
+  - Toggle de favoritos disponible en `MovieCard`.
+  - Persistencia local usando `localStorage`.
+
+#### Phase 9.B — Infinite Scroll (Search)
+
+- `Status`: `Pending`
+- **Objective**
+  - Cargar más resultados de búsqueda al hacer scroll.
+- **Definition of done**
+  - Search soporta paginación incremental por scroll con feedback de carga.
+
+### Post-MVP execution priority
+
+1. `Phase 5.A` — Multi-category Home.
+2. `Phase 5.B` — Featured Banner.
+3. `Phase 6.A` — Header Search Integration.
+4. `Phase 7.A` — Enriched Movie Metadata.
+
 ### Recommended next subphase
 
-- **Sin subfases pendientes de Phase 4** — listo para iterar en mejoras futuras fuera del MVP.
+- **`Phase 5.A`** — mayor impacto inmediato en experiencia de Home y base para extensiones posteriores.
 
 ### Alternative paths
 
-- **Prioridad velocidad de demo**: `Phase 1.A -> 1.B -> 2.A` para mostrar Home cuanto antes.
-- **Prioridad reducción de riesgo técnico**: `Phase 1.A -> 1.B -> 3.A` para estabilizar data layer/tests antes de expandir UI.
-- **Prioridad valor funcional completo MVP**: `Phase 1.A -> 1.B -> 2.A -> 2.B -> 2.C -> 3.A -> 3.B`.
+- **Prioridad Home premium rápido**: `5.A -> 5.B -> 6.A`.
+- **Prioridad profundidad funcional de detalle**: `7.A -> 7.B -> 7.C`.
+- **Prioridad polish visual final**: `8.A -> 8.B -> 8.C`.
+- **Prioridad exploración opcional**: `9.A -> 9.B` (cuando no comprometa roadmap principal).
 
 ### Progress tracking rule
 
