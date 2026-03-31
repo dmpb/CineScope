@@ -26,4 +26,6 @@ export interface MovieListResult {
 export interface SearchResult {
   results: Movie[];
   totalResults: number;
+  currentPage: number;
+  totalPages: number;
 }

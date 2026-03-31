@@ -30,7 +30,9 @@ const searchFixture: SearchResult = {
       voteCount: 0
     }
   ],
-  totalResults: 1
+  totalResults: 1,
+  currentPage: 1,
+  totalPages: 1
 };
 
 describe("Search page", () => {

@@ -476,12 +476,13 @@
 
 ### Phase 9 — Optional Features (Low Priority)
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 9.A -> Phase 9.B`
 
 #### Phase 9.A — Favorites (localStorage)
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Botón de favorito en `src/components/FavoriteButton.tsx` con persistencia en `localStorage` (`cinescope:favorites`) e integración en `src/components/MovieCard.tsx` para agregar/quitar películas.
 - **Objective**
   - Permitir guardar/eliminar favoritas en cliente sin backend.
 - **Definition of done**
@@ -490,7 +491,8 @@
 
 #### Phase 9.B — Infinite Scroll (Search)
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Infinite scroll en Search con `src/components/SearchResultsInfinite.tsx` + `IntersectionObserver`, soporte de paginación en `searchMovies(query, page)` y endpoint interno `src/app/api/search/route.ts` para cargar más resultados por scroll.
 - **Objective**
   - Cargar más resultados de búsqueda al hacer scroll.
 - **Definition of done**
@@ -505,7 +507,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 9.A`** — comenzar exploración de favoritos en cliente (`localStorage`) como extensión opcional.
+- **Sin subfases pendientes del roadmap actual** — listo para definir una nueva iteración de producto.
 
 ### Alternative paths
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MovieSection } from "@/components/MovieSection";
+import { SearchResultsInfinite } from "@/components/SearchResultsInfinite";
 import { StateMessage } from "@/components/StateMessage";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { searchMovies } from "@/lib/tmdb";
@@ -15,12 +15,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   let hasError = false;
   let totalResults = 0;
+  let currentPage = 1;
+  let totalPages = 0;
   let results = [] as Awaited<ReturnType<typeof searchMovies>>["results"];
 
   if (query) {
     try {
       const searchResult = await searchMovies(query);
       totalResults = searchResult.totalResults;
+      currentPage = searchResult.currentPage;
+      totalPages = searchResult.totalPages;
       results = searchResult.results;
     } catch {
       hasError = true;
@@ -60,22 +64,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       )}
 
       {query.length > 0 && !hasError && (
-        <section className="space-y-4 sm:space-y-5" aria-labelledby="search-results-title">
-          <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <h2 id="search-results-title" className="text-xl font-semibold text-zinc-100 sm:text-2xl">
-              Resultados para "{query}"
-            </h2>
-            <p className="text-sm text-zinc-400">
-              {totalResults} {totalResults === 1 ? "resultado" : "resultados"}
-            </p>
-          </header>
-
-          <MovieSection
-            title="Coincidencias"
-            movies={results}
-            emptyMessage={`No se encontraron peliculas para "${query}". Prueba con otro titulo o palabras clave.`}
-          />
-        </section>
+        <SearchResultsInfinite
+          query={query}
+          initialResults={results}
+          initialTotalResults={totalResults}
+          initialPage={currentPage}
+          initialTotalPages={totalPages}
+        />
       )}
     </main>
   );

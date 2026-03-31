@@ -26,6 +26,8 @@ type TmdbMovieListResponse = {
 type TmdbSearchResponse = {
   results?: TmdbMovieDto[];
   total_results?: number;
+  page?: number;
+  total_pages?: number;
 };
 
 type TmdbVideoDto = {
@@ -457,29 +459,43 @@ export async function getSimilarMoviesById(id: number): Promise<Movie[]> {
   return data.results.map(mapMovieDto);
 }
 
-export async function searchMovies(query: string): Promise<SearchResult> {
+export async function searchMovies(query: string, page = 1): Promise<SearchResult> {
   const trimmed = query.trim();
+  const normalizedPage = Number.isInteger(page) && page > 0 ? page : 1;
   if (!trimmed) {
-    return { results: [], totalResults: 0 };
+    return { results: [], totalResults: 0, currentPage: 1, totalPages: 0 };
   }
 
   if (isTmdbMockMode) {
     const queryLower = trimmed.toLowerCase();
-    const results = getMockMovies().filter((movie) => movie.title.toLowerCase().includes(queryLower));
-    return { results, totalResults: results.length };
+    const allResults = getMockMovies().filter((movie) => movie.title.toLowerCase().includes(queryLower));
+    const pageSize = 2;
+    const start = (normalizedPage - 1) * pageSize;
+    const results = allResults.slice(start, start + pageSize);
+    return {
+      results,
+      totalResults: allResults.length,
+      currentPage: normalizedPage,
+      totalPages: Math.ceil(allResults.length / pageSize)
+    };
   }
 
-  const path = `/search/movie?${new URLSearchParams({ query: trimmed }).toString()}`;
+  const path = `/search/movie?${new URLSearchParams({
+    query: trimmed,
+    page: String(normalizedPage)
+  }).toString()}`;
   const data = await tmdbFetchJson<TmdbSearchResponse>(path);
 
   if (!data) {
-    return { results: [], totalResults: 0 };
+    return { results: [], totalResults: 0, currentPage: normalizedPage, totalPages: 0 };
   }
 
   const results = (data.results ?? []).map(mapMovieDto);
   return {
     results,
-    totalResults: data.total_results ?? results.length
+    totalResults: data.total_results ?? results.length,
+    currentPage: data.page ?? normalizedPage,
+    totalPages: data.total_pages ?? 0
   };
 }
 

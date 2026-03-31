@@ -84,6 +84,7 @@ export default async function HomePage() {
 
   return (
     <main className="page-shell">
+      
       {!hasToken && (
         <StateMessage variant="warning">
           Falta configurar <code>TMDB_BEARER_TOKEN</code> en <code>.env.local</code>.
