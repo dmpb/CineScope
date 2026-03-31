@@ -200,7 +200,7 @@
   - Depende de `Phase 3.A`.
   - Tiempos de CI pueden aumentar sin cachés/configuración posterior.
 
-### Phase 4 — UI polish y hardening
+### Phase 4 — UI polish y hardening ✅
 
 - `Status`: `Completed`
 - `Execution order`: `Phase 4.A -> Phase 4.B -> Phase 4.C`
@@ -277,7 +277,7 @@
   - Dependencia de estabilidad de datos externos (TMDb).
   - Recomendado definir mocking o criterios flexibles para evitar flakes.
 
-### Phase 5 — Home Experience Enhancement
+### Phase 5 — Home Experience Enhancement ✅
 
 - `Status`: `Completed`
 - `Execution order`: `Phase 5.A -> Phase 5.B -> Phase 5.C`
@@ -345,14 +345,15 @@
   - Mayor complejidad de rate-limit y número de requests.
   - Recomendado ejecutar después de `Phase 5.A` y `Phase 5.B`.
 
-### Phase 6 — Search & Navigation UX
+### Phase 6 — Search & Navigation UX ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 6.A -> Phase 6.B`
 
-#### Phase 6.A — Header Search Integration (HIGH PRIORITY)
+#### Phase 6.A — Header Search Integration (HIGH PRIORITY) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Creación de `src/components/Navbar.tsx` con `SearchBar` global, integración en `src/app/layout.tsx`, ajuste de `SearchBar` para tomar query desde URL (`?q=`) y simplificación de `src/app/search/page.tsx` para depender del header compartido.
 - **Objective**
   - Mover la búsqueda a un header global visible en todas las páginas.
 - **Definition of done**
@@ -370,9 +371,10 @@
   - Posibles regresiones visuales entre layouts existentes.
   - Requiere coordinación con estilos de `Phase 4.*`.
 
-#### Phase 6.B — Improve Search Results Page
+#### Phase 6.B — Improve Search Results Page ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Refinamiento de `src/app/search/page.tsx` con metadata visible de conteo de resultados, estructura más clara del bloque de resultados y empty state más expresivo orientado a la consulta; ajuste de pruebas en Search.
 - **Objective**
   - Mejorar layout y UX de resultados para claridad y escaneabilidad.
 - **Definition of done**
@@ -497,7 +499,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 6.A`** — integrar búsqueda global en header para elevar navegación y descubrimiento en todas las pantallas.
+- **`Phase 7.A`** — enriquecer Movie Detail con metadata clave (`genres`, `runtime`, `language`, `vote count`).
 
 ### Alternative paths
 

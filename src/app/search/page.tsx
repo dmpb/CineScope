@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { MovieSection } from "@/components/MovieSection";
-import { SearchBar } from "@/components/SearchBar";
 import { StateMessage } from "@/components/StateMessage";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { searchMovies } from "@/lib/tmdb";
@@ -42,11 +41,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <header className="space-y-3">
         <h1 className="page-title">Busqueda</h1>
         <p className="page-subtitle">
-          Escribe un titulo y presiona buscar. La consulta se refleja en la URL con <code>?q=</code>.
+          Usa la barra de busqueda del encabezado. La consulta se refleja en la URL con <code>?q=</code>.
         </p>
       </header>
-
-      <SearchBar defaultValue={query} />
 
       {!hasToken && (
         <StateMessage variant="warning">
@@ -63,11 +60,22 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       )}
 
       {query.length > 0 && !hasError && (
-        <MovieSection
-          title={`Resultados para "${query}" (${totalResults})`}
-          movies={results}
-          emptyMessage="No se encontraron peliculas para esta busqueda."
-        />
+        <section className="space-y-4 sm:space-y-5" aria-labelledby="search-results-title">
+          <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <h2 id="search-results-title" className="text-xl font-semibold text-zinc-100 sm:text-2xl">
+              Resultados para "{query}"
+            </h2>
+            <p className="text-sm text-zinc-400">
+              {totalResults} {totalResults === 1 ? "resultado" : "resultados"}
+            </p>
+          </header>
+
+          <MovieSection
+            title="Coincidencias"
+            movies={results}
+            emptyMessage={`No se encontraron peliculas para "${query}". Prueba con otro titulo o palabras clave.`}
+          />
+        </section>
       )}
     </main>
   );

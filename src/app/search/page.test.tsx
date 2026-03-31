@@ -45,6 +45,7 @@ describe("Search page", () => {
     render(await SearchPage({ searchParams: Promise.resolve({ q: "matrix" }) }));
 
     expect(screen.getByText(/Resultados para "matrix"/)).toBeInTheDocument();
+    expect(screen.getByText("1 resultado")).toBeInTheDocument();
     expect(screen.getByText("The Matrix")).toBeInTheDocument();
   });
 });
