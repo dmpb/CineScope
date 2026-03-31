@@ -35,7 +35,11 @@ const movieFixture: Movie = {
   posterPath: "https://image.tmdb.org/t/p/original/a.jpg",
   backdropPath: "https://image.tmdb.org/t/p/original/b.jpg",
   rating: 8.2,
-  releaseDate: "2010-07-16"
+  releaseDate: "2010-07-16",
+  genres: [],
+  runtime: 0,
+  language: "",
+  voteCount: 0
 };
 
 describe("HomePage", () => {

@@ -388,14 +388,15 @@
 - **Risks / dependencies**
   - Riesgo bajo de ajustes visuales colaterales en `Search`.
 
-### Phase 7 — Movie Detail Enhancement
+### Phase 7 — Movie Detail Enhancement ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 7.A -> Phase 7.B -> Phase 7.C`
 
-#### Phase 7.A — Enriched Movie Metadata (HIGH PRIORITY)
+#### Phase 7.A — Enriched Movie Metadata (HIGH PRIORITY) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Extensión de `Movie` en `src/types/movie.ts` con `genres`, `runtime`, `language`, `voteCount`; actualización del mapeo TMDb en `src/lib/tmdb.ts` (incluido modo mock) para normalizar metadata enriquecida de `/movie/{id}`; render de metadata en `src/components/MovieDetail.tsx` y ajuste de pruebas de Detail/Home/Search.
 - **Objective**
   - Expandir información del detalle con metadata clave de película.
 - **Definition of done**
@@ -408,9 +409,10 @@
   - Cambios en contrato de tipos pueden requerir ajustes de tests.
   - Depende de mantener normalización en `src/lib/tmdb.ts`.
 
-#### Phase 7.B — Trailer Integration (HIGH VALUE)
+#### Phase 7.B — Trailer Integration (HIGH VALUE) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Nueva función `getMovieTrailerById()` en `src/lib/tmdb.ts` consumiendo `/movie/{id}/videos` con selección determinística de trailer en YouTube (incluye fallback/mock), integración en `src/app/movie/[id]/page.tsx` y embebido seguro en `src/components/MovieDetail.tsx` con render condicional.
 - **Objective**
   - Mostrar trailer principal de la película para enriquecer la experiencia.
 - **Definition of done**
@@ -423,9 +425,10 @@
   - Dependencia de disponibilidad de videos por película.
   - Considerar fallback explícito si no hay trailer.
 
-#### Phase 7.C — Cast & Similar Movies
+#### Phase 7.C — Cast & Similar Movies ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Implementación de `getMovieCastById()` y `getSimilarMoviesById()` en `src/lib/tmdb.ts` (incluyendo mock/fallback), render de cast principal en `src/components/MovieDetail.tsx` y sección de películas similares en `src/app/movie/[id]/page.tsx` reutilizando `MovieSection`.
 - **Objective**
   - Añadir contexto de reparto y películas relacionadas en la vista de detalle.
 - **Definition of done**
@@ -499,7 +502,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 7.A`** — enriquecer Movie Detail con metadata clave (`genres`, `runtime`, `language`, `vote count`).
+- **`Phase 8.A`** — iniciar polish visual post-MVP con filas horizontales scrollables.
 
 ### Alternative paths
 

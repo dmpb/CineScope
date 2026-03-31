@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { MovieSection } from "@/components/MovieSection";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
-import { getMovieById } from "@/lib/tmdb";
+import { getMovieById, getMovieCastById, getMovieTrailerById, getSimilarMoviesById } from "@/lib/tmdb";
 import { MovieDetail } from "@/components/MovieDetail";
 import { StateMessage } from "@/components/StateMessage";
 
@@ -21,7 +22,14 @@ export default async function MoviePage({ params }: MoviePageProps) {
   const movieId = parseMovieId(idParam);
   const hasToken = Boolean(getOptionalTmdbBearerToken());
 
-  const movie = movieId ? await getMovieById(movieId) : null;
+  const [movie, trailerUrl, cast, similarMovies] = movieId
+    ? await Promise.all([
+        getMovieById(movieId),
+        getMovieTrailerById(movieId),
+        getMovieCastById(movieId),
+        getSimilarMoviesById(movieId)
+      ])
+    : [null, null, [], []];
 
   return (
     <main className="page-shell">
@@ -50,7 +58,14 @@ export default async function MoviePage({ params }: MoviePageProps) {
         </StateMessage>
       )}
 
-      {movie && <MovieDetail movie={movie} />}
+      {movie && <MovieDetail movie={movie} trailerUrl={trailerUrl} cast={cast} />}
+      {movie && (
+        <MovieSection
+          title={`Similares a "${movie.title}"`}
+          movies={similarMovies}
+          emptyMessage="No se encontraron peliculas similares para este titulo."
+        />
+      )}
     </main>
   );
 }

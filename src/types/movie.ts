@@ -6,6 +6,17 @@ export interface Movie {
   backdropPath: string;
   rating: number;
   releaseDate: string;
+  genres: string[];
+  runtime: number;
+  language: string;
+  voteCount: number;
+}
+
+export interface CastMember {
+  id: number;
+  name: string;
+  character: string;
+  profilePath: string;
 }
 
 export interface MovieListResult {

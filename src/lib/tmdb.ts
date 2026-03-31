@@ -1,5 +1,5 @@
 import { getOptionalTmdbBearerToken } from "@/lib/env";
-import type { Movie, SearchResult } from "@/types/movie";
+import type { CastMember, Movie, SearchResult } from "@/types/movie";
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/original";
@@ -12,7 +12,11 @@ type TmdbMovieDto = {
   poster_path?: string | null;
   backdrop_path?: string | null;
   vote_average?: number;
+  vote_count?: number;
   release_date?: string;
+  original_language?: string;
+  runtime?: number;
+  genres?: TmdbGenreDto[];
 };
 
 type TmdbMovieListResponse = {
@@ -22,6 +26,28 @@ type TmdbMovieListResponse = {
 type TmdbSearchResponse = {
   results?: TmdbMovieDto[];
   total_results?: number;
+};
+
+type TmdbVideoDto = {
+  key?: string;
+  site?: string;
+  type?: string;
+  official?: boolean;
+};
+
+type TmdbVideoListResponse = {
+  results?: TmdbVideoDto[];
+};
+
+type TmdbCastDto = {
+  id: number;
+  name?: string;
+  character?: string;
+  profile_path?: string | null;
+};
+
+type TmdbCreditsResponse = {
+  cast?: TmdbCastDto[];
 };
 
 type TmdbGenreDto = {
@@ -46,7 +72,14 @@ const MOCK_MOVIES: TmdbMovieDto[] = [
     poster_path: "/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
     backdrop_path: "/icmmSD4vTTDKOq2vvdulafOGw93.jpg",
     vote_average: 8.2,
-    release_date: "1999-03-31"
+    vote_count: 26000,
+    release_date: "1999-03-31",
+    original_language: "en",
+    runtime: 136,
+    genres: [
+      { id: 28, name: "Action" },
+      { id: 878, name: "Science Fiction" }
+    ]
   },
   {
     id: 27205,
@@ -55,7 +88,14 @@ const MOCK_MOVIES: TmdbMovieDto[] = [
     poster_path: "/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
     backdrop_path: "/s3TBrRGB1iav7gFOCNx3H31MoES.jpg",
     vote_average: 8.4,
-    release_date: "2010-07-16"
+    vote_count: 37000,
+    release_date: "2010-07-16",
+    original_language: "en",
+    runtime: 148,
+    genres: [
+      { id: 28, name: "Action" },
+      { id: 878, name: "Science Fiction" }
+    ]
   },
   {
     id: 155,
@@ -64,7 +104,14 @@ const MOCK_MOVIES: TmdbMovieDto[] = [
     poster_path: "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
     backdrop_path: "/hqkIcbrOHL86UncnHIsHVcVmzue.jpg",
     vote_average: 8.5,
-    release_date: "2008-07-18"
+    vote_count: 33000,
+    release_date: "2008-07-18",
+    original_language: "en",
+    runtime: 152,
+    genres: [
+      { id: 18, name: "Drama" },
+      { id: 80, name: "Crime" }
+    ]
   },
   {
     id: 550,
@@ -73,7 +120,14 @@ const MOCK_MOVIES: TmdbMovieDto[] = [
     poster_path: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
     backdrop_path: "/rr7E0NoGKxvbkb89eR1GwfoYjpA.jpg",
     vote_average: 8.4,
-    release_date: "1999-10-15"
+    vote_count: 29000,
+    release_date: "1999-10-15",
+    original_language: "en",
+    runtime: 139,
+    genres: [
+      { id: 18, name: "Drama" },
+      { id: 53, name: "Thriller" }
+    ]
   },
   {
     id: 13,
@@ -82,7 +136,14 @@ const MOCK_MOVIES: TmdbMovieDto[] = [
     poster_path: "/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg",
     backdrop_path: "/qdIMHd4sEfJSckfVJfKQvisL02a.jpg",
     vote_average: 8.5,
-    release_date: "1994-07-06"
+    vote_count: 28000,
+    release_date: "1994-07-06",
+    original_language: "en",
+    runtime: 142,
+    genres: [
+      { id: 35, name: "Comedy" },
+      { id: 18, name: "Drama" }
+    ]
   },
   {
     id: 238,
@@ -91,7 +152,14 @@ const MOCK_MOVIES: TmdbMovieDto[] = [
     poster_path: "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
     backdrop_path: "/tmU7GeKVybMWFButWEGl2M4GeiP.jpg",
     vote_average: 8.7,
-    release_date: "1972-03-14"
+    vote_count: 21000,
+    release_date: "1972-03-14",
+    original_language: "en",
+    runtime: 175,
+    genres: [
+      { id: 18, name: "Drama" },
+      { id: 80, name: "Crime" }
+    ]
   }
 ];
 
@@ -112,7 +180,11 @@ function mapMovieDto(dto: TmdbMovieDto): Movie {
     posterPath: buildImageUrl(dto.poster_path),
     backdropPath: buildImageUrl(dto.backdrop_path),
     rating: typeof dto.vote_average === "number" ? dto.vote_average : 0,
-    releaseDate: dto.release_date ?? ""
+    releaseDate: dto.release_date ?? "",
+    genres: (dto.genres ?? []).map((genre) => genre.name ?? "").filter(Boolean),
+    runtime: typeof dto.runtime === "number" ? dto.runtime : 0,
+    language: dto.original_language ?? "",
+    voteCount: typeof dto.vote_count === "number" ? dto.vote_count : 0
   };
 }
 
@@ -126,6 +198,32 @@ function getMockGenres(): MovieGenre[] {
     { id: 35, name: "Comedy" },
     { id: 18, name: "Drama" }
   ];
+}
+
+function getMockCastByMovieId(id: number): CastMember[] {
+  const baseCast: Record<number, CastMember[]> = {
+    603: [
+      { id: 1, name: "Keanu Reeves", character: "Neo", profilePath: buildImageUrl("/rRdru6REr9i3WIHv2mntpcgxnoY.jpg") },
+      { id: 2, name: "Carrie-Anne Moss", character: "Trinity", profilePath: buildImageUrl("/xD4jTA3KmVp5Rq3aHcymL9DUGjD.jpg") },
+      { id: 3, name: "Laurence Fishburne", character: "Morpheus", profilePath: buildImageUrl("/8SuOhUmPbfKqDQ17jQ1Gy0mIvof.jpg") }
+    ],
+    27205: [
+      { id: 4, name: "Leonardo DiCaprio", character: "Cobb", profilePath: buildImageUrl("/wo2hJpn04vbtmh0B9utCFdsQhxM.jpg") },
+      { id: 5, name: "Joseph Gordon-Levitt", character: "Arthur", profilePath: buildImageUrl("/4U9G4YwTlIEbA6wudwZ2fCRfP7a.jpg") },
+      { id: 6, name: "Elliot Page", character: "Ariadne", profilePath: buildImageUrl("/g9BQx4A2dUQXbUoVhM8a1fKTf4Q.jpg") }
+    ]
+  };
+
+  return baseCast[id] ?? [];
+}
+
+function mapCastDto(dto: TmdbCastDto): CastMember {
+  return {
+    id: dto.id,
+    name: dto.name ?? "Sin nombre",
+    character: dto.character ?? "Sin personaje",
+    profilePath: buildImageUrl(dto.profile_path)
+  };
 }
 
 async function tmdbFetchJson<T>(path: string): Promise<T | null> {
@@ -265,6 +363,93 @@ export async function getMoviesByGenre(genreId: number): Promise<Movie[]> {
 
   const path = `/discover/movie?${new URLSearchParams({ with_genres: String(genreId) }).toString()}`;
   const data = await tmdbFetchJson<TmdbMovieListResponse>(path);
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  return data.results.map(mapMovieDto);
+}
+
+function selectYouTubeTrailer(videos: TmdbVideoDto[]): TmdbVideoDto | null {
+  if (videos.length === 0) {
+    return null;
+  }
+
+  const youtubeVideos = videos.filter((video) => video.site === "YouTube" && typeof video.key === "string" && video.key.length > 0);
+  if (youtubeVideos.length === 0) {
+    return null;
+  }
+
+  const officialTrailer = youtubeVideos.find((video) => video.type === "Trailer" && video.official);
+  if (officialTrailer) {
+    return officialTrailer;
+  }
+
+  const anyTrailer = youtubeVideos.find((video) => video.type === "Trailer");
+  if (anyTrailer) {
+    return anyTrailer;
+  }
+
+  return youtubeVideos[0] ?? null;
+}
+
+export async function getMovieTrailerById(id: number): Promise<string | null> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return null;
+  }
+
+  if (isTmdbMockMode) {
+    const mockTrailerByMovieId: Record<number, string> = {
+      603: "vKQi3bBA1y8",
+      27205: "YoHD9XEInc0",
+      155: "EXeTwQWrcwY",
+      550: "qtRKdVHc-cE",
+      13: "bLvqoHBptjg",
+      238: "sY1S34973zA"
+    };
+
+    const trailerKey = mockTrailerByMovieId[id];
+    return trailerKey ? `https://www.youtube.com/embed/${trailerKey}` : null;
+  }
+
+  const data = await tmdbFetchJson<TmdbVideoListResponse>(`/movie/${id}/videos`);
+  if (!data?.results?.length) {
+    return null;
+  }
+
+  const selectedTrailer = selectYouTubeTrailer(data.results);
+  return selectedTrailer?.key ? `https://www.youtube.com/embed/${selectedTrailer.key}` : null;
+}
+
+export async function getMovieCastById(id: number): Promise<CastMember[]> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockCastByMovieId(id);
+  }
+
+  const data = await tmdbFetchJson<TmdbCreditsResponse>(`/movie/${id}/credits`);
+  if (!data?.cast?.length) {
+    return [];
+  }
+
+  return data.cast.map(mapCastDto);
+}
+
+export async function getSimilarMoviesById(id: number): Promise<Movie[]> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockMovies()
+      .filter((movie) => movie.id !== id)
+      .slice(0, 5);
+  }
+
+  const data = await tmdbFetchJson<TmdbMovieListResponse>(`/movie/${id}/similar`);
   if (!data?.results?.length) {
     return [];
   }

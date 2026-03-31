@@ -23,7 +23,11 @@ const searchFixture: SearchResult = {
       posterPath: "https://image.tmdb.org/t/p/original/a.jpg",
       backdropPath: "https://image.tmdb.org/t/p/original/b.jpg",
       rating: 8.5,
-      releaseDate: "1999-03-31"
+      releaseDate: "1999-03-31",
+      genres: [],
+      runtime: 0,
+      language: "",
+      voteCount: 0
     }
   ],
   totalResults: 1
