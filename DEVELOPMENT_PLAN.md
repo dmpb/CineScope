@@ -584,14 +584,15 @@
 - **Risks / dependencies**
   - Riesgo bajo; depende de completar baseline visual de `Phase 10.B`.
 
-### Phase 11 — Cinematic Home Composition
+### Phase 11 — Cinematic Home Composition ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 11.A -> Phase 11.B -> Phase 11.C`
 
-#### Phase 11.A — Hero Banner v2 (CRITICAL COMPONENT)
+#### Phase 11.A — Hero Banner v2 (CRITICAL COMPONENT) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Refactor de `src/components/Banner.tsx` a hero cinematografico full-width (~72vh) con metadata (rating, duracion, generos), CTA `Ver detalle` y CTA `Ver trailer` por modal reusable en `src/components/TrailerModal.tsx`; integración de trailer desde Home con `getMovieTrailerById`.
 - **Objective**
   - Evolucionar hero a formato cinematográfico full-width (70-90vh), metadata clave y acciones primarias con trailer modal.
 - **Definition of done**
@@ -612,9 +613,10 @@
   - Dependencia de `Phase 7.B` (fuente de trailers).
   - Riesgo de rendimiento por assets grandes de hero; coordinar con `Phase 14.B`.
 
-#### Phase 11.B — Interleaved Featured Mini-Banners
+#### Phase 11.B — Interleaved Featured Mini-Banners ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Nuevo componente reusable `src/components/FeaturedStrip.tsx` e insercion intercalada en Home (`Hero -> Rows -> Strips -> Rows`) con fallback seguro para omitir strips cuando no hay dataset disponible.
 - **Objective**
   - Intercalar mini-banners full-width entre filas de contenido para destacar títulos puntuales.
 - **Definition of done**
@@ -634,9 +636,10 @@
   - Riesgo de exceso visual si se abusa de strips.
   - Depende de `Phase 5.A` (múltiples categorías) y `Phase 11.A`.
 
-#### Phase 11.C — Full-width Rails & Spacing Consistency
+#### Phase 11.C — Full-width Rails & Spacing Consistency ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Home migra a layout cinematic full-width en `src/app/page.tsx` con nuevos tokens/containers (`home-cinematic-shell`, `home-content-container`, `home-content-stack`) definidos en `src/app/globals.css`, normalizando gutters y ritmo vertical por breakpoint.
 - **Objective**
   - Consolidar composición Home en ancho completo con ritmo de espaciado consistente entre hero, rows y strips.
 - **Definition of done**
@@ -849,7 +852,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 11.A — Hero Banner v2 (CRITICAL COMPONENT)`**: siguiente salto visual del Home con composición cinematográfica full-width y CTAs de alto impacto.
+- **`Phase 12.A — Netflix-style Rows Interaction Upgrade`**: refinar interacción de rails (scroll/snap/overlay/focus) sobre la base cinematográfica ya establecida en Home.
 
 ### Alternative paths
 

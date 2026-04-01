@@ -8,6 +8,8 @@ vi.mock("@/lib/env", () => ({
 }));
 
 vi.mock("@/lib/tmdb", () => ({
+  getMovieById: vi.fn(),
+  getMovieTrailerById: vi.fn(),
   getTrendingMovies: vi.fn(),
   getPopularMovies: vi.fn(),
   getTopRatedMovies: vi.fn(),
@@ -19,6 +21,8 @@ vi.mock("@/lib/tmdb", () => ({
 
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import {
+  getMovieById,
+  getMovieTrailerById,
   getMovieGenres,
   getMoviesByGenre,
   getNowPlayingMovies,
@@ -50,6 +54,12 @@ describe("HomePage", () => {
     vi.mocked(getTopRatedMovies).mockResolvedValue([]);
     vi.mocked(getNowPlayingMovies).mockResolvedValue([]);
     vi.mocked(getUpcomingMovies).mockResolvedValue([]);
+    vi.mocked(getMovieById).mockResolvedValue({
+      ...movieFixture,
+      genres: ["Action", "Science Fiction"],
+      runtime: 148
+    });
+    vi.mocked(getMovieTrailerById).mockResolvedValue("https://www.youtube.com/embed/YoHD9XEInc0");
     vi.mocked(getMovieGenres).mockResolvedValue([
       { id: 28, name: "Action" },
       { id: 35, name: "Comedy" }
@@ -59,6 +69,7 @@ describe("HomePage", () => {
     render(await HomePage());
 
     expect(screen.getByText("Pelicula destacada")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ver trailer" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver detalle" })).toHaveAttribute("href", "/movie/1");
     expect(screen.getByText("Tendencias de la semana")).toBeInTheDocument();
     expect(screen.getByText("Genero: Action")).toBeInTheDocument();
@@ -73,6 +84,8 @@ describe("HomePage", () => {
     vi.mocked(getTopRatedMovies).mockResolvedValue([]);
     vi.mocked(getNowPlayingMovies).mockResolvedValue([]);
     vi.mocked(getUpcomingMovies).mockResolvedValue([]);
+    vi.mocked(getMovieById).mockResolvedValue(null);
+    vi.mocked(getMovieTrailerById).mockResolvedValue(null);
     vi.mocked(getMovieGenres).mockResolvedValue([]);
     vi.mocked(getMoviesByGenre).mockResolvedValue([]);
 

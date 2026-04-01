@@ -28,6 +28,18 @@ body {
     @apply mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:gap-10 lg:py-12;
   }
 
+  .home-cinematic-shell {
+    @apply flex min-h-screen w-full flex-col gap-8 pb-14;
+  }
+
+  .home-content-container {
+    @apply mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-10;
+  }
+
+  .home-content-stack {
+    @apply space-y-8 sm:space-y-10 lg:space-y-12;
+  }
+
   .page-title {
     @apply text-3xl font-semibold tracking-tight text-zinc-100 sm:text-4xl;
   }

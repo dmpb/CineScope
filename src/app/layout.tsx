@@ -18,7 +18,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
         <div className="flex min-h-screen flex-col">
           <Navbar />
-          <div className="flex-1">{children}</div>
+          <div className="flex-1 pt-20">{children}</div>
           <Footer />
         </div>
       </body>

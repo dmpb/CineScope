@@ -29,7 +29,7 @@ export function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b premium-transition ${
+      className={`fixed inset-x-0 top-0 z-50 border-b premium-transition ${
         isScrolled
           ? "glass-surface border-zinc-800/80"
           : "border-transparent bg-transparent backdrop-blur-0"
