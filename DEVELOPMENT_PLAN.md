@@ -483,12 +483,12 @@
 - **Definition of done**
   - Skeletons consistentes visibles en estados de carga de Home/Search/Detail.
 
-### Phase 9 — Optional Features (Low Priority)
+### Phase 9 — Optional Features (Low Priority) ✅
 
 - `Status`: `Completed`
 - `Execution order`: `Phase 9.A -> Phase 9.B`
 
-#### Phase 9.A — Favorites (localStorage)
+#### Phase 9.A — Favorites (localStorage) ✅
 
 - `Status`: `Completed`
 - `Implemented`: 2026-03-31 — Botón de favorito en `src/components/FavoriteButton.tsx` con persistencia en `localStorage` (`cinescope:favorites`) e integración en `src/components/MovieCard.tsx` para agregar/quitar películas.
@@ -498,7 +498,7 @@
   - Toggle de favoritos disponible en `MovieCard`.
   - Persistencia local usando `localStorage`.
 
-#### Phase 9.B — Infinite Scroll (Search)
+#### Phase 9.B — Infinite Scroll (Search) ✅
 
 - `Status`: `Completed`
 - `Implemented`: 2026-03-31 — Infinite scroll en Search con `src/components/SearchResultsInfinite.tsx` + `IntersectionObserver`, soporte de paginación en `searchMovies(query, page)` y endpoint interno `src/app/api/search/route.ts` para cargar más resultados por scroll.
@@ -507,12 +507,12 @@
 - **Definition of done**
   - Search soporta paginación incremental por scroll con feedback de carga.
 
-### Phase 10 — Premium Layout & Visual System (Netflix + Liquid Glass)
+### Phase 10 — Premium Layout & Visual System (Netflix + Liquid Glass) ✅
 
-- `Status`: `In Progress`
+- `Status`: `Completed`
 - `Execution order`: `Phase 10.A -> Phase 10.B -> Phase 10.C`
 
-#### Phase 10.A — Global Header Redesign (CRITICAL)
+#### Phase 10.A — Global Header Redesign (CRITICAL) ✅
 
 - `Status`: `Completed`
 - `Implemented`: 2026-04-01 — `src/components/Navbar.tsx` migrado a client component con layout izquierda/centro/derecha (logo, links `Home/Peliculas/Series` placeholder), estado visual translúcido -> sólido con blur al scroll, y variante compacta de búsqueda en header vía `src/components/SearchBar.tsx`.
@@ -537,9 +537,10 @@
   - Riesgo de contraste en imágenes claras del hero; requiere validación de legibilidad.
   - `Open question`: definir comportamiento exacto del link `Series` bajo restricciones actuales de endpoints.
 
-#### Phase 10.B — Unified Visual Design Tokens
+#### Phase 10.B — Unified Visual Design Tokens ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Tokens premium centralizados en `src/app/globals.css` (near-black, accent rojo, glass surfaces y motion base 250ms), adopción en componentes clave (`Navbar`, `SearchBar`, `Banner`, `MovieCard`, `MovieDetail`, `StateMessage`) y unificación de transiciones/feedback visual.
 - **Objective**
   - Formalizar sistema visual premium compartido para evitar estilos aislados y mantener consistencia.
 - **Definition of done**
@@ -560,9 +561,10 @@
   - Riesgo de regresión visual transversal.
   - Depende de la estructura base ya estabilizada en `Phase 4.*` y `Phase 8.*`.
 
-#### Phase 10.C — Footer profesional de bajo peso visual
+#### Phase 10.C — Footer profesional de bajo peso visual ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Nuevo componente `src/components/Footer.tsx` con branding discreto + links `About` y `GitHub`, integración global en `src/app/layout.tsx` y ajuste de jerarquía visual para cierre de página sin competir con contenido.
 - **Objective**
   - Añadir cierre de experiencia con footer mínimo y profesional, sin competir con contenido.
 - **Definition of done**
@@ -847,7 +849,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 10.B — Unified Visual Design Tokens`**: consolida la base visual (glass surfaces, color system y motion) para que Home/Detail/Search evolucionen con consistencia premium.
+- **`Phase 11.A — Hero Banner v2 (CRITICAL COMPONENT)`**: siguiente salto visual del Home con composición cinematográfica full-width y CTAs de alto impacto.
 
 ### Alternative paths
 

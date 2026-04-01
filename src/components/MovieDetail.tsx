@@ -15,7 +15,7 @@ export function MovieDetail({ movie, trailerUrl = null, cast = [] }: MovieDetail
   const voteCountText = movie.voteCount > 0 ? new Intl.NumberFormat("es-ES").format(movie.voteCount) : "Sin votos";
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/80">
+    <article className="glass-surface overflow-hidden rounded-2xl">
       <div className="relative aspect-[16/9] w-full bg-zinc-800 sm:aspect-[21/9]">
         {movie.backdropPath ? (
           <Image

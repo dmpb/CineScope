@@ -16,7 +16,7 @@ export function MovieCard({ movie }: MovieCardProps) {
       <Link
         href={`/movie/${movie.id}`}
         aria-label={`Ver detalle de ${movieTitle}`}
-        className="focus-ring group block overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80 transition duration-300 hover:-translate-y-1 hover:border-zinc-600 hover:shadow-xl hover:shadow-black/40"
+        className="focus-ring premium-transition group glass-surface-soft block overflow-hidden rounded-xl hover:-translate-y-1 hover:border-zinc-500 hover:shadow-xl hover:shadow-black/40"
       >
         <div className="relative aspect-[2/3] w-full bg-zinc-800">
           {movie.posterPath ? (

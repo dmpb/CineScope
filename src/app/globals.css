@@ -4,10 +4,23 @@
 
 :root {
   color-scheme: dark;
+  --background-base: #090909;
+  --background-elevated: #111113;
+  --glass-surface: rgba(24, 24, 27, 0.58);
+  --glass-surface-soft: rgba(24, 24, 27, 0.4);
+  --glass-border: rgba(161, 161, 170, 0.22);
+  --accent-red: #e50914;
+  --accent-red-strong: #ff2a2a;
+  --text-primary: #f4f4f5;
+  --text-secondary: #c4c4cd;
+  --motion-base: 250ms;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body {
-  @apply bg-zinc-950 text-zinc-100 antialiased;
+  background-color: var(--background-base);
+  color: var(--text-primary);
+  @apply antialiased;
 }
 
 @layer components {
@@ -24,23 +37,29 @@ body {
   }
 
   .state-card {
-    @apply rounded-xl border px-4 py-4 text-sm leading-relaxed;
+    @apply rounded-xl border px-4 py-4 text-sm leading-relaxed backdrop-blur-md;
+    background-color: var(--glass-surface-soft);
+    border-color: var(--glass-border);
   }
 
   .state-card--info {
-    @apply border-zinc-700 bg-zinc-900/60 text-zinc-200;
+    @apply text-zinc-200;
   }
 
   .state-card--empty {
-    @apply border-dashed border-zinc-700 bg-zinc-900/40 text-zinc-300;
+    @apply border-dashed text-zinc-300;
   }
 
   .state-card--error {
-    @apply border-amber-900 bg-amber-950/50 text-amber-200;
+    @apply text-amber-200;
+    border-color: rgba(180, 83, 9, 0.45);
+    background-color: rgba(120, 53, 15, 0.25);
   }
 
   .state-card--warning {
-    @apply border-red-900 bg-red-950/50 text-red-200;
+    @apply text-red-200;
+    border-color: rgba(239, 68, 68, 0.45);
+    background-color: rgba(127, 29, 29, 0.28);
   }
 
   .focus-ring {
@@ -64,5 +83,32 @@ body {
   .horizontal-scroll-row::-webkit-scrollbar-thumb {
     background-color: rgb(63 63 70);
     border-radius: 9999px;
+  }
+
+  .glass-surface {
+    background-color: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px);
+  }
+
+  .glass-surface-soft {
+    background-color: var(--glass-surface-soft);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+  }
+
+  .premium-transition {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity, backdrop-filter;
+    transition-duration: var(--motion-base);
+    transition-timing-function: var(--motion-ease);
+  }
+
+  .accent-button {
+    background-color: var(--accent-red);
+    color: white;
+  }
+
+  .accent-button:hover {
+    background-color: var(--accent-red-strong);
   }
 }

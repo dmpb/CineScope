@@ -20,7 +20,7 @@ test("smoke: Search por query param", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 2, name: /Resultados para "matrix"/i })).toBeVisible();
 
   await page.getByRole("searchbox", { name: /Buscar pelicula/i }).fill("inception");
-  await page.getByRole("button", { name: "Buscar" }).click();
+  await page.getByRole("button", { name: "Ir" }).click();
 
   await expect(page).toHaveURL(/\/search\?q=inception$/);
   await expect(page.getByRole("heading", { level: 2, name: /Resultados para "inception"/i })).toBeVisible();
