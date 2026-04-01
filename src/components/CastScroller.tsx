@@ -60,7 +60,7 @@ export function CastScroller({ cast }: CastScrollerProps) {
               <article className="group space-y-2 text-center">
                 <div className="relative mx-auto h-20 w-20 overflow-hidden rounded-full border border-zinc-700/80 bg-zinc-800 premium-transition group-hover:border-zinc-400 group-focus-within:border-zinc-400">
                   {member.profilePath ? (
-                    <Image src={member.profilePath} alt={`Foto de ${member.name}`} fill className="object-cover" sizes="80px" />
+                    <Image src={member.profilePath} alt={`Foto de ${member.name}`} fill loading="lazy" className="object-cover" sizes="80px" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-[10px] text-zinc-500">N/A</div>
                   )}

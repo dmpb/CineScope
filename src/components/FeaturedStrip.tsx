@@ -15,7 +15,7 @@ export function FeaturedStrip({ movie, label = "Recomendacion destacada" }: Feat
     <section aria-labelledby={`strip-${movie.id}`} className="glass-surface relative overflow-hidden rounded-2xl">
       <div className="relative min-h-[220px] sm:min-h-[260px] lg:min-h-[260px]">
         {imageSrc ? (
-          <Image src={imageSrc} alt={`Imagen destacada de ${movieTitle}`} fill className="object-cover" sizes="100vw" />
+          <Image src={imageSrc} alt={`Imagen destacada de ${movieTitle}`} fill loading="lazy" className="object-cover" sizes="100vw" />
         ) : (
           <div className="h-full w-full bg-zinc-800" />
         )}

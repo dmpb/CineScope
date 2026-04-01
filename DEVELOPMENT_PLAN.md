@@ -769,12 +769,13 @@
 
 ### Phase 14 — Premium Polish, Performance & Micro-interactions
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 14.A -> Phase 14.B -> Phase 14.C`
 
 #### Phase 14.A — Skeletons & Loading Experience Upgrade
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Skeletons de Home/Detail/Search actualizados para reflejar layout real cinematográfico (`src/app/loading.tsx`, `src/app/movie/[id]/loading.tsx`, `src/app/search/loading.tsx`) con hero/rails/cast placeholders contextuales.
 - **Objective**
   - Mejorar percepción de velocidad con skeletons más contextuales y coherentes con diseño premium.
 - **Definition of done**
@@ -795,7 +796,8 @@
 
 #### Phase 14.B — Image Performance & Rendering Efficiency
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Optimización de imágenes en componentes de alta densidad visual con estrategia explícita de carga (`loading="lazy"` en `MovieCard`, `FeaturedStrip`, `CastScroller`) y ajuste de skeletons para reducir percepción de blocking render en first paint.
 - **Objective**
   - Optimizar carga de imágenes y rendering sin sacrificar calidad visual cinematográfica.
 - **Definition of done**
@@ -818,7 +820,8 @@
 
 #### Phase 14.C — Micro-interactions & Favorites UX Polish
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Pulido de micro-interacciones de favoritos en `src/components/FavoriteButton.tsx` (estados visuales activo/inactivo, transición premium, feedback de escala al toggle y sincronización por evento `storage` entre contextos).
 - **Objective**
   - Dar acabado premium en interacciones pequeñas (botones, hover, feedback de favorito) para sensación de producto final.
 - **Definition of done**
@@ -981,7 +984,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 14.A — Skeletons & Loading Experience Upgrade`**: adaptar skeletons al layout final de Home y Detail para reforzar percepción de velocidad premium.
+- **`Phase 15.A — Detail CTAs & In-page Navigation`**: siguiente incremento de producto para mejorar navegación contextual en la vista de detalle.
 
 ### Alternative paths
 

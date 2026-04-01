@@ -32,7 +32,6 @@ export function MovieDetail({ movie, trailerUrl = null, cast = [] }: MovieDetail
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-sm text-zinc-400">Backdrop no disponible</div>
       )}
-      hi
       <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/78 to-black/35" />
       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent" />
 

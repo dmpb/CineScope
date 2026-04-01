@@ -26,6 +26,7 @@ export function MovieCard({ movie }: MovieCardProps) {
               src={movie.posterPath}
               alt={`Poster de ${movieTitle}`}
               fill
+              loading="lazy"
               className="object-cover premium-transition group-hover:scale-[1.08]"
               sizes="(max-width: 640px) 48vw, (max-width: 1024px) 31vw, 20vw"
             />
