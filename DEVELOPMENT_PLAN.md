@@ -839,6 +839,126 @@
   - Riesgo bajo-medio de sobrecarga visual.
   - Depende de `Phase 9.A` y `Phase 10.B`.
 
+### Phase 15 — Detail Experience Expansion (Post-14)
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 15.A -> Phase 15.B -> Phase 15.C -> Phase 15.D -> Phase 15.E`
+
+#### Phase 15.A — Detail CTAs & In-page Navigation
+
+- `Status`: `Pending`
+- **Objective**
+  - Aumentar usabilidad en detalle con CTAs contextuales y navegación interna rápida.
+- **Definition of done**
+  - Existe CTA para saltar a sección de similares desde el hero de detalle.
+  - Favoritos disponible también en página de detalle (además de cards).
+  - Navegación interna no rompe accesibilidad ni foco.
+- **Chunks**
+  1. **Agregar CTA de salto a similares**
+     - Áreas/archivos: `src/components/MovieDetail.tsx`, `src/app/movie/[id]/page.tsx`.
+     - Verificación: click desplaza a sección de similares en misma página.
+  2. **Integrar favoritos en detail**
+     - Áreas/archivos: `src/components/MovieDetail.tsx`, `src/components/FavoriteButton.tsx`.
+     - Verificación: toggle de favorito consistente con estado en cards.
+  3. **Ajustes a11y para navegación interna**
+     - Áreas/archivos: `src/components/MovieDetail.tsx`.
+     - Verificación: foco/lectura por teclado correctos al usar CTAs.
+- **Risks / dependencies**
+  - Depende de `Phase 9.A` (favoritos).
+  - Riesgo bajo de duplicidad visual de acciones si no se jerarquiza CTA principal.
+
+#### Phase 15.B — Credits Enrichment (Director, Writer, Crew Highlights)
+
+- `Status`: `Pending`
+- **Objective**
+  - Enriquecer ficha de detalle con información de crew relevante (dirección/guion).
+- **Definition of done**
+  - Se muestran director(es) y guionista(s) principales cuando existan.
+  - Fallback claro cuando TMDb no retorne datos de crew.
+  - Sin consumo directo de DTO en UI.
+- **Chunks**
+  1. **Extender data layer para crew**
+     - Áreas/archivos: `src/lib/tmdb.ts`, `src/types/movie.ts`.
+     - Verificación: función de detalle devuelve crew normalizado.
+  2. **Render de créditos clave en detail**
+     - Áreas/archivos: `src/components/MovieDetail.tsx`.
+     - Verificación: bloques Director/Guion visibles y legibles.
+  3. **Pruebas de contrato y UI**
+     - Áreas/archivos: tests de detail.
+     - Verificación: casos con y sin crew cubiertos.
+- **Risks / dependencies**
+  - Depende de estabilidad del endpoint de créditos de TMDb.
+  - Riesgo medio de sobrecargar la ficha con metadata secundaria.
+
+#### Phase 15.C — Watch Providers & Availability Context
+
+- `Status`: `Pending`
+- **Objective**
+  - Añadir contexto de disponibilidad (plataformas) para elevar valor práctico del detalle.
+- **Definition of done**
+  - Sección “Dónde verla” visible cuando existan providers.
+  - Se comunica claramente cuando no hay proveedores para región objetivo.
+  - Implementación mantiene fallback por región configurable.
+- **Chunks**
+  1. **Integrar endpoint de providers**
+     - Áreas/archivos: `src/lib/tmdb.ts`, `src/types/movie.ts`.
+     - Verificación: providers normalizados por región.
+  2. **Render de providers en detail**
+     - Áreas/archivos: `src/components/MovieDetail.tsx`.
+     - Verificación: logos/nombres y estado vacío consistentes.
+  3. **Definir región base y fallback**
+     - Áreas/archivos: `src/lib/env.ts`, `src/lib/tmdb.ts`.
+     - Verificación: comportamiento determinista con región sin resultados.
+- **Risks / dependencies**
+  - Depende de cobertura real de providers en TMDb por país.
+  - Riesgo de inconsistencias entre entornos si no se fija región default.
+
+#### Phase 15.D — Media Gallery (Backdrops & Stills)
+
+- `Status`: `Pending`
+- **Objective**
+  - Mejorar inmersión visual del detalle con galería horizontal de imágenes.
+- **Definition of done**
+  - Galería de backdrops/stills visible bajo hero.
+  - Scroll horizontal usable en touch/trackpad y teclado.
+  - Lazy loading aplicado para no penalizar render inicial.
+- **Chunks**
+  1. **Agregar fetching de imágenes de película**
+     - Áreas/archivos: `src/lib/tmdb.ts`, `src/types/movie.ts`.
+     - Verificación: dataset de galería normalizado.
+  2. **Crear componente de galería reusable**
+     - Áreas/archivos: `src/components/*` (ej. `MovieMediaGallery.tsx`).
+     - Verificación: render robusto con fallback vacío.
+  3. **Integrar galería en página de detalle**
+     - Áreas/archivos: `src/app/movie/[id]/page.tsx`, `src/components/MovieDetail.tsx`.
+     - Verificación: layout mantiene ritmo visual y legibilidad.
+- **Risks / dependencies**
+  - Riesgo medio de peso visual y de red si no se limita número de imágenes.
+  - Depende de `Phase 14.B` para optimización de carga.
+
+#### Phase 15.E — Detail Information Architecture (Tabs/Sections)
+
+- `Status`: `Pending`
+- **Objective**
+  - Organizar densidad de información de detalle con arquitectura escalable por secciones.
+- **Definition of done**
+  - Bloques de detalle agrupados en secciones claras (`Resumen`, `Cast`, `Datos`, `Media`).
+  - Navegación de secciones usable en mobile y desktop.
+  - No se degrada accesibilidad ni SEO semántico.
+- **Chunks**
+  1. **Diseñar IA de bloques de detalle**
+     - Áreas/archivos: `src/components/MovieDetail.tsx`.
+     - Verificación: jerarquía clara y mantenible.
+  2. **Implementar tabs/anchors progresivas**
+     - Áreas/archivos: `src/components/MovieDetail.tsx`, estilos globales.
+     - Verificación: interacción consistente sin dependencia de estado global.
+  3. **QA de legibilidad y accesibilidad**
+     - Áreas/archivos: tests y revisión manual.
+     - Verificación: foco, orden de lectura y navegación por teclado correctos.
+- **Risks / dependencies**
+  - Riesgo medio de complejidad de UI si no se limita alcance inicial.
+  - Depende de `Phase 15.B`, `15.C` y `15.D`.
+
 ### Post-MVP execution priority
 
 1. `Phase 10.B` — Unified Visual Design Tokens (base visual compartida).
@@ -853,6 +973,11 @@
 10. `Phase 14.A` — Skeletons & Loading Experience Upgrade.
 11. `Phase 14.B` — Image Performance & Rendering Efficiency.
 12. `Phase 14.C` — Micro-interactions & Favorites UX Polish.
+13. `Phase 15.A` — Detail CTAs & In-page Navigation.
+14. `Phase 15.B` — Credits Enrichment (Director, Writer, Crew Highlights).
+15. `Phase 15.C` — Watch Providers & Availability Context.
+16. `Phase 15.D` — Media Gallery (Backdrops & Stills).
+17. `Phase 15.E` — Detail Information Architecture (Tabs/Sections).
 
 ### Recommended next subphase
 
