@@ -9,6 +9,9 @@
 - No hay auth (alineado con reglas: frontend-only con API externa).
 - Cliente TMDb, UI MVP, tests criticos y pipeline CI base implementados.
 - `Assumption`: tampoco existe configuración Docker operativa versionada en este estado inicial.
+- Home, Search y Detail ya funcionan con base sólida post-MVP (fases 5-9), incluyendo banner, filas horizontales, cast/similares, trailer y favoritos locales.
+- Se planifica una nueva iteración de **UX/UI Master Upgrade** para llevar el producto a experiencia premium (inspiración Netflix + Apple Liquid Glass) sin cambiar arquitectura ni stack.
+- `Open question`: la navegación incluye `Series`, pero las reglas actuales solo exigen endpoints de películas.
 
 ## 2) Goals (from rules + repo)
 
@@ -18,6 +21,12 @@
 - Entregar MVP navegable: Home, Movie Detail y Search por `?q=`.
 - Garantizar estados `loading`, `empty`, `error` en flujos críticos.
 - Ejecutar y validar calidad (lint/type-check/tests) dentro de Docker.
+- Evolucionar la navegación global hacia header full-width con comportamiento glass on-scroll y jerarquía visual cinematográfica.
+- Rediseñar Hero y bloques intermedios del Home para priorizar contenido destacado, CTAs claros y trailer en modal.
+- Consolidar un sistema visual unificado (colores, blur, sombras, tipografía, motion 200-300ms) reutilizable entre Home/Search/Detail.
+- Refinar Movie Detail a formato cinematográfico premium (layout, cast horizontal circular, trailer modal-only y validación de similares).
+- Mejorar UX global de búsqueda desde header (flujo rápido por URL, con espacio para sugerencias en iteración avanzada).
+- Fortalecer polish final de producto: footer profesional, skeletons consistentes, micro-interacciones y optimización de imágenes con `<Image />`.
 
 ## 3) Phases
 
@@ -498,23 +507,361 @@
 - **Definition of done**
   - Search soporta paginación incremental por scroll con feedback de carga.
 
+### Phase 10 — Premium Layout & Visual System (Netflix + Liquid Glass)
+
+- `Status`: `In Progress`
+- `Execution order`: `Phase 10.A -> Phase 10.B -> Phase 10.C`
+
+#### Phase 10.A — Global Header Redesign (CRITICAL)
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — `src/components/Navbar.tsx` migrado a client component con layout izquierda/centro/derecha (logo, links `Home/Peliculas/Series` placeholder), estado visual translúcido -> sólido con blur al scroll, y variante compacta de búsqueda en header vía `src/components/SearchBar.tsx`.
+- **Objective**
+  - Rediseñar el header global a patrón premium (logo izquierda, navegación centro, búsqueda derecha) con comportamiento translúcido inicial y solid+blur al scroll.
+- **Definition of done**
+  - Header presente y consistente en Home, Detail y Search.
+  - Navegación visible: `Home`, `Películas`, `Series` (si `Series` no está implementado, queda explícito como placeholder no funcional).
+  - Transición suave en scroll (`opacity`, `backdrop-blur`, color de fondo) sin parpadeos.
+- **Chunks**
+  1. **Refactor de estructura del header**
+     - Áreas/archivos: `src/components/Navbar.tsx`, `src/app/layout.tsx`.
+     - Verificación: jerarquía izquierda/centro/derecha renderiza correctamente en desktop y mobile.
+  2. **Aplicar estado visual on-scroll**
+     - Áreas/archivos: `src/components/Navbar.tsx`, `src/app/globals.css`.
+     - Verificación: al hacer scroll, cambia de transparente a sólido con blur y transición fluida.
+  3. **Integrar búsqueda mínima en header**
+     - Áreas/archivos: `src/components/SearchBar.tsx`, `src/components/Navbar.tsx`.
+     - Verificación: Enter navega a `/search?q=...` manteniendo regla de query params.
+- **Risks / dependencies**
+  - Dependencia de `Phase 6.A` (header ya integrado).
+  - Riesgo de contraste en imágenes claras del hero; requiere validación de legibilidad.
+  - `Open question`: definir comportamiento exacto del link `Series` bajo restricciones actuales de endpoints.
+
+#### Phase 10.B — Unified Visual Design Tokens
+
+- `Status`: `Pending`
+- **Objective**
+  - Formalizar sistema visual premium compartido para evitar estilos aislados y mantener consistencia.
+- **Definition of done**
+  - Tokens base documentados e implementados en estilos globales (fondo near-black, accent rojo, surfaces glass).
+  - Tipografía y jerarquía de títulos/textos consistente entre páginas.
+  - Motion base 200-300ms aplicada en componentes interactivos clave.
+- **Chunks**
+  1. **Definir tokens de color y superficies**
+     - Áreas/archivos: `src/app/globals.css`.
+     - Verificación: variables/utilidades reutilizadas por Home, Detail, Search y Navbar.
+  2. **Estandarizar componentes glass reutilizables**
+     - Áreas/archivos: `src/components/*` (botones, overlays, contenedores de estado).
+     - Verificación: botones/overlays comparten bordes, opacidad y blur de forma uniforme.
+  3. **Alinear transiciones y feedback visual**
+     - Áreas/archivos: `src/components/MovieCard.tsx`, `src/components/MovieDetail.tsx`, `src/components/Banner.tsx`.
+     - Verificación: duración/easing consistente; no hay animaciones abruptas.
+- **Risks / dependencies**
+  - Riesgo de regresión visual transversal.
+  - Depende de la estructura base ya estabilizada en `Phase 4.*` y `Phase 8.*`.
+
+#### Phase 10.C — Footer profesional de bajo peso visual
+
+- `Status`: `Pending`
+- **Objective**
+  - Añadir cierre de experiencia con footer mínimo y profesional, sin competir con contenido.
+- **Definition of done**
+  - Footer visible al final de páginas principales.
+  - Incluye nombre/logo, enlace a GitHub y About.
+  - Estética dark minimal con baja prominencia.
+- **Chunks**
+  1. **Crear componente Footer reusable**
+     - Áreas/archivos: `src/components/Footer.tsx`.
+     - Verificación: componente renderiza contenido requerido con estructura semántica.
+  2. **Integrar footer en layout global**
+     - Áreas/archivos: `src/app/layout.tsx`.
+     - Verificación: aparece en Home/Search/Detail sin romper layout existente.
+  3. **Ajustar contraste y spacing**
+     - Áreas/archivos: `src/app/globals.css`.
+     - Verificación: lectura clara y baja carga visual en desktop/mobile.
+- **Risks / dependencies**
+  - Riesgo bajo; depende de completar baseline visual de `Phase 10.B`.
+
+### Phase 11 — Cinematic Home Composition
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 11.A -> Phase 11.B -> Phase 11.C`
+
+#### Phase 11.A — Hero Banner v2 (CRITICAL COMPONENT)
+
+- `Status`: `Pending`
+- **Objective**
+  - Evolucionar hero a formato cinematográfico full-width (70-90vh), metadata clave y acciones primarias con trailer modal.
+- **Definition of done**
+  - Hero usa backdrop full-width con gradient overlay legible.
+  - Muestra título, rating, duración y géneros, además de descripción corta.
+  - CTAs `Ver Trailer` y `Ver Detalle` operativas; trailer abre modal (no inline).
+- **Chunks**
+  1. **Extender modelo de datos para hero**
+     - Áreas/archivos: `src/lib/tmdb.ts`, `src/types/movie.ts`.
+     - Verificación: hero recibe metadata completa sin consumir DTO crudo en UI.
+  2. **Refactor de `Banner` a Hero premium**
+     - Áreas/archivos: `src/components/Banner.tsx` (o nuevo `HeroBanner.tsx`), `src/app/page.tsx`.
+     - Verificación: altura, overlay, bloques de contenido y CTAs respetan layout objetivo.
+  3. **Modal de trailer reutilizable**
+     - Áreas/archivos: `src/components/*` (modal y trigger), `src/app/page.tsx`.
+     - Verificación: abre/cierra correctamente, accesible por teclado, bloqueo de scroll y foco seguro.
+- **Risks / dependencies**
+  - Dependencia de `Phase 7.B` (fuente de trailers).
+  - Riesgo de rendimiento por assets grandes de hero; coordinar con `Phase 14.B`.
+
+#### Phase 11.B — Interleaved Featured Mini-Banners
+
+- `Status`: `Pending`
+- **Objective**
+  - Intercalar mini-banners full-width entre filas de contenido para destacar títulos puntuales.
+- **Definition of done**
+  - Home alterna rows y mini-banners destacados sin romper ritmo visual.
+  - Mini-banners son reutilizables y configurables por dataset.
+- **Chunks**
+  1. **Diseñar componente FeaturedStrip**
+     - Áreas/archivos: `src/components/FeaturedStrip.tsx`.
+     - Verificación: componente soporta imagen, título corto y CTA.
+  2. **Definir estrategia de inserción entre secciones**
+     - Áreas/archivos: `src/app/page.tsx`.
+     - Verificación: estructura final mantiene orden lógico (`Hero -> Rows -> Strips -> Rows`).
+  3. **Manejo de fallback de datos**
+     - Áreas/archivos: `src/lib/tmdb.ts`, componentes Home.
+     - Verificación: si falta dataset para strip, se omite sin romper layout.
+- **Risks / dependencies**
+  - Riesgo de exceso visual si se abusa de strips.
+  - Depende de `Phase 5.A` (múltiples categorías) y `Phase 11.A`.
+
+#### Phase 11.C — Full-width Rails & Spacing Consistency
+
+- `Status`: `Pending`
+- **Objective**
+  - Consolidar composición Home en ancho completo con ritmo de espaciado consistente entre hero, rows y strips.
+- **Definition of done**
+  - No hay boxed layout principal.
+  - Separaciones verticales consistentes y escalables por breakpoint.
+  - El contenido mantiene enfoque cinematográfico y legible.
+- **Chunks**
+  1. **Ajustar contenedores y gutters globales**
+     - Áreas/archivos: `src/app/page.tsx`, `src/app/globals.css`.
+     - Verificación: inspección visual en mobile/tablet/desktop.
+  2. **Normalizar márgenes y paddings entre secciones**
+     - Áreas/archivos: componentes Home (`MovieSection`, hero, strips).
+     - Verificación: no hay saltos abruptos de spacing.
+  3. **Revalidar responsive end-to-end**
+     - Áreas/archivos: Home + componentes asociados.
+     - Verificación: smoke visual en breakpoints críticos.
+- **Risks / dependencies**
+  - Riesgo bajo-medio de regresiones visuales en layouts existentes.
+  - Requiere `Phase 11.A` y `Phase 11.B`.
+
+### Phase 12 — Rows & Search Premium UX
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 12.A -> Phase 12.B`
+
+#### Phase 12.A — Netflix-style Rows Interaction Upgrade
+
+- `Status`: `Pending`
+- **Objective**
+  - Perfeccionar filas horizontales con interacción premium: snap opcional, hover enriquecido y overlay informativo.
+- **Definition of done**
+  - Scroll horizontal usable con inercia adecuada en touch.
+  - Hover/focus muestra título + rating + glow sutil.
+  - Interacción no rompe accesibilidad por teclado.
+- **Chunks**
+  1. **Refinar comportamiento de carruseles**
+     - Áreas/archivos: `src/components/MovieSection.tsx`, `src/app/globals.css`.
+     - Verificación: scroll y snap (si se activa) funcionan sin bloquear usabilidad.
+  2. **Enriquecer overlay de `MovieCard`**
+     - Áreas/archivos: `src/components/MovieCard.tsx`.
+     - Verificación: overlay muestra datos mínimos y transición suave.
+  3. **Ajustar estado hover/focus coherente con tokens**
+     - Áreas/archivos: `src/components/MovieCard.tsx`, estilos globales.
+     - Verificación: contraste y legibilidad correctos en fondos variados.
+- **Risks / dependencies**
+  - Dependencia de `Phase 8.A` y `Phase 8.B`.
+  - Riesgo de sobre-animación; controlar para mantener foco en contenido.
+
+#### Phase 12.B — Global Search UX Enhancement
+
+- `Status`: `Pending`
+- **Objective**
+  - Mejorar experiencia de búsqueda desde header para flujo rápido y consistente en toda la app.
+- **Definition of done**
+  - Input de búsqueda minimal integrado en header, con opción de expansión en foco.
+  - Submit siempre navega por URL (`/search?q=...`).
+  - `Advanced (optional)`: base preparada para sugerencias con debounce sin romper reglas de capa.
+- **Chunks**
+  1. **Refinar interacción del input global**
+     - Áreas/archivos: `src/components/SearchBar.tsx`, `src/components/Navbar.tsx`.
+     - Verificación: foco, envío y limpieza funcionan en Home/Detail/Search.
+  2. **Asegurar coherencia de query param como source of truth**
+     - Áreas/archivos: `src/app/search/page.tsx`, `src/components/SearchBar.tsx`.
+     - Verificación: refresh y navegación atrás/adelante conservan estado por URL.
+  3. **Preparación opcional para sugerencias**
+     - Áreas/archivos: `src/components/SearchBar.tsx`, `src/lib/tmdb.ts` (si aplica endpoint ya existente de search).
+     - Verificación: debounce documentado/implementado sin llamadas directas API desde UI.
+- **Risks / dependencies**
+  - Riesgo de complejidad en modo sugerencias (opcional).
+  - Depende de `Phase 10.A` y `Phase 6.*`.
+
+### Phase 13 — Cinematic Detail Experience v2
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 13.A -> Phase 13.B`
+
+#### Phase 13.A — Detail Layout Overhaul + Trailer Modal-Only
+
+- `Status`: `Pending`
+- **Objective**
+  - Convertir la página de detalle a experiencia cinematográfica premium con backdrop dominante y composición poster+metadata+acciones.
+- **Definition of done**
+  - Fondo full-width con gradient overlay oscuro.
+  - Layout principal: poster a la izquierda, metadata y descripción a la derecha.
+  - Botón `Back to Home` removido del bloque principal.
+  - Trailer visible solo por modal (no embebido por defecto).
+- **Chunks**
+  1. **Rediseñar layout de detalle**
+     - Áreas/archivos: `src/app/movie/[id]/page.tsx`, `src/components/MovieDetail.tsx`.
+     - Verificación: estructura visual cumple patrón cinematográfico en desktop/mobile.
+  2. **Migrar trailer a interacción modal-only**
+     - Áreas/archivos: `src/components/MovieDetail.tsx`, componente modal compartido.
+     - Verificación: no hay trailer inline; modal abre/cierra correctamente.
+  3. **Refinar sección de cast horizontal circular**
+     - Áreas/archivos: `src/components/MovieDetail.tsx`.
+     - Verificación: avatars circulares con hover/focus mostrando actor/personaje.
+- **Risks / dependencies**
+  - Depende de `Phase 7.A`, `Phase 7.B` y `Phase 7.C`.
+  - Riesgo medio de regresión visual/espaciado por alta densidad de contenido.
+
+#### Phase 13.B — Similar Movies Correctness Hardening
+
+- `Status`: `Pending`
+- **Objective**
+  - Asegurar y blindar la lógica de similares para mantener relevancia funcional y consistencia con TMDb.
+- **Definition of done**
+  - Similar movies siguen endpoint oficial `/movie/{id}/similar`.
+  - Existe validación de contratos y fallback cuando la API retorne resultados pobres o vacíos.
+  - Cobertura de pruebas para proteger este flujo.
+- **Chunks**
+  1. **Auditar implementación y normalización de similares**
+     - Áreas/archivos: `src/lib/tmdb.ts`, `src/types/movie.ts`.
+     - Verificación: no se usa endpoint alterno ni mezcla de datasets no relacionados.
+  2. **Refinar presentación y criterio de fallback**
+     - Áreas/archivos: `src/app/movie/[id]/page.tsx`, `src/components/MovieSection.tsx`.
+     - Verificación: sección similar nunca rompe UI y comunica estado vacío de forma clara.
+  3. **Agregar/ajustar pruebas de contrato y UI**
+     - Áreas/archivos: tests unit/integration/E2E de detail.
+     - Verificación: casos con dataset similar presente y vacío cubiertos en CI.
+- **Risks / dependencies**
+  - Dependencia de variabilidad real del dataset TMDb.
+  - Riesgo de falsos positivos en pruebas si no se controla mocking.
+
+### Phase 14 — Premium Polish, Performance & Micro-interactions
+
+- `Status`: `Pending`
+- `Execution order`: `Phase 14.A -> Phase 14.B -> Phase 14.C`
+
+#### Phase 14.A — Skeletons & Loading Experience Upgrade
+
+- `Status`: `Pending`
+- **Objective**
+  - Mejorar percepción de velocidad con skeletons más contextuales y coherentes con diseño premium.
+- **Definition of done**
+  - Estados de carga de Home/Detail/Search muestran skeletons alineados al layout real.
+  - No hay loaders de texto genérico en flujos principales.
+- **Chunks**
+  1. **Refinar skeleton del hero y rows**
+     - Áreas/archivos: `src/app/loading.tsx`, componentes de skeleton.
+     - Verificación: estructura de carga refleja hero + rails.
+  2. **Refinar skeleton de detail**
+     - Áreas/archivos: `src/app/movie/[id]/loading.tsx`.
+     - Verificación: poster/metadata/cast skeleton coherente.
+  3. **Refinar skeleton de search**
+     - Áreas/archivos: `src/app/search/loading.tsx`.
+     - Verificación: resultados y metadata de búsqueda representados.
+- **Risks / dependencies**
+  - Riesgo bajo; depende de layouts finales de `Phase 11` y `Phase 13`.
+
+#### Phase 14.B — Image Performance & Rendering Efficiency
+
+- `Status`: `Pending`
+- **Objective**
+  - Optimizar carga de imágenes y rendering sin sacrificar calidad visual cinematográfica.
+- **Definition of done**
+  - Uso consistente de `<Image />` con tamaños/prioridades correctas por contexto.
+  - Lazy loading aplicado en cards no críticas.
+  - Mejoras verificables en Web Vitals percibidos (LCP/CLS en entornos de prueba).
+- **Chunks**
+  1. **Auditar uso de `<Image />` en componentes críticos**
+     - Áreas/archivos: `src/components/Banner.tsx`, `src/components/MovieCard.tsx`, `src/components/MovieDetail.tsx`.
+     - Verificación: atributos `sizes`, `priority`, placeholders y `loading` definidos según contexto.
+  2. **Ajustar estrategias de carga por viewport**
+     - Áreas/archivos: componentes de Home/Detail/Search.
+     - Verificación: imágenes fuera de viewport no bloquean render principal.
+  3. **Validar impacto de performance**
+     - Áreas/archivos: scripts/guías de verificación en docs o QA checklist.
+     - Verificación: comparación antes/después en métricas básicas de carga.
+- **Risks / dependencies**
+  - Riesgo medio por trade-offs entre calidad visual y peso de imagen.
+  - Depende de `Phase 10.B` y `Phase 11.A`.
+
+#### Phase 14.C — Micro-interactions & Favorites UX Polish
+
+- `Status`: `Pending`
+- **Objective**
+  - Dar acabado premium en interacciones pequeñas (botones, hover, feedback de favorito) para sensación de producto final.
+- **Definition of done**
+  - Botones principales muestran feedback táctil/visual consistente.
+  - Favoritos tiene estados claros (activo/inactivo) y transición suave.
+  - No se introducen patrones nuevos fuera del sistema visual definido.
+- **Chunks**
+  1. **Unificar feedback de botones y CTAs**
+     - Áreas/archivos: `src/components/*` (CTA hero, acciones detail, búsqueda).
+     - Verificación: animaciones y estados active/hover/focus consistentes.
+  2. **Pulir interacción de favoritos**
+     - Áreas/archivos: `src/components/FavoriteButton.tsx`, `src/components/MovieCard.tsx`.
+     - Verificación: cambio de estado inmediato, accesible y persistente en `localStorage`.
+  3. **QA de coherencia micro-interaction cross-page**
+     - Áreas/archivos: Home/Detail/Search.
+     - Verificación: checklist de micro-interacciones completado sin inconsistencias.
+- **Risks / dependencies**
+  - Riesgo bajo-medio de sobrecarga visual.
+  - Depende de `Phase 9.A` y `Phase 10.B`.
+
 ### Post-MVP execution priority
 
-1. `Phase 5.A` — Multi-category Home.
-2. `Phase 5.B` — Featured Banner.
-3. `Phase 6.A` — Header Search Integration.
-4. `Phase 7.A` — Enriched Movie Metadata.
+1. `Phase 10.B` — Unified Visual Design Tokens (base visual compartida).
+2. `Phase 11.A` — Hero Banner v2 (componente crítico de impacto).
+3. `Phase 13.A` — Detail Layout Overhaul + Trailer Modal-Only.
+4. `Phase 12.A` — Netflix-style Rows Interaction Upgrade.
+5. `Phase 10.C` — Footer profesional.
+6. `Phase 11.B` — Interleaved Featured Mini-Banners.
+7. `Phase 11.C` — Full-width Rails & Spacing Consistency.
+8. `Phase 12.B` — Global Search UX Enhancement.
+9. `Phase 13.B` — Similar Movies Correctness Hardening.
+10. `Phase 14.A` — Skeletons & Loading Experience Upgrade.
+11. `Phase 14.B` — Image Performance & Rendering Efficiency.
+12. `Phase 14.C` — Micro-interactions & Favorites UX Polish.
 
 ### Recommended next subphase
 
-- **Sin subfases pendientes del roadmap actual** — listo para definir una nueva iteración de producto.
+- **`Phase 10.B — Unified Visual Design Tokens`**: consolida la base visual (glass surfaces, color system y motion) para que Home/Detail/Search evolucionen con consistencia premium.
 
 ### Alternative paths
 
-- **Prioridad Home premium rápido**: `5.A -> 5.B -> 6.A`.
-- **Prioridad profundidad funcional de detalle**: `7.A -> 7.B -> 7.C`.
-- **Prioridad polish visual final**: `8.A -> 8.B -> 8.C`.
-- **Prioridad exploración opcional**: `9.A -> 9.B` (cuando no comprometa roadmap principal).
+- **Ruta UI foundation-first (recomendada)**: `10.A -> 10.B -> 11.A`.
+- **Ruta Home-first visual impact**: `11.A -> 11.B -> 11.C -> 12.A`.
+- **Ruta Detail premium-first**: `13.A -> 13.B -> 14.A`.
+- **Ruta búsqueda avanzada**: `10.A -> 12.B` (sugerencias en modo opcional si no compromete tiempos).
+- **Ruta performance & finishing**: `14.A -> 14.B -> 14.C` al cierre de la iteración.
+
+### Execution order note
+
+- Mantener ejecución estrictamente incremental: completar primero fundamentos transversales (`Phase 10.*`) antes de extender Home/Detail/Search.
+- Cada subfase está diseñada para ejecutarse en 1-2 interacciones, con validación explícita por chunk.
+- Si surgen bloqueos de alcance (por ejemplo `Series`), registrar como `Open question` sin romper secuencia.
 
 ### Progress tracking rule
 
@@ -528,11 +875,17 @@
 - Multi-tenancy (no aplicable según reglas).
 - Observabilidad avanzada (tracing/metrics), tuning de performance no crítico y optimizaciones prematuras.
 - Internacionalización y accesibilidad avanzada fuera de baseline estándar de Next.js.
+- Incorporar nuevas fuentes de datos o proveedores distintos de TMDb.
+- Introducir librerías de UI externas para reemplazar Tailwind o cambiar stack de rendering.
+- Implementar dominio completo de `Series/TV` mientras no se aprueben endpoints y modelos específicos.
 
 ## 5) Open Questions
 
 - ¿Se requiere política obligatoria de mocks para TMDb en pruebas y CI, o será opcional por suite?
 - ¿Qué cobertura mínima se considera aceptable para aprobar CI en MVP?
+- ¿`Series` en el header será placeholder visual temporal o se habilitará en una iteración con endpoints TV dedicados?
+- ¿El modal de trailer debe ser componente compartido único entre Home y Detail o se permite variante por contexto?
+- ¿Se prioriza implementación de sugerencias de búsqueda en esta iteración o queda en backlog opcional?
 
 ## Decisions Confirmed
 
