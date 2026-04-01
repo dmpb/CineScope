@@ -660,12 +660,12 @@
   - Riesgo bajo-medio de regresiones visuales en layouts existentes.
   - Requiere `Phase 11.A` y `Phase 11.B`.
 
-### Phase 12 — Rows & Search Premium UX
+### Phase 12 — Rows & Search Premium UX ✅
 
 - `Status`: `Completed`
 - `Execution order`: `Phase 12.A -> Phase 12.B`
 
-#### Phase 12.A — Netflix-style Rows Interaction Upgrade
+#### Phase 12.A — Netflix-style Rows Interaction Upgrade ✅
 
 - `Status`: `Completed`
 - `Implemented`: 2026-04-01 — Rails horizontales refinadas con `scroll-snap` + inercia touch (`src/app/globals.css`, `src/components/MovieSection.tsx`), y `MovieCard` con overlay enriquecido (rating/año + glow sutil + transición uniforme) manteniendo foco por teclado.
@@ -689,7 +689,7 @@
   - Dependencia de `Phase 8.A` y `Phase 8.B`.
   - Riesgo de sobre-animación; controlar para mantener foco en contenido.
 
-#### Phase 12.B — Global Search UX Enhancement
+#### Phase 12.B — Global Search UX Enhancement ✅
 
 - `Status`: `Completed`
 - `Implemented`: 2026-04-01 — `SearchBar` global refinado con expansión en foco, icono de búsqueda en variante compacta, limpieza rápida (`Borrar/Limpiar`) y soporte `Escape`, manteniendo navegación por URL (`/search?q=`) como source of truth en Home/Detail/Search.
@@ -713,14 +713,15 @@
   - Riesgo de complejidad en modo sugerencias (opcional).
   - Depende de `Phase 10.A` y `Phase 6.*`.
 
-### Phase 13 — Cinematic Detail Experience v2
+### Phase 13 — Cinematic Detail Experience v2 ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 13.A -> Phase 13.B`
 
-#### Phase 13.A — Detail Layout Overhaul + Trailer Modal-Only
+#### Phase 13.A — Detail Layout Overhaul + Trailer Modal-Only ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — `src/components/MovieDetail.tsx` rediseñado a layout cinematográfico con backdrop dominante full-width, composición poster izquierda + metadata derecha, sección de cast en rail horizontal circular y trailer migrado a `TrailerModal` (sin iframe inline). En `src/app/movie/[id]/page.tsx` se removió el bloque de back link del detalle.
 - **Objective**
   - Convertir la página de detalle a experiencia cinematográfica premium con backdrop dominante y composición poster+metadata+acciones.
 - **Definition of done**
@@ -742,9 +743,10 @@
   - Depende de `Phase 7.A`, `Phase 7.B` y `Phase 7.C`.
   - Riesgo medio de regresión visual/espaciado por alta densidad de contenido.
 
-#### Phase 13.B — Similar Movies Correctness Hardening
+#### Phase 13.B — Similar Movies Correctness Hardening ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Hardening de similares en `src/lib/tmdb.ts` con normalización (`normalizeSimilarMovies`) para filtrar duplicados/self-ID/IDs inválidos y mantener consistencia del endpoint oficial `/movie/{id}/similar`; fallback de UI reforzado en `src/app/movie/[id]/page.tsx` y cobertura adicional en `src/app/movie/[id]/page.test.tsx` para caso de lista vacía.
 - **Objective**
   - Asegurar y blindar la lógica de similares para mantener relevancia funcional y consistencia con TMDb.
 - **Definition of done**
@@ -854,7 +856,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 13.A — Detail Layout Overhaul + Trailer Modal-Only`**: siguiente iteración para elevar la experiencia de detalle a patrón cinematográfico premium.
+- **`Phase 14.A — Skeletons & Loading Experience Upgrade`**: adaptar skeletons al layout final de Home y Detail para reforzar percepción de velocidad premium.
 
 ### Alternative paths
 

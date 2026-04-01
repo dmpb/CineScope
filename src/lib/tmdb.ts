@@ -9,11 +9,16 @@ const RUNTIME_ENRICH_LIMIT = 8;
 type TmdbMovieDto = {
   id: number;
   title?: string;
+  original_title?: string;
+  tagline?: string;
   overview?: string | null;
   poster_path?: string | null;
   backdrop_path?: string | null;
   vote_average?: number;
   vote_count?: number;
+  popularity?: number;
+  status?: string;
+  production_countries?: Array<{ iso_3166_1?: string; name?: string }>;
   release_date?: string;
   original_language?: string;
   runtime?: number;
@@ -176,14 +181,23 @@ function buildImageUrl(path: string | null | undefined): string {
 }
 
 function mapMovieDto(dto: TmdbMovieDto): Movie {
+  const productionCountries = (dto.production_countries ?? [])
+    .map((country) => country.name ?? country.iso_3166_1 ?? "")
+    .filter(Boolean);
+
   return {
     id: dto.id,
     title: dto.title ?? "",
+    originalTitle: dto.original_title ?? "",
+    tagline: dto.tagline ?? "",
     overview: dto.overview ?? "",
     posterPath: buildImageUrl(dto.poster_path),
     backdropPath: buildImageUrl(dto.backdrop_path),
     rating: typeof dto.vote_average === "number" ? dto.vote_average : 0,
+    popularity: typeof dto.popularity === "number" ? dto.popularity : 0,
     releaseDate: dto.release_date ?? "",
+    status: dto.status ?? "",
+    productionCountries,
     genres: (dto.genres ?? []).map((genre) => genre.name ?? "").filter(Boolean),
     runtime: typeof dto.runtime === "number" ? dto.runtime : 0,
     language: dto.original_language ?? "",
@@ -286,6 +300,24 @@ async function enrichMoviesWithDetails(movies: Movie[], limit = RUNTIME_ENRICH_L
   );
 
   return [...enrichedSubset, ...movies.slice(boundedLimit)];
+}
+
+function normalizeSimilarMovies(targetMovieId: number, movies: Movie[]): Movie[] {
+  if (!Number.isFinite(targetMovieId) || targetMovieId <= 0) {
+    return [];
+  }
+
+  const seen = new Set<number>();
+  return movies.filter((movie) => {
+    if (!movie || !Number.isFinite(movie.id) || movie.id <= 0) {
+      return false;
+    }
+    if (movie.id === targetMovieId || seen.has(movie.id)) {
+      return false;
+    }
+    seen.add(movie.id);
+    return true;
+  });
 }
 
 export async function getTrendingMovies(): Promise<Movie[]> {
@@ -482,9 +514,10 @@ export async function getSimilarMoviesById(id: number): Promise<Movie[]> {
   }
 
   if (isTmdbMockMode) {
-    return getMockMovies()
+    const mockSimilar = getMockMovies()
       .filter((movie) => movie.id !== id)
       .slice(0, 5);
+    return normalizeSimilarMovies(id, mockSimilar);
   }
 
   const data = await tmdbFetchJson<TmdbMovieListResponse>(`/movie/${id}/similar`);
@@ -493,7 +526,8 @@ export async function getSimilarMoviesById(id: number): Promise<Movie[]> {
   }
 
   const movies = data.results.map(mapMovieDto);
-  return enrichMoviesWithDetails(movies);
+  const enrichedMovies = await enrichMoviesWithDetails(movies);
+  return normalizeSimilarMovies(id, enrichedMovies);
 }
 
 export async function searchMovies(query: string, page = 1): Promise<SearchResult> {

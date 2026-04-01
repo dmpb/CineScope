@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { MovieSection } from "@/components/MovieSection";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { getMovieById, getMovieCastById, getMovieTrailerById, getSimilarMoviesById } from "@/lib/tmdb";
@@ -32,39 +31,36 @@ export default async function MoviePage({ params }: MoviePageProps) {
     : [null, null, [], []];
 
   return (
-    <main className="page-shell">
-      <nav aria-label="Navegacion de pagina">
-        <Link
-          href="/"
-          className="focus-ring w-fit rounded-md text-sm text-zinc-300 underline-offset-4 hover:text-zinc-100 hover:underline"
-        >
-          ← Volver al inicio
-        </Link>
-      </nav>
+    <main className="-mt-20 home-cinematic-shell">
+      {(!hasToken || !movieId || (movieId && !movie)) && (
+        <div className="home-content-container space-y-4 pt-6">
+          {!hasToken && (
+            <StateMessage variant="warning">
+              Falta configurar <code>TMDB_BEARER_TOKEN</code> en <code>.env.local</code>.
+            </StateMessage>
+          )}
 
-      {!hasToken && (
-        <StateMessage variant="warning">
-          Falta configurar <code>TMDB_BEARER_TOKEN</code> en <code>.env.local</code>.
-        </StateMessage>
-      )}
+          {!movieId && (
+            <StateMessage variant="empty">El ID de la pelicula no es valido.</StateMessage>
+          )}
 
-      {!movieId && (
-        <StateMessage variant="empty">El ID de la pelicula no es valido.</StateMessage>
-      )}
-
-      {movieId && !movie && (
-        <StateMessage variant="error">
-          No se pudo cargar la pelicula solicitada. Puede no existir o estar temporalmente no disponible.
-        </StateMessage>
+          {movieId && !movie && (
+            <StateMessage variant="error">
+              No se pudo cargar la pelicula solicitada. Puede no existir o estar temporalmente no disponible.
+            </StateMessage>
+          )}
+        </div>
       )}
 
       {movie && <MovieDetail movie={movie} trailerUrl={trailerUrl} cast={cast} />}
       {movie && (
-        <MovieSection
-          title={`Similares a "${movie.title}"`}
-          movies={similarMovies}
-          emptyMessage="No se encontraron peliculas similares para este titulo."
-        />
+        <div className="home-content-container home-content-stack">
+          <MovieSection
+            title={`Similares a "${movie.title}"`}
+            movies={similarMovies}
+            emptyMessage="No se encontraron peliculas similares relevantes para este titulo."
+          />
+        </div>
       )}
     </main>
   );

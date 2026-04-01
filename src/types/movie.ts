@@ -1,11 +1,16 @@
 export interface Movie {
   id: number;
   title: string;
+  originalTitle?: string;
+  tagline?: string;
   overview: string;
   posterPath: string;
   backdropPath: string;
   rating: number;
+  popularity?: number;
   releaseDate: string;
+  status?: string;
+  productionCountries?: string[];
   genres: string[];
   runtime: number;
   language: string;

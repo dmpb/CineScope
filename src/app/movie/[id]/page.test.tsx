@@ -57,10 +57,22 @@ describe("Movie detail page", () => {
     expect(screen.getByText("Interstellar")).toBeInTheDocument();
     expect(screen.getByText("Adventure, Science Fiction")).toBeInTheDocument();
     expect(screen.getByText("169 min")).toBeInTheDocument();
-    expect(screen.getByTitle("Trailer de Interstellar")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ver trailer" })).toBeInTheDocument();
     expect(screen.getByText("Matthew McConaughey")).toBeInTheDocument();
     expect(screen.getByText('Similares a "Interstellar"')).toBeInTheDocument();
     expect(screen.getByText("The Martian")).toBeInTheDocument();
+  });
+
+  it("shows empty similar message when related list is empty", async () => {
+    vi.mocked(getOptionalTmdbBearerToken).mockReturnValue("token");
+    vi.mocked(getMovieById).mockResolvedValue(movieFixture);
+    vi.mocked(getMovieTrailerById).mockResolvedValue(null);
+    vi.mocked(getMovieCastById).mockResolvedValue([]);
+    vi.mocked(getSimilarMoviesById).mockResolvedValue([]);
+
+    render(await MoviePage({ params: Promise.resolve({ id: "1" }) }));
+
+    expect(screen.getByText(/No se encontraron peliculas similares relevantes/i)).toBeInTheDocument();
   });
 
   it("shows invalid id fallback", async () => {
