@@ -767,12 +767,12 @@
   - Dependencia de variabilidad real del dataset TMDb.
   - Riesgo de falsos positivos en pruebas si no se controla mocking.
 
-### Phase 14 — Premium Polish, Performance & Micro-interactions
+### Phase 14 — Premium Polish, Performance & Micro-interactions ✅
 
 - `Status`: `Completed`
 - `Execution order`: `Phase 14.A -> Phase 14.B -> Phase 14.C`
 
-#### Phase 14.A — Skeletons & Loading Experience Upgrade
+#### Phase 14.A — Skeletons & Loading Experience Upgrade ✅
 
 - `Status`: `Completed`
 - `Implemented`: 2026-04-01 — Skeletons de Home/Detail/Search actualizados para reflejar layout real cinematográfico (`src/app/loading.tsx`, `src/app/movie/[id]/loading.tsx`, `src/app/search/loading.tsx`) con hero/rails/cast placeholders contextuales.
@@ -794,7 +794,7 @@
 - **Risks / dependencies**
   - Riesgo bajo; depende de layouts finales de `Phase 11` y `Phase 13`.
 
-#### Phase 14.B — Image Performance & Rendering Efficiency
+#### Phase 14.B — Image Performance & Rendering Efficiency ✅
 
 - `Status`: `Completed`
 - `Implemented`: 2026-04-01 — Optimización de imágenes en componentes de alta densidad visual con estrategia explícita de carga (`loading="lazy"` en `MovieCard`, `FeaturedStrip`, `CastScroller`) y ajuste de skeletons para reducir percepción de blocking render en first paint.
@@ -818,7 +818,7 @@
   - Riesgo medio por trade-offs entre calidad visual y peso de imagen.
   - Depende de `Phase 10.B` y `Phase 11.A`.
 
-#### Phase 14.C — Micro-interactions & Favorites UX Polish
+#### Phase 14.C — Micro-interactions & Favorites UX Polish ✅
 
 - `Status`: `Completed`
 - `Implemented`: 2026-04-01 — Pulido de micro-interacciones de favoritos en `src/components/FavoriteButton.tsx` (estados visuales activo/inactivo, transición premium, feedback de escala al toggle y sincronización por evento `storage` entre contextos).
@@ -842,14 +842,15 @@
   - Riesgo bajo-medio de sobrecarga visual.
   - Depende de `Phase 9.A` y `Phase 10.B`.
 
-### Phase 15 — Detail Experience Expansion (Post-14)
+### Phase 15 — Detail Experience Expansion (Post-14) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 15.A -> Phase 15.B -> Phase 15.C -> Phase 15.D -> Phase 15.E`
 
-#### Phase 15.A — Detail CTAs & In-page Navigation
+#### Phase 15.A — Detail CTAs & In-page Navigation ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — CTA contextual en detalle para saltar a `#similar-movies`, integración de favorito inline en hero de detalle y navegación interna por anclas (`Resumen`, `Cast`, `Datos`, `Media`, `Similares`) en `src/components/MovieDetail.tsx`.
 - **Objective**
   - Aumentar usabilidad en detalle con CTAs contextuales y navegación interna rápida.
 - **Definition of done**
@@ -870,9 +871,10 @@
   - Depende de `Phase 9.A` (favoritos).
   - Riesgo bajo de duplicidad visual de acciones si no se jerarquiza CTA principal.
 
-#### Phase 15.B — Credits Enrichment (Director, Writer, Crew Highlights)
+#### Phase 15.B — Credits Enrichment (Director, Writer, Crew Highlights) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Data layer extendida con `getMovieCrewHighlightsById` (directores/guionistas) y render en detalle dentro de metadata técnica; contratos y UI cubiertos en `src/app/movie/[id]/page.test.tsx`.
 - **Objective**
   - Enriquecer ficha de detalle con información de crew relevante (dirección/guion).
 - **Definition of done**
@@ -893,9 +895,10 @@
   - Depende de estabilidad del endpoint de créditos de TMDb.
   - Riesgo medio de sobrecargar la ficha con metadata secundaria.
 
-#### Phase 15.C — Watch Providers & Availability Context
+#### Phase 15.C — Watch Providers & Availability Context ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Implementado `getMovieWatchProvidersById` en `src/lib/tmdb.ts` con fallback regional y visualización “Dónde verla” (suscripción/renta/compra) en `src/components/MovieDetail.tsx`.
 - **Objective**
   - Añadir contexto de disponibilidad (plataformas) para elevar valor práctico del detalle.
 - **Definition of done**
@@ -916,9 +919,10 @@
   - Depende de cobertura real de providers en TMDb por país.
   - Riesgo de inconsistencias entre entornos si no se fija región default.
 
-#### Phase 15.D — Media Gallery (Backdrops & Stills)
+#### Phase 15.D — Media Gallery (Backdrops & Stills) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Nuevo fetch `getMovieImagesById` y componente reusable `src/components/MovieMediaGallery.tsx` para galería horizontal de backdrops/stills integrada en detalle.
 - **Objective**
   - Mejorar inmersión visual del detalle con galería horizontal de imágenes.
 - **Definition of done**
@@ -939,9 +943,10 @@
   - Riesgo medio de peso visual y de red si no se limita número de imágenes.
   - Depende de `Phase 14.B` para optimización de carga.
 
-#### Phase 15.E — Detail Information Architecture (Tabs/Sections)
+#### Phase 15.E — Detail Information Architecture (Tabs/Sections) ✅
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Arquitectura de información de detalle reorganizada por secciones navegables y escalables (`Resumen`, `Cast`, `Datos`, `Media`) con anchors progresivas y soporte de navegación por teclado.
 - **Objective**
   - Organizar densidad de información de detalle con arquitectura escalable por secciones.
 - **Definition of done**
@@ -984,7 +989,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 15.A — Detail CTAs & In-page Navigation`**: siguiente incremento de producto para mejorar navegación contextual en la vista de detalle.
+- **Sin subfases pendientes del roadmap actual** — listo para definir una nueva iteración (Phase 16+) enfocada en descubrimiento avanzado o personalización.
 
 ### Alternative paths
 

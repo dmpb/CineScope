@@ -11,11 +11,22 @@ vi.mock("@/lib/tmdb", () => ({
   getMovieById: vi.fn(),
   getMovieTrailerById: vi.fn(),
   getMovieCastById: vi.fn(),
+  getMovieCrewHighlightsById: vi.fn(),
+  getMovieWatchProvidersById: vi.fn(),
+  getMovieImagesById: vi.fn(),
   getSimilarMoviesById: vi.fn()
 }));
 
 import { getOptionalTmdbBearerToken } from "@/lib/env";
-import { getMovieById, getMovieCastById, getMovieTrailerById, getSimilarMoviesById } from "@/lib/tmdb";
+import {
+  getMovieById,
+  getMovieCastById,
+  getMovieCrewHighlightsById,
+  getMovieImagesById,
+  getMovieTrailerById,
+  getMovieWatchProvidersById,
+  getSimilarMoviesById
+} from "@/lib/tmdb";
 
 const movieFixture: Movie = {
   id: 1,
@@ -44,6 +55,12 @@ describe("Movie detail page", () => {
         profilePath: "https://image.tmdb.org/t/p/original/m.jpg"
       }
     ]);
+    vi.mocked(getMovieCrewHighlightsById).mockResolvedValue({
+      directors: ["Christopher Nolan"],
+      writers: ["Jonathan Nolan", "Christopher Nolan"]
+    });
+    vi.mocked(getMovieWatchProvidersById).mockResolvedValue([{ id: 8, name: "Netflix", logoPath: "https://image.tmdb.org/t/p/original/a.png", category: "flatrate" }]);
+    vi.mocked(getMovieImagesById).mockResolvedValue(["https://image.tmdb.org/t/p/original/c.jpg"]);
     vi.mocked(getSimilarMoviesById).mockResolvedValue([
       {
         ...movieFixture,
@@ -58,6 +75,8 @@ describe("Movie detail page", () => {
     expect(screen.getByText("Adventure, Science Fiction")).toBeInTheDocument();
     expect(screen.getByText("169 min")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ver trailer" })).toBeInTheDocument();
+    expect(screen.getByText("Christopher Nolan")).toBeInTheDocument();
+    expect(screen.getByText("Netflix")).toBeInTheDocument();
     expect(screen.getByText("Matthew McConaughey")).toBeInTheDocument();
     expect(screen.getByText('Similares a "Interstellar"')).toBeInTheDocument();
     expect(screen.getByText("The Martian")).toBeInTheDocument();
@@ -68,6 +87,9 @@ describe("Movie detail page", () => {
     vi.mocked(getMovieById).mockResolvedValue(movieFixture);
     vi.mocked(getMovieTrailerById).mockResolvedValue(null);
     vi.mocked(getMovieCastById).mockResolvedValue([]);
+    vi.mocked(getMovieCrewHighlightsById).mockResolvedValue({ directors: [], writers: [] });
+    vi.mocked(getMovieWatchProvidersById).mockResolvedValue([]);
+    vi.mocked(getMovieImagesById).mockResolvedValue([]);
     vi.mocked(getSimilarMoviesById).mockResolvedValue([]);
 
     render(await MoviePage({ params: Promise.resolve({ id: "1" }) }));

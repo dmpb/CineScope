@@ -23,6 +23,16 @@ body {
   @apply antialiased;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 @layer components {
   .page-shell {
     @apply mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:gap-10 lg:py-12;
@@ -38,6 +48,10 @@ body {
 
   .home-content-stack {
     @apply space-y-8 sm:space-y-10 lg:space-y-12;
+  }
+
+  .anchor-target {
+    scroll-margin-top: 7rem;
   }
 
   .page-title {

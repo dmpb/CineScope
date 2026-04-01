@@ -1,6 +1,14 @@
 import { MovieSection } from "@/components/MovieSection";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
-import { getMovieById, getMovieCastById, getMovieTrailerById, getSimilarMoviesById } from "@/lib/tmdb";
+import {
+  getMovieById,
+  getMovieCastById,
+  getMovieCrewHighlightsById,
+  getMovieImagesById,
+  getMovieTrailerById,
+  getMovieWatchProvidersById,
+  getSimilarMoviesById
+} from "@/lib/tmdb";
 import { MovieDetail } from "@/components/MovieDetail";
 import { StateMessage } from "@/components/StateMessage";
 
@@ -21,14 +29,17 @@ export default async function MoviePage({ params }: MoviePageProps) {
   const movieId = parseMovieId(idParam);
   const hasToken = Boolean(getOptionalTmdbBearerToken());
 
-  const [movie, trailerUrl, cast, similarMovies] = movieId
+  const [movie, trailerUrl, cast, crew, providers, mediaImages, similarMovies] = movieId
     ? await Promise.all([
         getMovieById(movieId),
         getMovieTrailerById(movieId),
         getMovieCastById(movieId),
+        getMovieCrewHighlightsById(movieId),
+        getMovieWatchProvidersById(movieId),
+        getMovieImagesById(movieId),
         getSimilarMoviesById(movieId)
       ])
-    : [null, null, [], []];
+    : [null, null, [], { directors: [], writers: [] }, [], [], []];
 
   return (
     <main className="-mt-20 home-cinematic-shell">
@@ -52,9 +63,9 @@ export default async function MoviePage({ params }: MoviePageProps) {
         </div>
       )}
 
-      {movie && <MovieDetail movie={movie} trailerUrl={trailerUrl} cast={cast} />}
+      {movie && <MovieDetail movie={movie} trailerUrl={trailerUrl} cast={cast} crew={crew} providers={providers} mediaImages={mediaImages} />}
       {movie && (
-        <div className="home-content-container home-content-stack">
+        <div id="similar-movies" className="anchor-target home-content-container home-content-stack">
           <MovieSection
             title={`Similares a "${movie.title}"`}
             movies={similarMovies}

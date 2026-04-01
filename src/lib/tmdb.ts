@@ -1,5 +1,5 @@
 import { getOptionalTmdbBearerToken } from "@/lib/env";
-import type { CastMember, Movie, SearchResult } from "@/types/movie";
+import type { CastMember, CrewHighlights, Movie, SearchResult, WatchProvider } from "@/types/movie";
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/original";
@@ -56,6 +56,12 @@ type TmdbCastDto = {
 
 type TmdbCreditsResponse = {
   cast?: TmdbCastDto[];
+  crew?: Array<{
+    id: number;
+    name?: string;
+    job?: string;
+    department?: string;
+  }>;
 };
 
 type TmdbGenreDto = {
@@ -65,6 +71,21 @@ type TmdbGenreDto = {
 
 type TmdbGenreListResponse = {
   genres?: TmdbGenreDto[];
+};
+
+type TmdbWatchProvidersResponse = {
+  results?: Record<
+    string,
+    {
+      flatrate?: Array<{ provider_id?: number; provider_name?: string; logo_path?: string | null }>;
+      rent?: Array<{ provider_id?: number; provider_name?: string; logo_path?: string | null }>;
+      buy?: Array<{ provider_id?: number; provider_name?: string; logo_path?: string | null }>;
+    }
+  >;
+};
+
+type TmdbImagesResponse = {
+  backdrops?: Array<{ file_path?: string | null }>;
 };
 
 export type MovieGenre = {
@@ -234,6 +255,46 @@ function getMockCastByMovieId(id: number): CastMember[] {
   return baseCast[id] ?? [];
 }
 
+function getMockCrewHighlightsByMovieId(id: number): CrewHighlights {
+  const byMovieId: Record<number, CrewHighlights> = {
+    603: { directors: ["Lana Wachowski", "Lilly Wachowski"], writers: ["Lana Wachowski", "Lilly Wachowski"] },
+    27205: { directors: ["Christopher Nolan"], writers: ["Christopher Nolan"] },
+    155: { directors: ["Christopher Nolan"], writers: ["Jonathan Nolan", "Christopher Nolan"] }
+  };
+
+  return byMovieId[id] ?? { directors: [], writers: [] };
+}
+
+function getMockWatchProvidersByMovieId(id: number): WatchProvider[] {
+  const providerLogo = (path: string) => buildImageUrl(path);
+  const byMovieId: Record<number, WatchProvider[]> = {
+    603: [
+      { id: 8, name: "Netflix", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" },
+      { id: 2, name: "Apple TV", logoPath: providerLogo("/peURlLlr8jggOwK53fJ5wdQl05y.jpg"), category: "rent" }
+    ],
+    27205: [
+      { id: 337, name: "Disney+", logoPath: providerLogo("/7rwgEsKTfFC0rQ1HfGZ7s2nP6kG.jpg"), category: "flatrate" }
+    ]
+  };
+
+  return byMovieId[id] ?? [];
+}
+
+function getMockMovieImagesById(id: number): string[] {
+  const byMovieId: Record<number, string[]> = {
+    603: [
+      buildImageUrl("/icmmSD4vTTDKOq2vvdulafOGw93.jpg"),
+      buildImageUrl("/7u3pxc0K1wx32IleAkLv78MKgrw.jpg")
+    ],
+    27205: [
+      buildImageUrl("/s3TBrRGB1iav7gFOCNx3H31MoES.jpg"),
+      buildImageUrl("/8IB2e4r4oVhHnANbnm7O3Tj6tF8.jpg")
+    ]
+  };
+
+  return byMovieId[id] ?? [];
+}
+
 function mapCastDto(dto: TmdbCastDto): CastMember {
   return {
     id: dto.id,
@@ -241,6 +302,32 @@ function mapCastDto(dto: TmdbCastDto): CastMember {
     character: dto.character ?? "Sin personaje",
     profilePath: buildImageUrl(dto.profile_path)
   };
+}
+
+function normalizeNames(values: string[]): string[] {
+  const seen = new Set<string>();
+  return values.filter((value) => {
+    const normalized = value.trim();
+    if (!normalized || seen.has(normalized.toLowerCase())) {
+      return false;
+    }
+    seen.add(normalized.toLowerCase());
+    return true;
+  });
+}
+
+function mapProviderEntries(
+  entries: Array<{ provider_id?: number; provider_name?: string; logo_path?: string | null }> | undefined,
+  category: WatchProvider["category"]
+): WatchProvider[] {
+  return (entries ?? [])
+    .filter((entry) => Number.isInteger(entry.provider_id))
+    .map((entry) => ({
+      id: entry.provider_id as number,
+      name: entry.provider_name ?? "Proveedor",
+      logoPath: buildImageUrl(entry.logo_path),
+      category
+    }));
 }
 
 async function tmdbFetchJson<T>(path: string): Promise<T | null> {
@@ -506,6 +593,86 @@ export async function getMovieCastById(id: number): Promise<CastMember[]> {
   }
 
   return data.cast.map(mapCastDto);
+}
+
+export async function getMovieCrewHighlightsById(id: number): Promise<CrewHighlights> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return { directors: [], writers: [] };
+  }
+
+  if (isTmdbMockMode) {
+    return getMockCrewHighlightsByMovieId(id);
+  }
+
+  const data = await tmdbFetchJson<TmdbCreditsResponse>(`/movie/${id}/credits`);
+  if (!data?.crew?.length) {
+    return { directors: [], writers: [] };
+  }
+
+  const directors = normalizeNames(
+    data.crew.filter((member) => member.job === "Director").map((member) => member.name ?? "")
+  );
+
+  const writers = normalizeNames(
+    data.crew
+      .filter((member) => member.job === "Writer" || member.job === "Screenplay" || member.department === "Writing")
+      .map((member) => member.name ?? "")
+  );
+
+  return { directors, writers };
+}
+
+export async function getMovieWatchProvidersById(id: number, region = "US"): Promise<WatchProvider[]> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockWatchProvidersByMovieId(id);
+  }
+
+  const normalizedRegion = region.trim().toUpperCase() || "US";
+  const data = await tmdbFetchJson<TmdbWatchProvidersResponse>(`/movie/${id}/watch/providers`);
+  const regionData = data?.results?.[normalizedRegion] ?? data?.results?.US;
+  if (!regionData) {
+    return [];
+  }
+
+  const providers = [
+    ...mapProviderEntries(regionData.flatrate, "flatrate"),
+    ...mapProviderEntries(regionData.rent, "rent"),
+    ...mapProviderEntries(regionData.buy, "buy")
+  ];
+
+  const seen = new Set<string>();
+  return providers.filter((provider) => {
+    const key = `${provider.id}-${provider.category}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+export async function getMovieImagesById(id: number): Promise<string[]> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockMovieImagesById(id);
+  }
+
+  const data = await tmdbFetchJson<TmdbImagesResponse>(`/movie/${id}/images`);
+  if (!data?.backdrops?.length) {
+    return [];
+  }
+
+  return data.backdrops
+    .map((image) => buildImageUrl(image.file_path))
+    .filter(Boolean)
+    .slice(0, 12);
 }
 
 export async function getSimilarMoviesById(id: number): Promise<Movie[]> {

@@ -1,15 +1,27 @@
 import Image from "next/image";
 import { CastScroller } from "@/components/CastScroller";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { MovieMediaGallery } from "@/components/MovieMediaGallery";
 import { TrailerModal } from "@/components/TrailerModal";
-import type { CastMember, Movie } from "@/types/movie";
+import type { CastMember, CrewHighlights, Movie, WatchProvider } from "@/types/movie";
 
 type MovieDetailProps = {
   movie: Movie;
   trailerUrl?: string | null;
   cast?: CastMember[];
+  crew?: CrewHighlights;
+  providers?: WatchProvider[];
+  mediaImages?: string[];
 };
 
-export function MovieDetail({ movie, trailerUrl = null, cast = [] }: MovieDetailProps) {
+export function MovieDetail({
+  movie,
+  trailerUrl = null,
+  cast = [],
+  crew = { directors: [], writers: [] },
+  providers = [],
+  mediaImages = []
+}: MovieDetailProps) {
   const movieTitle = movie.title || "Sin titulo";
   const originalTitleText = movie.originalTitle && movie.originalTitle !== movieTitle ? movie.originalTitle : null;
   const taglineText = movie.tagline?.trim() || null;
@@ -24,6 +36,13 @@ export function MovieDetail({ movie, trailerUrl = null, cast = [] }: MovieDetail
       ? movie.productionCountries.join(", ")
       : "No disponible";
   const imageSrc = movie.backdropPath || movie.posterPath;
+  const directorsText = crew.directors.length > 0 ? crew.directors.join(", ") : "No disponible";
+  const writersText = crew.writers.length > 0 ? crew.writers.join(", ") : "No disponible";
+  const providersByCategory = {
+    flatrate: providers.filter((provider) => provider.category === "flatrate"),
+    rent: providers.filter((provider) => provider.category === "rent"),
+    buy: providers.filter((provider) => provider.category === "buy")
+  };
 
   return (
     <article className="relative min-h-[72vh] overflow-hidden bg-zinc-900">
@@ -46,9 +65,27 @@ export function MovieDetail({ movie, trailerUrl = null, cast = [] }: MovieDetail
           </div>
 
           <div className="space-y-4 sm:space-y-5 overflow-hidden">
+            <nav aria-label="Navegacion interna de detalle" className="flex flex-wrap gap-2 text-xs text-zinc-300">
+              <a href="#detail-summary" className="focus-ring premium-transition rounded-full border border-zinc-600/70 px-3 py-1 hover:border-zinc-400">
+                Resumen
+              </a>
+              <a href="#detail-cast" className="focus-ring premium-transition rounded-full border border-zinc-600/70 px-3 py-1 hover:border-zinc-400">
+                Cast
+              </a>
+              <a href="#detail-data" className="focus-ring premium-transition rounded-full border border-zinc-600/70 px-3 py-1 hover:border-zinc-400">
+                Datos
+              </a>
+              <a href="#detail-media" className="focus-ring premium-transition rounded-full border border-zinc-600/70 px-3 py-1 hover:border-zinc-400">
+                Media
+              </a>
+              <a href="#similar-movies" className="focus-ring premium-transition rounded-full border border-zinc-600/70 px-3 py-1 hover:border-zinc-400">
+                Similares
+              </a>
+            </nav>
             <h1 className="text-3xl font-semibold text-zinc-100 sm:text-4xl lg:text-5xl">{movieTitle}</h1>
             {originalTitleText && <p className="text-sm text-zinc-300">Titulo original: {originalTitleText}</p>}
             {taglineText && <p className="text-sm italic text-zinc-300">"{taglineText}"</p>}
+            <section id="detail-summary" className="anchor-target space-y-4">
             <dl className="text-sm text-zinc-300">
               <div className="flex flex-wrap items-center gap-2">
                 <dt className="sr-only">Fecha de estreno</dt>
@@ -58,7 +95,7 @@ export function MovieDetail({ movie, trailerUrl = null, cast = [] }: MovieDetail
                 <dd>⭐ {movie.rating.toFixed(1)}</dd>
               </div>
             </dl>
-            <dl className="grid gap-2 text-sm text-zinc-300 sm:grid-cols-2">
+              <dl id="detail-data" className="anchor-target grid gap-2 text-sm text-zinc-300 sm:grid-cols-2">
               <div>
                 <dt className="text-zinc-400">Generos</dt>
                 <dd>{genresText}</dd>
@@ -87,19 +124,64 @@ export function MovieDetail({ movie, trailerUrl = null, cast = [] }: MovieDetail
                 <dt className="text-zinc-400">Paises de produccion</dt>
                 <dd>{countriesText}</dd>
               </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-zinc-400">Direccion</dt>
+                  <dd>{directorsText}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-zinc-400">Guion</dt>
+                  <dd>{writersText}</dd>
+                </div>
             </dl>
             <p className="w-full text-sm leading-relaxed text-zinc-200 sm:text-base">
               {movie.overview || "No hay sinopsis disponible para esta pelicula."}
             </p>
             <div className="flex flex-wrap gap-3">
               <TrailerModal trailerUrl={trailerUrl} movieTitle={movieTitle} />
+              <FavoriteButton movieId={movie.id} movieTitle={movieTitle} variant="inline" />
+              <a
+                href="#similar-movies"
+                className="focus-ring premium-transition inline-flex items-center rounded-lg border border-zinc-500/70 bg-black/35 px-4 py-2.5 text-sm font-medium text-zinc-100 hover:border-zinc-300 hover:bg-black/55"
+              >
+                Ver similares
+              </a>
             </div>
-            <section className="space-y-2">
+            </section>
+            <section id="detail-cast" className="anchor-target space-y-2">
               {cast.length > 0 ? (
                 <CastScroller cast={cast} />
               ) : (
                 <p className="text-sm text-zinc-400">No hay informacion de cast disponible.</p>
               )}
+            </section>
+            <section className="space-y-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">Donde verla</h2>
+              {providers.length > 0 ? (
+                <div className="space-y-2 text-sm text-zinc-300">
+                  {providersByCategory.flatrate.length > 0 && (
+                    <p>
+                      <span className="text-zinc-400">Suscripcion:</span>{" "}
+                      {providersByCategory.flatrate.map((provider) => provider.name).join(", ")}
+                    </p>
+                  )}
+                  {providersByCategory.rent.length > 0 && (
+                    <p>
+                      <span className="text-zinc-400">Renta:</span> {providersByCategory.rent.map((provider) => provider.name).join(", ")}
+                    </p>
+                  )}
+                  {providersByCategory.buy.length > 0 && (
+                    <p>
+                      <span className="text-zinc-400">Compra:</span> {providersByCategory.buy.map((provider) => provider.name).join(", ")}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-zinc-400">No hay proveedores disponibles para la region configurada.</p>
+              )}
+            </section>
+            <section id="detail-media" className="anchor-target space-y-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">Media</h2>
+              <MovieMediaGallery images={mediaImages} />
             </section>
           </div>
         </div>

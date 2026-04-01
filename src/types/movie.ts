@@ -24,6 +24,18 @@ export interface CastMember {
   profilePath: string;
 }
 
+export interface CrewHighlights {
+  directors: string[];
+  writers: string[];
+}
+
+export interface WatchProvider {
+  id: number;
+  name: string;
+  logoPath: string;
+  category: "flatrate" | "rent" | "buy";
+}
+
 export interface MovieListResult {
   results: Movie[];
 }
