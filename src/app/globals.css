@@ -83,9 +83,15 @@ body {
   }
 
   .horizontal-scroll-row {
-    @apply flex gap-3 overflow-x-auto pb-2 pr-2 sm:gap-4;
+    @apply flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-2 sm:gap-4;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
     scrollbar-width: thin;
     scrollbar-color: #3f3f46 transparent;
+  }
+
+  .horizontal-scroll-item {
+    @apply snap-start;
   }
 
   .horizontal-scroll-row::-webkit-scrollbar {

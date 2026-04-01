@@ -4,6 +4,7 @@ import type { CastMember, Movie, SearchResult } from "@/types/movie";
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/original";
 const isTmdbMockMode = process.env.TMDB_MOCK_MODE === "1";
+const RUNTIME_ENRICH_LIMIT = 8;
 
 type TmdbMovieDto = {
   id: number;
@@ -258,6 +259,35 @@ async function tmdbFetchJson<T>(path: string): Promise<T | null> {
   }
 }
 
+async function enrichMoviesWithDetails(movies: Movie[], limit = RUNTIME_ENRICH_LIMIT): Promise<Movie[]> {
+  const boundedLimit = Number.isInteger(limit) && limit > 0 ? limit : RUNTIME_ENRICH_LIMIT;
+  const moviesToEnrich = movies.slice(0, boundedLimit);
+
+  const enrichedSubset = await Promise.all(
+    moviesToEnrich.map(async (movie) => {
+      if (movie.runtime > 0 && movie.genres.length > 0) {
+        return movie;
+      }
+
+      const detail = await tmdbFetchJson<TmdbMovieDto>(`/movie/${movie.id}`);
+      if (!detail) {
+        return movie;
+      }
+
+      const detailRuntime = typeof detail.runtime === "number" ? detail.runtime : movie.runtime;
+      const detailGenres = (detail.genres ?? []).map((genre) => genre.name ?? "").filter(Boolean);
+
+      return {
+        ...movie,
+        runtime: detailRuntime > 0 ? detailRuntime : movie.runtime,
+        genres: detailGenres.length > 0 ? detailGenres : movie.genres
+      };
+    })
+  );
+
+  return [...enrichedSubset, ...movies.slice(boundedLimit)];
+}
+
 export async function getTrendingMovies(): Promise<Movie[]> {
   if (isTmdbMockMode) {
     return getMockMovies().slice(0, 5);
@@ -268,7 +298,8 @@ export async function getTrendingMovies(): Promise<Movie[]> {
     return [];
   }
 
-  return data.results.map(mapMovieDto);
+  const movies = data.results.map(mapMovieDto);
+  return enrichMoviesWithDetails(movies);
 }
 
 export async function getPopularMovies(): Promise<Movie[]> {
@@ -282,7 +313,8 @@ export async function getPopularMovies(): Promise<Movie[]> {
     return [];
   }
 
-  return data.results.map(mapMovieDto);
+  const movies = data.results.map(mapMovieDto);
+  return enrichMoviesWithDetails(movies);
 }
 
 export async function getTopRatedMovies(): Promise<Movie[]> {
@@ -298,7 +330,8 @@ export async function getTopRatedMovies(): Promise<Movie[]> {
     return [];
   }
 
-  return data.results.map(mapMovieDto);
+  const movies = data.results.map(mapMovieDto);
+  return enrichMoviesWithDetails(movies);
 }
 
 export async function getNowPlayingMovies(): Promise<Movie[]> {
@@ -312,7 +345,8 @@ export async function getNowPlayingMovies(): Promise<Movie[]> {
     return [];
   }
 
-  return data.results.map(mapMovieDto);
+  const movies = data.results.map(mapMovieDto);
+  return enrichMoviesWithDetails(movies);
 }
 
 export async function getUpcomingMovies(): Promise<Movie[]> {
@@ -326,7 +360,8 @@ export async function getUpcomingMovies(): Promise<Movie[]> {
     return [];
   }
 
-  return data.results.map(mapMovieDto);
+  const movies = data.results.map(mapMovieDto);
+  return enrichMoviesWithDetails(movies);
 }
 
 export async function getMovieGenres(): Promise<MovieGenre[]> {
@@ -369,7 +404,8 @@ export async function getMoviesByGenre(genreId: number): Promise<Movie[]> {
     return [];
   }
 
-  return data.results.map(mapMovieDto);
+  const movies = data.results.map(mapMovieDto);
+  return enrichMoviesWithDetails(movies);
 }
 
 function selectYouTubeTrailer(videos: TmdbVideoDto[]): TmdbVideoDto | null {
@@ -456,7 +492,8 @@ export async function getSimilarMoviesById(id: number): Promise<Movie[]> {
     return [];
   }
 
-  return data.results.map(mapMovieDto);
+  const movies = data.results.map(mapMovieDto);
+  return enrichMoviesWithDetails(movies);
 }
 
 export async function searchMovies(query: string, page = 1): Promise<SearchResult> {
@@ -490,7 +527,8 @@ export async function searchMovies(query: string, page = 1): Promise<SearchResul
     return { results: [], totalResults: 0, currentPage: normalizedPage, totalPages: 0 };
   }
 
-  const results = (data.results ?? []).map(mapMovieDto);
+  const rawResults = (data.results ?? []).map(mapMovieDto);
+  const results = await enrichMoviesWithDetails(rawResults, 6);
   return {
     results,
     totalResults: data.total_results ?? results.length,

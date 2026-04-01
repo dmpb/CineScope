@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { useSearchParams } from "next/navigation";
 
 type SearchBarProps = {
@@ -9,6 +10,7 @@ type SearchBarProps = {
 
 export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps) {
   const searchParams = useSearchParams();
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const queryFromUrl = searchParams.get("q")?.trim() ?? "";
   const resolvedDefaultValue = defaultValue || queryFromUrl;
   const formClassName = compact
@@ -20,6 +22,9 @@ export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps
   const buttonClassName = compact
     ? "focus-ring premium-transition h-9 rounded-full border border-red-500/40 bg-red-600 px-3 text-xs font-semibold uppercase tracking-wide text-white hover:bg-red-500"
     : "focus-ring premium-transition rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500";
+  const clearButtonClassName = compact
+    ? "focus-ring premium-transition h-9 rounded-full border border-zinc-600 bg-zinc-900/70 px-3 text-xs font-semibold uppercase tracking-wide text-zinc-200 hover:border-zinc-400 hover:text-zinc-100"
+    : "focus-ring premium-transition rounded-xl border border-zinc-600 bg-zinc-900/80 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:border-zinc-400 hover:text-zinc-100";
 
   return (
     <form
@@ -34,13 +39,36 @@ export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps
         Buscar pelicula por titulo
       </label>
       <input
+        ref={inputRef}
         id="search-query"
         type="search"
         name="q"
         defaultValue={resolvedDefaultValue}
         placeholder="Busca una pelicula..."
         className={inputClassName}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            event.currentTarget.value = "";
+            event.currentTarget.blur();
+          }
+        }}
       />
+      {resolvedDefaultValue.length > 0 && (
+        <button
+          type="button"
+          aria-label="Limpiar busqueda"
+          onClick={() => {
+            if (inputRef.current) {
+              inputRef.current.value = "";
+              inputRef.current.focus();
+            }
+          }}
+          className={clearButtonClassName}
+        >
+          {compact ? "Limpiar" : "Borrar"}
+        </button>
+      )}
       <button
         type="submit"
         aria-label="Buscar"

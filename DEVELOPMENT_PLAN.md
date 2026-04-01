@@ -662,12 +662,13 @@
 
 ### Phase 12 — Rows & Search Premium UX
 
-- `Status`: `Pending`
+- `Status`: `Completed`
 - `Execution order`: `Phase 12.A -> Phase 12.B`
 
 #### Phase 12.A — Netflix-style Rows Interaction Upgrade
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Rails horizontales refinadas con `scroll-snap` + inercia touch (`src/app/globals.css`, `src/components/MovieSection.tsx`), y `MovieCard` con overlay enriquecido (rating/año + glow sutil + transición uniforme) manteniendo foco por teclado.
 - **Objective**
   - Perfeccionar filas horizontales con interacción premium: snap opcional, hover enriquecido y overlay informativo.
 - **Definition of done**
@@ -690,7 +691,8 @@
 
 #### Phase 12.B — Global Search UX Enhancement
 
-- `Status`: `Pending`
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — `SearchBar` global refinado con expansión en foco, icono de búsqueda en variante compacta, limpieza rápida (`Borrar/Limpiar`) y soporte `Escape`, manteniendo navegación por URL (`/search?q=`) como source of truth en Home/Detail/Search.
 - **Objective**
   - Mejorar experiencia de búsqueda desde header para flujo rápido y consistente en toda la app.
 - **Definition of done**
@@ -852,7 +854,7 @@
 
 ### Recommended next subphase
 
-- **`Phase 12.A — Netflix-style Rows Interaction Upgrade`**: refinar interacción de rails (scroll/snap/overlay/focus) sobre la base cinematográfica ya establecida en Home.
+- **`Phase 13.A — Detail Layout Overhaul + Trailer Modal-Only`**: siguiente iteración para elevar la experiencia de detalle a patrón cinematográfico premium.
 
 ### Alternative paths
 
