@@ -80,3 +80,13 @@ docker compose build web
 docker compose up -d web
 docker compose exec web npm run test:e2e:docker
 ```
+
+## 🛠️ Diagnóstico Home
+
+La orquestación de Home registra tiempos por bloque en logs server-side con prefijo `"[home]"`:
+
+- `trending`, `popular`, `top-rated`, `now-playing`, `upcoming`, `genres`
+- `genre-<id>` para rails por género
+- `featured-detail` y `featured-trailer`
+
+Si una fuente falla, Home mantiene render parcial y registra el bloque afectado sin romper toda la página.

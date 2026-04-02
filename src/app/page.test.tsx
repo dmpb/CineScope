@@ -2,35 +2,20 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Movie } from "@/types/movie";
 import HomePage from "@/app/page";
+import type { HomeData } from "@/lib/home";
 
 vi.mock("@/lib/env", () => ({
   getOptionalTmdbBearerToken: vi.fn()
 }));
 
-vi.mock("@/lib/tmdb", () => ({
-  getMovieById: vi.fn(),
-  getMovieTrailerById: vi.fn(),
-  getTrendingMovies: vi.fn(),
-  getPopularMovies: vi.fn(),
-  getTopRatedMovies: vi.fn(),
-  getNowPlayingMovies: vi.fn(),
-  getUpcomingMovies: vi.fn(),
-  getMovieGenres: vi.fn(),
-  getMoviesByGenre: vi.fn()
+vi.mock("@/lib/home", () => ({
+  getHomeData: vi.fn(),
+  buildHomeRowSections: vi.fn(),
+  selectHomeStripMovies: vi.fn()
 }));
 
 import { getOptionalTmdbBearerToken } from "@/lib/env";
-import {
-  getMovieById,
-  getMovieTrailerById,
-  getMovieGenres,
-  getMoviesByGenre,
-  getNowPlayingMovies,
-  getPopularMovies,
-  getTopRatedMovies,
-  getTrendingMovies,
-  getUpcomingMovies
-} from "@/lib/tmdb";
+import { buildHomeRowSections, getHomeData, selectHomeStripMovies } from "@/lib/home";
 
 const movieFixture: Movie = {
   id: 1,
@@ -46,25 +31,52 @@ const movieFixture: Movie = {
   voteCount: 0
 };
 
+const homeDataFixture: HomeData = {
+  trending: [movieFixture],
+  popular: [],
+  topRated: [],
+  nowPlaying: [],
+  upcoming: [],
+  genreSections: [
+    { genre: { id: 28, name: "Action" }, movies: [] },
+    { genre: { id: 35, name: "Comedy" }, movies: [] }
+  ],
+  featuredMovie: {
+    ...movieFixture,
+    genres: ["Action", "Science Fiction"],
+    runtime: 148
+  },
+  featuredTrailerUrl: "https://www.youtube.com/embed/YoHD9XEInc0",
+  hasError: false
+};
+
+const rowSectionsFixture = [
+  {
+    key: "trending",
+    title: "Tendencias de la semana",
+    movies: [movieFixture],
+    emptyMessage: "No hay peliculas en tendencia para mostrar en este momento."
+  },
+  {
+    key: "genre-28",
+    title: "Genero: Action",
+    movies: [],
+    emptyMessage: "No hay peliculas para el genero Action en este momento."
+  },
+  {
+    key: "genre-35",
+    title: "Genero: Comedy",
+    movies: [],
+    emptyMessage: "No hay peliculas para el genero Comedy en este momento."
+  }
+];
+
 describe("HomePage", () => {
   it("renders movie sections with data", async () => {
     vi.mocked(getOptionalTmdbBearerToken).mockReturnValue("token");
-    vi.mocked(getTrendingMovies).mockResolvedValue([movieFixture]);
-    vi.mocked(getPopularMovies).mockResolvedValue([]);
-    vi.mocked(getTopRatedMovies).mockResolvedValue([]);
-    vi.mocked(getNowPlayingMovies).mockResolvedValue([]);
-    vi.mocked(getUpcomingMovies).mockResolvedValue([]);
-    vi.mocked(getMovieById).mockResolvedValue({
-      ...movieFixture,
-      genres: ["Action", "Science Fiction"],
-      runtime: 148
-    });
-    vi.mocked(getMovieTrailerById).mockResolvedValue("https://www.youtube.com/embed/YoHD9XEInc0");
-    vi.mocked(getMovieGenres).mockResolvedValue([
-      { id: 28, name: "Action" },
-      { id: 35, name: "Comedy" }
-    ]);
-    vi.mocked(getMoviesByGenre).mockResolvedValue([]);
+    vi.mocked(getHomeData).mockResolvedValue(homeDataFixture);
+    vi.mocked(buildHomeRowSections).mockReturnValue(rowSectionsFixture);
+    vi.mocked(selectHomeStripMovies).mockReturnValue([]);
 
     render(await HomePage());
 
@@ -79,18 +91,33 @@ describe("HomePage", () => {
 
   it("shows token warning when missing", async () => {
     vi.mocked(getOptionalTmdbBearerToken).mockReturnValue(null);
-    vi.mocked(getTrendingMovies).mockResolvedValue([]);
-    vi.mocked(getPopularMovies).mockResolvedValue([]);
-    vi.mocked(getTopRatedMovies).mockResolvedValue([]);
-    vi.mocked(getNowPlayingMovies).mockResolvedValue([]);
-    vi.mocked(getUpcomingMovies).mockResolvedValue([]);
-    vi.mocked(getMovieById).mockResolvedValue(null);
-    vi.mocked(getMovieTrailerById).mockResolvedValue(null);
-    vi.mocked(getMovieGenres).mockResolvedValue([]);
-    vi.mocked(getMoviesByGenre).mockResolvedValue([]);
+    vi.mocked(getHomeData).mockResolvedValue({
+      ...homeDataFixture,
+      trending: [],
+      featuredMovie: null,
+      featuredTrailerUrl: null
+    });
+    vi.mocked(buildHomeRowSections).mockReturnValue([]);
+    vi.mocked(selectHomeStripMovies).mockReturnValue([]);
 
     render(await HomePage());
 
     expect(screen.getByText(/Falta configurar/)).toBeInTheDocument();
+  });
+
+  it("renders partial data with global error state", async () => {
+    vi.mocked(getOptionalTmdbBearerToken).mockReturnValue("token");
+    vi.mocked(getHomeData).mockResolvedValue({
+      ...homeDataFixture,
+      hasError: true,
+      popular: []
+    });
+    vi.mocked(buildHomeRowSections).mockReturnValue(rowSectionsFixture);
+    vi.mocked(selectHomeStripMovies).mockReturnValue([]);
+
+    render(await HomePage());
+
+    expect(screen.getByText(/Ocurrio un error al cargar datos de TMDb/i)).toBeInTheDocument();
+    expect(screen.getByText("Tendencias de la semana")).toBeInTheDocument();
   });
 });

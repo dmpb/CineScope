@@ -967,6 +967,131 @@
   - Riesgo medio de complejidad de UI si no se limita alcance inicial.
   - Depende de `Phase 15.B`, `15.C` y `15.D`.
 
+### Phase 16 — Home Data Orchestration & Resilience
+
+- `Status`: `Completed`
+- `Execution order`: `Phase 16.A -> Phase 16.B -> Phase 16.C -> Phase 16.D -> Phase 16.E`
+
+#### Phase 16.A — Home Partial Resilience (allSettled Strategy) ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Orquestación de Home migrada a `Promise.allSettled` en `src/lib/home.ts` para tolerar fallos parciales por dataset y mantener render de secciones disponibles; integración en `src/app/page.tsx` con estado de error global no bloqueante.
+- **Objective**
+  - Evitar que un fallo puntual degrade toda la Home; mantener render parcial con estado explícito por bloque.
+- **Definition of done**
+  - Home sigue renderizando secciones disponibles aunque falle una o más fuentes.
+  - Mensaje de error contextual visible sin colapsar experiencia global.
+  - No se rompe contrato de datos ni SSR.
+- **Chunks**
+  1. **Migrar orquestación a patrón tolerante a fallos**
+     - Áreas/archivos: `src/app/page.tsx` (o capa de agregación dedicada).
+     - Verificación: reemplazo de `Promise.all` global por estrategia tipo `Promise.allSettled`.
+  2. **Definir fallback por dataset**
+     - Áreas/archivos: Home + componentes de estado.
+     - Verificación: cada rail puede quedar vacío sin invalidar el resto.
+  3. **Cobertura de casos parciales**
+     - Áreas/archivos: tests de Home.
+     - Verificación: escenario con combinación de éxitos/fallos cubierto.
+- **Risks / dependencies**
+  - Riesgo medio de complejidad en manejo de estado parcial.
+  - Depende de contratos estables de `src/lib/tmdb.ts`.
+
+#### Phase 16.B — Home Orchestration Refactor (Service Layer) ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Extracción de capa de composición a `src/lib/home.ts` (`getHomeData`, `buildHomeRowSections`, `selectHomeStripMovies`) dejando `src/app/page.tsx` enfocado en render y ajustando tests de Home para validar orquestación desacoplada.
+- **Objective**
+  - Reducir complejidad de `src/app/page.tsx` separando composición de datos en capa reutilizable/testeable.
+- **Definition of done**
+  - Lógica de agregación de Home extraída a módulo dedicado (ej. `src/lib/home.ts`).
+  - `page.tsx` queda principalmente orientado a render.
+  - Tests de integración mantienen cobertura funcional.
+- **Chunks**
+  1. **Extraer funciones de composición**
+     - Áreas/archivos: `src/app/page.tsx` -> `src/lib/*`.
+     - Verificación: `page.tsx` reduce carga lógica y mantiene resultado.
+  2. **Tipado explícito de payload de Home**
+     - Áreas/archivos: `src/types/*` o tipos locales dedicados.
+     - Verificación: contratos de Home claros y sin `any`.
+  3. **Ajuste de pruebas**
+     - Áreas/archivos: `src/app/page.test.tsx`.
+     - Verificación: tests estables tras refactor.
+- **Risks / dependencies**
+  - Riesgo bajo de regresión accidental por movimiento de funciones.
+  - Depende de mantener reglas de arquitectura de `PROJECT_RULES.md`.
+
+#### Phase 16.C — Featured Banner Fetch Optimization ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Optimización de featured en `src/lib/home.ts` con estrategia condicional para `getMovieById` (solo cuando falta metadata clave), carga controlada de trailer y manejo de fallback por `Promise.allSettled` sin degradar Home.
+- **Objective**
+  - Reducir sobre-fetch del destacado y controlar costo de requests secundarias (detalle + trailer).
+- **Definition of done**
+  - Estrategia del featured optimizada (lazy/conditional/cache) sin perder metadata clave.
+  - Tiempo de respuesta de Home no empeora con datos enriquecidos.
+  - Fallback robusto cuando trailer o detalle no estén disponibles.
+- **Chunks**
+  1. **Definir estrategia de carga del featured**
+     - Áreas/archivos: `src/app/page.tsx`, `src/lib/tmdb.ts`.
+     - Verificación: requests secundarios ejecutados solo cuando aportan valor.
+  2. **Ajustar cache/revalidate por criticidad**
+     - Áreas/archivos: data layer.
+     - Verificación: balance entre frescura y costo de red.
+  3. **Pruebas de fallback de featured**
+     - Áreas/archivos: tests Home.
+     - Verificación: UI no se degrada si falta trailer/detalle.
+- **Risks / dependencies**
+  - Riesgo medio por trade-off UX vs performance.
+  - Depende de `Phase 11.A` y `Phase 14.B`.
+
+#### Phase 16.D — Deterministic Home Selection Logic (Genres/Strips) ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Selección de géneros determinista en `pickHomeGenres` (prioridades + dedupe por ID + orden estable) y deduplicado de strips optimizado con `Set` en `selectHomeStripMovies`; cobertura de edge-cases en `src/lib/home.test.ts`.
+- **Objective**
+  - Hacer determinista y mantenible la selección de géneros y mini-strips para evitar duplicados y edge-cases.
+- **Definition of done**
+  - Selección de géneros sin duplicación de `find` ni lógica dispersa.
+  - Dedupe de strips optimizado con `Set`/helpers claros.
+  - Comportamiento consistente ante datasets incompletos.
+- **Chunks**
+  1. **Refactor de selección de géneros**
+     - Áreas/archivos: Home orchestration.
+     - Verificación: helper único para géneros prioritarios/fallback.
+  2. **Optimizar deduplicado de strips**
+     - Áreas/archivos: Home orchestration.
+     - Verificación: eliminación de patrón O(n²) en dedupe.
+  3. **Pruebas de edge-cases**
+     - Áreas/archivos: tests Home.
+     - Verificación: casos sin géneros esperados y datasets repetidos cubiertos.
+- **Risks / dependencies**
+  - Riesgo bajo de cambios de orden visual no deseados.
+  - Depende de `Phase 16.B`.
+
+#### Phase 16.E — Home Runtime Observability & Diagnostics ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-01 — Instrumentación de timings por bloque en `src/lib/home.ts` (`[home] ... completed/failed`), estandarización de error contextual por dataset y guía de troubleshooting en `README.md`.
+- **Objective**
+  - Mejorar trazabilidad operativa de Home para detectar cuellos y fallos por bloque sin exponer datos sensibles.
+- **Definition of done**
+  - Logging de timings por dataset en server-side.
+  - Errores de Home incluyen contexto mínimo (bloque afectado) sin romper reglas de seguridad.
+  - Guía breve de diagnóstico agregada en docs/checklist.
+- **Chunks**
+  1. **Instrumentar tiempos de fetch por sección**
+     - Áreas/archivos: capa de agregación Home.
+     - Verificación: logs útiles para identificar bloque lento.
+  2. **Estandarizar mensajes de error operativos**
+     - Áreas/archivos: data layer/Home orchestration.
+     - Verificación: errores accionables y no verbosos.
+  3. **Documentar checklist de troubleshooting**
+     - Áreas/archivos: `README.md` o guía QA.
+     - Verificación: pasos claros para reproducir y depurar incidentes Home.
+- **Risks / dependencies**
+  - Riesgo bajo; posible ruido de logs si no se regula.
+  - Depende de `Phase 16.A` y `Phase 16.B`.
+
 ### Post-MVP execution priority
 
 1. `Phase 10.B` — Unified Visual Design Tokens (base visual compartida).
@@ -986,10 +1111,15 @@
 15. `Phase 15.C` — Watch Providers & Availability Context.
 16. `Phase 15.D` — Media Gallery (Backdrops & Stills).
 17. `Phase 15.E` — Detail Information Architecture (Tabs/Sections).
+18. `Phase 16.A` — Home Partial Resilience (allSettled Strategy).
+19. `Phase 16.B` — Home Orchestration Refactor (Service Layer).
+20. `Phase 16.C` — Featured Banner Fetch Optimization.
+21. `Phase 16.D` — Deterministic Home Selection Logic (Genres/Strips).
+22. `Phase 16.E` — Home Runtime Observability & Diagnostics.
 
 ### Recommended next subphase
 
-- **Sin subfases pendientes del roadmap actual** — listo para definir una nueva iteración (Phase 16+) enfocada en descubrimiento avanzado o personalización.
+- **Sin subfases pendientes del roadmap actual** — listo para definir una nueva iteración (Phase 17+) centrada en descubrimiento avanzado o personalización.
 
 ### Alternative paths
 
