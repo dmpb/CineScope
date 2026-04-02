@@ -4,7 +4,24 @@ import { useEffect, useMemo, useState } from "react";
 
 const FAVORITES_STORAGE_KEY = "cinescope:favorites";
 
-function readFavorites(): number[] {
+type MediaKind = "movie" | "tv";
+type FavoriteKey = string;
+
+function parseFavoriteKey(item: unknown): FavoriteKey | null {
+  if (typeof item === "string" && /^(movie|tv):\d+$/.test(item)) {
+    return item;
+  }
+  if (typeof item === "number" && Number.isInteger(item) && item > 0) {
+    return `movie:${item}`;
+  }
+  return null;
+}
+
+function toFavoriteKey(mediaKind: MediaKind, id: number): FavoriteKey {
+  return `${mediaKind}:${id}`;
+}
+
+function readFavorites(): FavoriteKey[] {
   if (typeof window === "undefined") {
     return [];
   }
@@ -14,14 +31,17 @@ function readFavorites(): number[] {
     if (!raw) {
       return [];
     }
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((item) => Number.isInteger(item)) : [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.map(parseFavoriteKey).filter((key): key is FavoriteKey => key != null);
   } catch {
     return [];
   }
 }
 
-function writeFavorites(favorites: number[]): void {
+function writeFavorites(favorites: FavoriteKey[]): void {
   if (typeof window === "undefined") {
     return;
   }
@@ -32,12 +52,15 @@ function writeFavorites(favorites: number[]): void {
 type FavoriteButtonProps = {
   movieId: number;
   movieTitle: string;
+  /** Por defecto `movie`. Usar `tv` en fichas de serie para evitar colisión de IDs con películas. */
+  mediaKind?: MediaKind;
   variant?: "card" | "inline";
 };
 
-export function FavoriteButton({ movieId, movieTitle, variant = "card" }: FavoriteButtonProps) {
+export function FavoriteButton({ movieId, movieTitle, mediaKind = "movie", variant = "card" }: FavoriteButtonProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const favoriteKey = useMemo(() => toFavoriteKey(mediaKind, movieId), [mediaKind, movieId]);
   const label = useMemo(
     () => (isFavorite ? `Quitar ${movieTitle} de favoritos` : `Agregar ${movieTitle} a favoritos`),
     [isFavorite, movieTitle]
@@ -45,24 +68,26 @@ export function FavoriteButton({ movieId, movieTitle, variant = "card" }: Favori
 
   useEffect(() => {
     const favorites = readFavorites();
-    setIsFavorite(favorites.includes(movieId));
-  }, [movieId]);
+    setIsFavorite(favorites.includes(favoriteKey));
+  }, [favoriteKey]);
 
   useEffect(() => {
     const onStorage = () => {
       const favorites = readFavorites();
-      setIsFavorite(favorites.includes(movieId));
+      setIsFavorite(favorites.includes(favoriteKey));
     };
 
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, [movieId]);
+  }, [favoriteKey]);
 
   function toggleFavorite() {
     const favorites = readFavorites();
-    const nextFavorites = favorites.includes(movieId) ? favorites.filter((id) => id !== movieId) : [...favorites, movieId];
+    const nextFavorites = favorites.includes(favoriteKey)
+      ? favorites.filter((key) => key !== favoriteKey)
+      : [...favorites, favoriteKey];
     writeFavorites(nextFavorites);
-    setIsFavorite(nextFavorites.includes(movieId));
+    setIsFavorite(nextFavorites.includes(favoriteKey));
     setIsAnimating(true);
     window.setTimeout(() => setIsAnimating(false), 180);
   }

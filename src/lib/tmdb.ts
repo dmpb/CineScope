@@ -25,6 +25,14 @@ type TmdbMovieDto = {
   genres?: TmdbGenreDto[];
 };
 
+type TmdbCreatedByPerson = {
+  name?: string;
+};
+
+type TmdbNetworkDto = {
+  name?: string;
+};
+
 type TmdbTvDto = {
   id: number;
   name?: string;
@@ -40,6 +48,11 @@ type TmdbTvDto = {
   production_countries?: Array<{ iso_3166_1?: string; name?: string }>;
   origin_country?: string[];
   first_air_date?: string;
+  last_air_date?: string;
+  number_of_seasons?: number;
+  number_of_episodes?: number;
+  networks?: TmdbNetworkDto[];
+  created_by?: TmdbCreatedByPerson[];
   original_language?: string;
   episode_run_time?: number[];
   genres?: TmdbGenreDto[];
@@ -227,6 +240,11 @@ const MOCK_TV: TmdbTvDto[] = [
     vote_average: 8.4,
     vote_count: 24000,
     first_air_date: "2011-04-17",
+    last_air_date: "2019-05-19",
+    number_of_seasons: 8,
+    number_of_episodes: 73,
+    networks: [{ name: "HBO" }],
+    created_by: [{ name: "David Benioff" }, { name: "D. B. Weiss" }],
     original_language: "en",
     episode_run_time: [57],
     genres: [
@@ -244,6 +262,11 @@ const MOCK_TV: TmdbTvDto[] = [
     vote_average: 8.9,
     vote_count: 14000,
     first_air_date: "2008-01-20",
+    last_air_date: "2013-09-29",
+    number_of_seasons: 5,
+    number_of_episodes: 62,
+    networks: [{ name: "AMC" }],
+    created_by: [{ name: "Vince Gilligan" }],
     original_language: "en",
     episode_run_time: [47],
     genres: [
@@ -261,6 +284,11 @@ const MOCK_TV: TmdbTvDto[] = [
     vote_average: 8.7,
     vote_count: 6200,
     first_air_date: "2019-05-06",
+    last_air_date: "2019-06-03",
+    number_of_seasons: 1,
+    number_of_episodes: 5,
+    networks: [{ name: "HBO" }],
+    created_by: [{ name: "Craig Mazin" }],
     original_language: "en",
     episode_run_time: [65],
     genres: [
@@ -310,7 +338,13 @@ function mapTvDto(dto: TmdbTvDto): Movie {
     .filter(Boolean);
 
   const countryFallback = (dto.origin_country ?? []).filter(Boolean);
-  const runtimeFromEpisode = Array.isArray(dto.episode_run_time) ? dto.episode_run_time.find((value) => typeof value === "number" && value > 0) : 0;
+  const rawEpisodeTimes = Array.isArray(dto.episode_run_time)
+    ? dto.episode_run_time.filter((value): value is number => typeof value === "number" && value > 0)
+    : [];
+  const episodeRunTimes = [...new Set(rawEpisodeTimes)].sort((a, b) => a - b);
+  const runtimeFromEpisode = episodeRunTimes[0] ?? 0;
+  const creators = normalizeNames((dto.created_by ?? []).map((person) => person.name ?? ""));
+  const networkNames = normalizeNames((dto.networks ?? []).map((network) => network.name ?? ""));
 
   return {
     id: dto.id,
@@ -329,7 +363,13 @@ function mapTvDto(dto: TmdbTvDto): Movie {
     genres: (dto.genres ?? []).map((genre) => genre.name ?? "").filter(Boolean),
     runtime: typeof runtimeFromEpisode === "number" ? runtimeFromEpisode : 0,
     language: dto.original_language ?? "",
-    voteCount: typeof dto.vote_count === "number" ? dto.vote_count : 0
+    voteCount: typeof dto.vote_count === "number" ? dto.vote_count : 0,
+    creators: creators.length > 0 ? creators : undefined,
+    numberOfSeasons: typeof dto.number_of_seasons === "number" ? dto.number_of_seasons : undefined,
+    numberOfEpisodes: typeof dto.number_of_episodes === "number" ? dto.number_of_episodes : undefined,
+    networkNames: networkNames.length > 0 ? networkNames : undefined,
+    lastAirDate: dto.last_air_date?.trim() || undefined,
+    episodeRunTimes: episodeRunTimes.length > 0 ? episodeRunTimes : undefined
   };
 }
 
@@ -409,6 +449,40 @@ function getMockMovieImagesById(id: number): string[] {
   };
 
   return byMovieId[id] ?? [];
+}
+
+function getMockWatchProvidersByTvId(id: number): WatchProvider[] {
+  const providerLogo = (path: string) => buildImageUrl(path);
+  const byTvId: Record<number, WatchProvider[]> = {
+    1399: [
+      { id: 8, name: "HBO Max", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" },
+      { id: 2, name: "Apple TV", logoPath: providerLogo("/peURlLlr8jggOwK53fJ5wdQl05y.jpg"), category: "rent" }
+    ],
+    1396: [{ id: 8, name: "Netflix", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" }],
+    87108: [{ id: 8, name: "HBO Max", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" }]
+  };
+
+  return byTvId[id] ?? [];
+}
+
+function getMockTvImagesById(id: number): string[] {
+  const byTvId: Record<number, string[]> = {
+    1399: [buildImageUrl("/suopoADq0k8YZr4dQXcU6pToj6s.jpg"), buildImageUrl("/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg")],
+    1396: [buildImageUrl("/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg")],
+    87108: [buildImageUrl("/hlLXt2tOPT6RRnjiUmoxyG1LTFi.jpg")]
+  };
+
+  return byTvId[id] ?? [];
+}
+
+function getMockCrewHighlightsByTvId(id: number): CrewHighlights {
+  const byTvId: Record<number, CrewHighlights> = {
+    1399: { directors: [], writers: ["David Benioff", "D. B. Weiss", "George R. R. Martin"] },
+    1396: { directors: [], writers: ["Vince Gilligan"] },
+    87108: { directors: [], writers: ["Craig Mazin"] }
+  };
+
+  return byTvId[id] ?? { directors: [], writers: [] };
 }
 
 function mapCastDto(dto: TmdbCastDto): CastMember {
@@ -520,15 +594,17 @@ async function enrichTvWithDetails(series: Movie[], limit = RUNTIME_ENRICH_LIMIT
         return show;
       }
 
-      const runtimeFromEpisode = Array.isArray(detail.episode_run_time)
-        ? detail.episode_run_time.find((value) => typeof value === "number" && value > 0)
-        : 0;
-      const detailGenres = (detail.genres ?? []).map((genre) => genre.name ?? "").filter(Boolean);
-
+      const merged = mapTvDto(detail);
       return {
         ...show,
-        runtime: typeof runtimeFromEpisode === "number" && runtimeFromEpisode > 0 ? runtimeFromEpisode : show.runtime,
-        genres: detailGenres.length > 0 ? detailGenres : show.genres
+        runtime: merged.runtime > 0 ? merged.runtime : show.runtime,
+        genres: merged.genres.length > 0 ? merged.genres : show.genres,
+        creators: merged.creators ?? show.creators,
+        numberOfSeasons: merged.numberOfSeasons ?? show.numberOfSeasons,
+        numberOfEpisodes: merged.numberOfEpisodes ?? show.numberOfEpisodes,
+        networkNames: merged.networkNames ?? show.networkNames,
+        lastAirDate: merged.lastAirDate ?? show.lastAirDate,
+        episodeRunTimes: merged.episodeRunTimes ?? show.episodeRunTimes
       };
     })
   );
@@ -884,6 +960,29 @@ export async function getMovieCrewHighlightsById(id: number): Promise<CrewHighli
   return { directors, writers };
 }
 
+export async function getTvCrewHighlightsById(id: number): Promise<CrewHighlights> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return { directors: [], writers: [] };
+  }
+
+  if (isTmdbMockMode) {
+    return getMockCrewHighlightsByTvId(id);
+  }
+
+  const data = await tmdbFetchJson<TmdbCreditsResponse>(`/tv/${id}/credits`);
+  if (!data?.crew?.length) {
+    return { directors: [], writers: [] };
+  }
+
+  const writers = normalizeNames(
+    data.crew
+      .filter((member) => member.job === "Writer" || member.job === "Screenplay" || member.department === "Writing")
+      .map((member) => member.name ?? "")
+  );
+
+  return { directors: [], writers };
+}
+
 export async function getMovieWatchProvidersById(id: number, region = "US"): Promise<WatchProvider[]> {
   if (!Number.isFinite(id) || id <= 0) {
     return [];
@@ -957,6 +1056,81 @@ export async function getSimilarMoviesById(id: number): Promise<Movie[]> {
   const movies = data.results.map(mapMovieDto);
   const enrichedMovies = await enrichMoviesWithDetails(movies);
   return normalizeSimilarMovies(id, enrichedMovies);
+}
+
+export async function getTvWatchProvidersById(id: number, region = "US"): Promise<WatchProvider[]> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockWatchProvidersByTvId(id);
+  }
+
+  const normalizedRegion = region.trim().toUpperCase() || "US";
+  const data = await tmdbFetchJson<TmdbWatchProvidersResponse>(`/tv/${id}/watch/providers`);
+  const regionData = data?.results?.[normalizedRegion] ?? data?.results?.US;
+  if (!regionData) {
+    return [];
+  }
+
+  const providers = [
+    ...mapProviderEntries(regionData.flatrate, "flatrate"),
+    ...mapProviderEntries(regionData.rent, "rent"),
+    ...mapProviderEntries(regionData.buy, "buy")
+  ];
+
+  const seen = new Set<string>();
+  return providers.filter((provider) => {
+    const key = `${provider.id}-${provider.category}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+export async function getTvImagesById(id: number): Promise<string[]> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockTvImagesById(id);
+  }
+
+  const data = await tmdbFetchJson<TmdbImagesResponse>(`/tv/${id}/images`);
+  if (!data?.backdrops?.length) {
+    return [];
+  }
+
+  return data.backdrops
+    .map((image) => buildImageUrl(image.file_path))
+    .filter(Boolean)
+    .slice(0, 12);
+}
+
+export async function getSimilarTvById(id: number): Promise<Movie[]> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    const mockSimilar = getMockTvShows()
+      .filter((show) => show.id !== id)
+      .slice(0, 5);
+    return normalizeSimilarMovies(id, mockSimilar);
+  }
+
+  const data = await tmdbFetchJson<TmdbTvListResponse>(`/tv/${id}/similar`);
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  const shows = data.results.map(mapTvDto);
+  const enrichedShows = await enrichTvWithDetails(shows);
+  return normalizeSimilarMovies(id, enrichedShows);
 }
 
 export async function searchMovies(query: string, page = 1): Promise<SearchResult> {

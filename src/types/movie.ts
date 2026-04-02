@@ -16,6 +16,18 @@ export interface Movie {
   runtime: number;
   language: string;
   voteCount: number;
+  /** TV: creadores desde TMDb `created_by` */
+  creators?: string[];
+  /** TV: temporadas emitidas */
+  numberOfSeasons?: number;
+  /** TV: episodios totales */
+  numberOfEpisodes?: number;
+  /** TV: nombres de cadenas / plataformas de emisión */
+  networkNames?: string[];
+  /** TV: última fecha de emisión (TMDb `last_air_date`) */
+  lastAirDate?: string;
+  /** TV: duraciones de episodio en minutos (para rango o “variable”) */
+  episodeRunTimes?: number[];
 }
 
 export interface CastMember {

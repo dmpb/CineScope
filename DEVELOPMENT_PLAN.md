@@ -11,7 +11,7 @@
 - `Assumption`: tampoco existe configuración Docker operativa versionada en este estado inicial.
 - Home, Search y Detail ya funcionan con base sólida post-MVP (fases 5-9), incluyendo banner, filas horizontales, cast/similares, trailer y favoritos locales.
 - Se planifica una nueva iteración de **UX/UI Master Upgrade** para llevar el producto a experiencia premium (inspiración Netflix + Apple Liquid Glass) sin cambiar arquitectura ni stack.
-- `Open question`: la navegación incluye `Series`, pero las reglas actuales solo exigen endpoints de películas.
+- `Open question`: la navegación incluye `Series`, pero las reglas originales del MVP privilegiaban endpoints de películas; la ficha TV en profundidad queda planificada en **`Phase 18`** (ver sección 3).
 
 ## 2) Goals (from rules + repo)
 
@@ -1169,6 +1169,69 @@
   - Riesgo medio por incremento de superficie funcional.
   - Depende de `Phase 17.A` y `Phase 17.B`.
 
+### Phase 18 — TV Detail Experience (`/tv/[id]`) ✅
+
+- `Status`: `Completed`
+- `Execution order`: `Phase 18.A -> Phase 18.B -> Phase 18.C`
+- `Context`: Ficha `/tv/[id]` alineada con detalle de película (datos, copy, similares, SEO, loading, migas, favoritos sin colisión ID). **Backlog explícito**: UI por temporadas/episodios (`/tv/{id}/season/{n}`) como mejora futura (ver §4).
+
+#### Phase 18.A — TV detail: paridad de datos con Movie Detail ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-02 — Funciones `getSimilarTvById`, `getTvWatchProvidersById`, `getTvImagesById`, `getTvCrewHighlightsById` en `src/lib/tmdb.ts`; `src/app/tv/[id]/page.tsx` alineado con `movie/[id]` (Promise.all); sección similares con `MovieSection` y ancla `#similar-titles`; mocks TV para providers/imágenes/guion.
+- **Objective**
+  - Alinear la ficha de serie con las capacidades ya entregadas en detalle de película: recomendaciones, disponibilidad por región, imágenes y contexto de equipo/creadores.
+- **Definition of done**
+  - Existen funciones en `src/lib/tmdb.ts` (o módulo coherente) para: `/tv/{id}/similar`, `/tv/{id}/watch/providers`, `/tv/{id}/images`, y extracción de creadores/equipo relevante desde créditos o detalle (`created_by`, crew filtrado).
+  - `src/app/tv/[id]/page.tsx` compone `Promise.all` equivalente al de película donde aplique y elimina el placeholder de similares.
+  - Sección inferior muestra series similares vía componente de listado existente (`MovieSection` o equivalente), con `emptyMessage` adecuado y ancla estable (`#similar-titles` o nombre acordado, actualizando links en `MovieDetail` cuando `mediaType === "tv"`).
+- **Chunks**
+  1. **Similar TV** — Implementar fetch y tipos; render con cards que enlazan a `/tv/[id]`; tests de página o contrato.
+  2. **Watch providers e imágenes TV** — Reutilizar patrones de `getMovieWatchProvidersById` / `getMovieImagesById`; pasar props a `MovieDetail` o capa intermedia.
+  3. **Creadores / highlights de crew para TV** — Mostrar bloques equivalentes a dirección/guion donde tenga sentido (creadores, showrunner si aplica).
+- **Risks / dependencies**
+  - Duplicación de lógica movie/tv; considerar helpers compartidos sin romper ISR.
+  - Depende de estabilidad de endpoints TV en TMDb.
+
+#### Phase 18.B — Metadatos de serie y copy en UI ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-02 — `Movie` extendido (`creators`, `numberOfSeasons`/`numberOfEpisodes`, `networkNames`, `lastAirDate`, `episodeRunTimes`); `TmdbTvDto`/`mapTvDto` y `MOCK_TV` enriquecidos; `MovieDetail` con copy y datos condicionados por `mediaType === "tv"` (anclas similares, “Donde ver”, duración por episodio con rango, creadores vs dirección, navegación accesible).
+- **Objective**
+  - Exponer campos propios de TV (temporadas, episodios, redes, ventanas de emisión) y eliminar copy genérico de “película” en la ficha de serie.
+- **Definition of done**
+  - DTO `TmdbTvDto` / `mapTvDto` (o extensión de tipo de dominio) incluye al menos: `number_of_seasons`, `number_of_episodes`, `networks` (u origen equivalente), y fechas `first_air_date` / `last_air_date` donde la API las provea; UI muestra etiquetas correctas (“Primera emisión”, “Temporadas”, “Episodios”, “Duración por episodio” o rango).
+  - `MovieDetail` admite variante o props de texto para: sinopsis fallback, “Dónde verla” / neutro “Dónde ver”, fecha, navegación interna y CTA “Ver similares” sin anclas solo pensadas para `#similar-movies`.
+  - Duración: manejo explícito de `episode_run_time` (vacío, único, múltiple → rango o “Variable”).
+- **Chunks**
+  1. **Extender modelo y mapeo TV** — `src/lib/tmdb.ts`, `src/types/movie.ts` (o tipo dedicado si se separa).
+  2. **Condicionales de UI en detalle** — `mediaType === "tv"` o componente `TvDetail` thin-wrapper que reutilice layout.
+  3. **Revisión accesibilidad** — `aria-label` y títulos de sección alineados al tipo de media.
+- **Risks / dependencies**
+  - Cambios en contrato `Movie` compartido; coordinar con listados Home que ya usan el mismo tipo.
+  - Depende de `Phase 18.A` para no duplicar refactors de fetch.
+
+#### Phase 18.C — Producto, SEO, favoritos y backlog opcional ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-02 — `generateMetadata` + `cache(getTvById)` en `src/app/tv/[id]/page.tsx`; `src/app/tv/[id]/loading.tsx`; migas `Series` → `/series` en `MovieDetail` (TV); `FavoriteButton` con `mediaKind` y claves `movie:{id}` / `tv:{id}` en `localStorage` (enteros legacy se interpretan como película); tests ampliados (`generateMetadata`, sin token, error API, enlace Series).
+- **Objective**
+  - Completar la experiencia de producto alrededor de `/tv/[id]`: descubrimiento, estado de carga, metadatos y decisión sobre favoritos; dejar documentado el alcance de temporadas/episodios.
+- **Definition of done**
+  - `generateMetadata` (o equivalente App Router) para título y descripción de la serie; alineado con convención de `movie/[id]` si existe.
+  - `loading.tsx` bajo `src/app/tv/[id]/` para paridad con película.
+  - Tests: ampliar `src/app/tv/[id]/page.test.tsx` (ya existe baseline con mocks) con casos error API / sin token si aplica; E2E opcional.
+  - Breadcrumb o enlace contextual “Series” → `/series` coherente con navegación global.
+  - **Favoritos**: decisión documentada — si se mantiene `localStorage` solo por ID numérico, riesgo de colisión movie/tv; alternativa: claves compuestas (`tv:1399` / `movie:603`) o prefijo en `FavoriteButton`.
+  - **Opcional / Phase 18+**: listado por temporadas y episodios (`/tv/{id}/season/{n}`) como fase posterior explícita; no bloquea cierre de 18.A–C.
+- **Chunks**
+  1. **SEO + loading + tests de ruta TV**.
+  2. **Navegación y favoritos** — implementación mínima acordada tras decisión de modelo de claves.
+  3. **Backlog**: episodios por temporada documentado como mejora futura en este plan.
+- **Risks / dependencies**
+  - Colisión de IDs en favoritos si no se actúa antes de escalar uso de TV.
+  - Depende de `Phase 18.A` y `Phase 18.B` para textos y datos finales en metadata.
+
 ### Post-MVP execution priority
 
 1. `Phase 10.B` — Unified Visual Design Tokens (base visual compartida).
@@ -1196,10 +1259,14 @@
 23. `Phase 17.A` — TV Data Layer & Unified Media Model.
 24. `Phase 17.B` — Home Mixed Rails Composition.
 25. `Phase 17.C` — TV Navigation & Detail Baseline.
+26. `Phase 18.A` — TV detail: paridad de datos con Movie Detail.
+27. `Phase 18.B` — Metadatos de serie y copy en UI.
+28. `Phase 18.C` — Producto, SEO, favoritos y backlog opcional (ficha TV).
 
 ### Recommended next subphase
 
-- **Sin subfases pendientes del roadmap actual** — listo para definir una nueva iteración (Phase 18+) enfocada en similars TV, búsqueda mixta o filtros avanzados.
+- **`Phase 19+`** (definir): búsqueda mixta movie/TV, filtros avanzados, o UI de temporadas/episodios en detalle TV.
+- E2E Playwright para flujo `/tv/[id]` opcional cuando haya capacidad QA.
 
 ### Alternative paths
 
@@ -1208,6 +1275,7 @@
 - **Ruta Detail premium-first**: `13.A -> 13.B -> 14.A`.
 - **Ruta búsqueda avanzada**: `10.A -> 12.B` (sugerencias en modo opcional si no compromete tiempos).
 - **Ruta performance & finishing**: `14.A -> 14.B -> 14.C` al cierre de la iteración.
+- **Ruta ficha de serie (`/tv/[id]`)**: `18.A -> 18.B -> 18.C` tras `Phase 17` cuando la prioridad sea paridad con detalle de película y metadatos TV.
 
 ### Execution order note
 
@@ -1242,7 +1310,7 @@
 - Internacionalización y accesibilidad avanzada fuera de baseline estándar de Next.js.
 - Incorporar nuevas fuentes de datos o proveedores distintos de TMDb.
 - Introducir librerías de UI externas para reemplazar Tailwind o cambiar stack de rendering.
-- Implementar dominio completo de `Series/TV` fuera del alcance definido en `Phase 17`.
+- Implementar dominio completo de `Series/TV` (p. ej. catálogo por temporada/episodio completo) fuera del alcance cerrado de **`Phase 18`**; el listado por temporadas (`/tv/{id}/season/{n}`) permanece en backlog de producto hasta nueva fase.
 
 ## 5) Open Questions
 
@@ -1261,3 +1329,4 @@
   - Unit/Integration: **Vitest + Testing Library + `@testing-library/jest-dom`**
   - API mocking en tests: **MSW**
   - E2E crítico (mínimo): **Playwright** (happy paths de Home, Detail, Search)
+- **Favoritos (Phase 18.C)**: en `localStorage` (`cinescope:favorites`) se guardan claves string `movie:{id}` y `tv:{id}`; los valores históricos solo numéricos se tratan como `movie:{id}` al leer. `FavoriteButton` expone `mediaKind` (`movie` por defecto; `tv` en ficha de serie).
