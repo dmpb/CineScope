@@ -967,7 +967,7 @@
   - Riesgo medio de complejidad de UI si no se limita alcance inicial.
   - Depende de `Phase 15.B`, `15.C` y `15.D`.
 
-### Phase 16 — Home Data Orchestration & Resilience
+### Phase 16 — Home Data Orchestration & Resilience ✅
 
 - `Status`: `Completed`
 - `Execution order`: `Phase 16.A -> Phase 16.B -> Phase 16.C -> Phase 16.D -> Phase 16.E`
@@ -1139,6 +1139,19 @@
 
 - Actualizar en este mismo archivo el `Status` de cada `Phase` y `Phase X.Y` (`Pending`, `In Progress`, `Completed`, `Blocked`).
 - Al cerrar una subfase, agregar opcionalmente una línea `Implemented:` con fecha breve y entregables.
+
+### Validation policy for phase execution
+
+- Durante cada subfase (`X.Y`), priorizar validación acotada para velocidad de iteración:
+  - lint solo en archivos modificados.
+  - tests focalizados del área afectada (si aplica).
+  - evitar correr validación global completa en cada micro-cambio.
+- Al completar el lote de subfases planificado para una fase/bloque, ejecutar validación completa una sola vez:
+  - `docker compose exec web npm run lint`
+  - `docker compose exec web npm run type-check`
+  - `docker compose exec web npm run test`
+  - `docker compose exec -e CI= web npm run test:e2e:docker` (cuando haya cambios en flujos UI).
+- Si una subfase toca arquitectura compartida (`types`, layout global, capa `lib` central), se recomienda adelantar al menos un `type-check` global antes de continuar.
 
 ## 4) Out of Scope (for now)
 

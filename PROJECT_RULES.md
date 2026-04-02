@@ -356,6 +356,18 @@ Before creating a new component:
 * Focus on critical UI flows
 * Test components where needed
 
+## Validation execution policy (subphases)
+
+* During each subphase, prioritize fast scoped validation:
+  * Run lint only for modified files.
+  * Run focused tests only for touched areas when applicable.
+  * Avoid running full-project validation on every micro-change.
+* After finishing all planned subphases in a batch/phase, run full validation once:
+  * `docker compose exec web npm run lint`
+  * `docker compose exec web npm run type-check`
+  * `docker compose exec web npm run test`
+  * `docker compose exec -e CI= web npm run test:e2e:docker` (when UI flows changed)
+
 ---
 
 # 27. Development Strategy
