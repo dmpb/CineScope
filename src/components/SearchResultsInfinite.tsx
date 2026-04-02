@@ -3,10 +3,32 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MovieSection } from "@/components/MovieSection";
+import type { SearchMediaKind } from "@/lib/search-params";
 import type { Movie } from "@/types/movie";
+
+function buildSearchApiQuery(
+  query: string,
+  page: number,
+  opts: { mediaKind: SearchMediaKind; year?: number; minVote?: number }
+): string {
+  const params = new URLSearchParams({ q: query, page: String(page) });
+  if (opts.mediaKind !== "all") {
+    params.set("type", opts.mediaKind);
+  }
+  if (opts.year !== undefined) {
+    params.set("year", String(opts.year));
+  }
+  if (opts.minVote !== undefined) {
+    params.set("minVote", String(opts.minVote));
+  }
+  return params.toString();
+}
 
 type SearchResultsInfiniteProps = {
   query: string;
+  mediaKind: SearchMediaKind;
+  year?: number;
+  minVote?: number;
   initialResults: Movie[];
   initialTotalResults: number;
   initialPage: number;
@@ -41,6 +63,9 @@ function mergeUniqueMovies(previous: Movie[], next: Movie[]): Movie[] {
 
 export function SearchResultsInfinite({
   query,
+  mediaKind,
+  year,
+  minVote,
   initialResults,
   initialTotalResults,
   initialPage,
@@ -54,6 +79,16 @@ export function SearchResultsInfinite({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const normalizedQuery = query.trim();
+  const filtersActive = year !== undefined || minVote !== undefined;
+  const displayedResultCount = filtersActive ? results.length : totalResults;
+
+  useEffect(() => {
+    setResults(initialResults);
+    setTotalResults(initialTotalResults);
+    setCurrentPage(initialPage);
+    setTotalPages(initialTotalPages);
+    setErrorMessage(null);
+  }, [query, mediaKind, year, minVote, initialResults, initialTotalResults, initialPage, initialTotalPages]);
 
   const hasMore = useMemo(() => {
     if (totalPages > 0) {
@@ -72,14 +107,17 @@ export function SearchResultsInfinite({
 
     try {
       const nextPage = currentPage + 1;
-      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=${nextPage}`);
+      const qs = buildSearchApiQuery(query, nextPage, { mediaKind, year, minVote });
+      const response = await fetch(`/api/search?${qs}`);
       const data = (await response.json()) as SearchResponse;
       if (!response.ok) {
         throw new Error(data.error || "No se pudo cargar la siguiente pagina.");
       }
 
       setResults((prev) => mergeUniqueMovies(prev, data.results));
-      setTotalResults(data.totalResults);
+      if (!filtersActive) {
+        setTotalResults(data.totalResults);
+      }
       setCurrentPage(data.currentPage);
       setTotalPages(data.totalPages);
     } catch (error) {
@@ -87,7 +125,7 @@ export function SearchResultsInfinite({
     } finally {
       setIsLoadingMore(false);
     }
-  }, [currentPage, hasMore, isLoadingMore, query]);
+  }, [currentPage, filtersActive, hasMore, isLoadingMore, mediaKind, minVote, query, year]);
 
   useEffect(() => {
     const element = sentinelRef.current;
@@ -108,28 +146,34 @@ export function SearchResultsInfinite({
     return () => observer.disconnect();
   }, [errorMessage, hasMore, loadNextPage]);
 
+  const emptyCopy =
+    mediaKind === "tv"
+      ? `No se encontraron series para "${query}". Prueba el titulo original o un termino mas corto.`
+      : mediaKind === "movie"
+        ? `No se encontraron peliculas para "${query}". Intenta con menos palabras, el titulo original o un termino mas general.`
+        : `No se encontraron peliculas ni series para "${query}". Intenta con menos palabras, el titulo original o un termino mas general.`;
+
   return (
-    <section className="space-y-4 sm:space-y-5" aria-labelledby="search-results-title">
+    <section className="w-full max-w-none space-y-4 sm:space-y-5" aria-labelledby="search-results-title">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <h2 id="search-results-title" className="text-xl font-semibold text-zinc-100 sm:text-2xl">
           Resultados para "{query}"
         </h2>
         <div className="text-sm text-zinc-400">
           <p>
-            {totalResults} {totalResults === 1 ? "resultado" : "resultados"}
+            {displayedResultCount}{" "}
+            {displayedResultCount === 1 ? "resultado" : "resultados"}
+            {filtersActive ? " mostrados" : ""}
           </p>
           <p className="text-xs uppercase tracking-wide text-zinc-500">
-            Vista en grid · Pagina {currentPage}{totalPages > 0 ? ` de ${totalPages}` : ""}
+            {filtersActive ? "Filtro local · " : ""}
+            Vista en grid · Pagina {currentPage}
+            {totalPages > 0 ? ` de ${totalPages}` : ""}
           </p>
         </div>
       </header>
 
-      <MovieSection
-        title="Coincidencias"
-        movies={results}
-        emptyMessage={`No se encontraron peliculas para "${query}". Intenta con menos palabras, el titulo original o un termino mas general.`}
-        layout="grid"
-      />
+      <MovieSection title="Coincidencias" movies={results} emptyMessage={emptyCopy} layout="grid" />
 
       {results.length === 0 && normalizedQuery.length > 0 && (
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4 text-sm text-zinc-300">
@@ -137,7 +181,7 @@ export function SearchResultsInfinite({
           <ul className="mt-2 list-disc space-y-1 pl-5 text-zinc-400">
             <li>Prueba sin acentos o con el titulo original.</li>
             <li>Usa menos palabras y evita signos especiales.</li>
-            <li>Explora categorias para descubrir titulos relacionados.</li>
+            <li>Ajusta los filtros o explora peliculas y series desde el menu.</li>
           </ul>
           <div className="mt-3 flex flex-wrap gap-3 text-xs">
             <Link href="/movies" className="focus-ring rounded border border-zinc-700 px-2.5 py-1.5 hover:border-zinc-500">
@@ -185,7 +229,9 @@ export function SearchResultsInfinite({
       <p aria-live="polite" className="sr-only">
         {errorMessage
           ? `Error: ${errorMessage}`
-          : `Mostrando ${results.length} de ${totalResults} resultados para ${normalizedQuery || "busqueda"}.`}
+          : filtersActive
+            ? `${results.length} resultados visibles con filtros para ${normalizedQuery || "busqueda"}.`
+            : `Mostrando ${results.length} de ${totalResults} resultados para ${normalizedQuery || "busqueda"}.`}
       </p>
       <div ref={sentinelRef} aria-hidden="true" className="h-4 w-full" />
     </section>

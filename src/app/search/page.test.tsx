@@ -8,11 +8,11 @@ vi.mock("@/lib/env", () => ({
 }));
 
 vi.mock("@/lib/tmdb", () => ({
-  searchMovies: vi.fn()
+  searchMedia: vi.fn()
 }));
 
 import { getOptionalTmdbBearerToken } from "@/lib/env";
-import { searchMovies } from "@/lib/tmdb";
+import { searchMedia } from "@/lib/tmdb";
 
 const searchFixture: SearchResult = {
   results: [
@@ -46,7 +46,7 @@ describe("Search page", () => {
 
   it("renders query results", async () => {
     vi.mocked(getOptionalTmdbBearerToken).mockReturnValue("token");
-    vi.mocked(searchMovies).mockResolvedValue(searchFixture);
+    vi.mocked(searchMedia).mockResolvedValue(searchFixture);
 
     render(await SearchPage({ searchParams: Promise.resolve({ q: "matrix" }) }));
 

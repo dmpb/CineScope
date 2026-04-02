@@ -1,5 +1,8 @@
 import { getOptionalTmdbBearerToken } from "@/lib/env";
+import { filterSearchResults, type SearchMediaKind, type SearchMediaOptions } from "@/lib/search-params";
 import type { CastMember, CrewHighlights, Movie, SearchResult, WatchProvider } from "@/types/movie";
+
+export type { SearchMediaKind, SearchMediaOptions } from "@/lib/search-params";
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/original";
@@ -68,6 +71,22 @@ type TmdbTvListResponse = {
 
 type TmdbSearchResponse = {
   results?: TmdbMovieDto[];
+  total_results?: number;
+  page?: number;
+  total_pages?: number;
+};
+
+type TmdbTvSearchResponse = {
+  results?: TmdbTvDto[];
+  total_results?: number;
+  page?: number;
+  total_pages?: number;
+};
+
+type TmdbMultiSearchRecord = (TmdbMovieDto | TmdbTvDto) & { media_type?: string };
+
+type TmdbMultiSearchResponse = {
+  results?: TmdbMultiSearchRecord[];
   total_results?: number;
   page?: number;
   total_pages?: number;
@@ -1133,27 +1152,42 @@ export async function getSimilarTvById(id: number): Promise<Movie[]> {
   return normalizeSimilarMovies(id, enrichedShows);
 }
 
-export async function searchMovies(query: string, page = 1): Promise<SearchResult> {
-  const trimmed = query.trim();
-  const normalizedPage = Number.isInteger(page) && page > 0 ? page : 1;
-  if (!trimmed) {
-    return { results: [], totalResults: 0, currentPage: 1, totalPages: 0 };
-  }
+const MOCK_SEARCH_PAGE_SIZE = 2;
 
-  if (isTmdbMockMode) {
-    const queryLower = trimmed.toLowerCase();
-    const allResults = getMockMovies().filter((movie) => movie.title.toLowerCase().includes(queryLower));
-    const pageSize = 2;
-    const start = (normalizedPage - 1) * pageSize;
-    const results = allResults.slice(start, start + pageSize);
-    return {
-      results,
-      totalResults: allResults.length,
-      currentPage: normalizedPage,
-      totalPages: Math.ceil(allResults.length / pageSize)
-    };
-  }
+function mockSearchMovieHits(trimmed: string): Movie[] {
+  const queryLower = trimmed.toLowerCase();
+  return getMockMovies().filter((movie) => movie.title.toLowerCase().includes(queryLower));
+}
 
+function mockSearchTvHits(trimmed: string): Movie[] {
+  const queryLower = trimmed.toLowerCase();
+  return getMockTvShows().filter(
+    (show) =>
+      show.title.toLowerCase().includes(queryLower) ||
+      (show.originalTitle ?? "").toLowerCase().includes(queryLower)
+  );
+}
+
+function mockSearchMultiHits(trimmed: string): Movie[] {
+  const movies = mockSearchMovieHits(trimmed);
+  const tvs = mockSearchTvHits(trimmed);
+  return [...movies, ...tvs].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+}
+
+function paginateMockSearchResults(allResults: Movie[], normalizedPage: number): SearchResult {
+  const pageSize = MOCK_SEARCH_PAGE_SIZE;
+  const start = (normalizedPage - 1) * pageSize;
+  const results = allResults.slice(start, start + pageSize);
+  const totalPages = allResults.length === 0 ? 0 : Math.ceil(allResults.length / pageSize);
+  return {
+    results,
+    totalResults: allResults.length,
+    currentPage: normalizedPage,
+    totalPages
+  };
+}
+
+async function fetchSearchMoviesFromApi(trimmed: string, normalizedPage: number): Promise<SearchResult> {
   const path = `/search/movie?${new URLSearchParams({
     query: trimmed,
     page: String(normalizedPage)
@@ -1172,6 +1206,108 @@ export async function searchMovies(query: string, page = 1): Promise<SearchResul
     currentPage: data.page ?? normalizedPage,
     totalPages: data.total_pages ?? 0
   };
+}
+
+async function fetchSearchTvFromApi(trimmed: string, normalizedPage: number): Promise<SearchResult> {
+  const path = `/search/tv?${new URLSearchParams({
+    query: trimmed,
+    page: String(normalizedPage)
+  }).toString()}`;
+  const data = await tmdbFetchJson<TmdbTvSearchResponse>(path);
+
+  if (!data) {
+    return { results: [], totalResults: 0, currentPage: normalizedPage, totalPages: 0 };
+  }
+
+  const rawResults = (data.results ?? []).map(mapTvDto);
+  const results = await enrichTvWithDetails(rawResults, 6);
+  return {
+    results,
+    totalResults: data.total_results ?? results.length,
+    currentPage: data.page ?? normalizedPage,
+    totalPages: data.total_pages ?? 0
+  };
+}
+
+async function fetchSearchMultiFromApi(trimmed: string, normalizedPage: number): Promise<SearchResult> {
+  const path = `/search/multi?${new URLSearchParams({
+    query: trimmed,
+    page: String(normalizedPage)
+  }).toString()}`;
+  const data = await tmdbFetchJson<TmdbMultiSearchResponse>(path);
+
+  if (!data) {
+    return { results: [], totalResults: 0, currentPage: normalizedPage, totalPages: 0 };
+  }
+
+  const records = data.results ?? [];
+  const movies: Movie[] = [];
+  const tvs: Movie[] = [];
+  const order: Array<{ kind: "movie" | "tv"; index: number }> = [];
+
+  for (const raw of records) {
+    const mt = raw.media_type;
+    if (mt === "movie") {
+      order.push({ kind: "movie", index: movies.length });
+      movies.push(mapMovieDto(raw as TmdbMovieDto));
+    } else if (mt === "tv") {
+      order.push({ kind: "tv", index: tvs.length });
+      tvs.push(mapTvDto(raw as TmdbTvDto));
+    }
+  }
+
+  const enrichedMovies = await enrichMoviesWithDetails(movies, 6);
+  const enrichedTvs = await enrichTvWithDetails(tvs, 6);
+  const byKind = { movie: enrichedMovies, tv: enrichedTvs };
+  const results = order.map((o) => byKind[o.kind][o.index]);
+  results.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+
+  return {
+    results,
+    totalResults: data.total_results ?? results.length,
+    currentPage: data.page ?? normalizedPage,
+    totalPages: data.total_pages ?? 0
+  };
+}
+
+export async function searchMedia(query: string, page = 1, options?: SearchMediaOptions): Promise<SearchResult> {
+  const trimmed = query.trim();
+  const normalizedPage = Number.isInteger(page) && page > 0 ? page : 1;
+  const kind: SearchMediaKind = options?.kind ?? "all";
+  const year = options?.year;
+  const minVote = options?.minVote;
+
+  if (!trimmed) {
+    return { results: [], totalResults: 0, currentPage: 1, totalPages: 0 };
+  }
+
+  let base: SearchResult;
+
+  if (isTmdbMockMode) {
+    if (kind === "movie") {
+      base = paginateMockSearchResults(mockSearchMovieHits(trimmed), normalizedPage);
+    } else if (kind === "tv") {
+      base = paginateMockSearchResults(mockSearchTvHits(trimmed), normalizedPage);
+    } else {
+      base = paginateMockSearchResults(mockSearchMultiHits(trimmed), normalizedPage);
+    }
+  } else if (kind === "movie") {
+    base = await fetchSearchMoviesFromApi(trimmed, normalizedPage);
+  } else if (kind === "tv") {
+    base = await fetchSearchTvFromApi(trimmed, normalizedPage);
+  } else {
+    base = await fetchSearchMultiFromApi(trimmed, normalizedPage);
+  }
+
+  const refined = filterSearchResults(base.results, { year, minVote });
+  return {
+    ...base,
+    results: refined
+  };
+}
+
+export async function searchMovies(query: string, page = 1): Promise<SearchResult> {
+  return searchMedia(query, page, { kind: "movie" });
 }
 
 export async function getMovieById(id: number): Promise<Movie | null> {
