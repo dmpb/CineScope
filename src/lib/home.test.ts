@@ -134,8 +134,7 @@ describe("home orchestration", () => {
       onTheAirTv: [{ ...movieFixture, id: 8, mediaType: "tv" }],
       airingTodayTv: [{ ...movieFixture, id: 9, mediaType: "tv" }],
       genreSections: [],
-      featuredMovie: movieFixture,
-      featuredTrailerUrl: null,
+      featuredSlides: [{ movie: movieFixture, trailerUrl: null }],
       hasError: false
     };
 

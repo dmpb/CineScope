@@ -46,12 +46,16 @@ const homeDataFixture: HomeData = {
     { genre: { id: 28, name: "Action" }, movies: [] },
     { genre: { id: 35, name: "Comedy" }, movies: [] }
   ],
-  featuredMovie: {
-    ...movieFixture,
-    genres: ["Action", "Science Fiction"],
-    runtime: 148
-  },
-  featuredTrailerUrl: "https://www.youtube.com/embed/YoHD9XEInc0",
+  featuredSlides: [
+    {
+      movie: {
+        ...movieFixture,
+        genres: ["Action", "Science Fiction"],
+        runtime: 148
+      },
+      trailerUrl: "https://www.youtube.com/embed/YoHD9XEInc0"
+    }
+  ],
   hasError: false
 };
 
@@ -99,8 +103,7 @@ describe("HomePage", () => {
     vi.mocked(getHomeData).mockResolvedValue({
       ...homeDataFixture,
       trending: [],
-      featuredMovie: null,
-      featuredTrailerUrl: null
+      featuredSlides: []
     });
     vi.mocked(buildHomeRowSections).mockReturnValue([]);
     vi.mocked(selectHomeStripMovies).mockReturnValue([]);

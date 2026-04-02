@@ -3,15 +3,15 @@ import { FeaturedStrip } from "@/components/FeaturedStrip";
 import { MovieSection } from "@/components/MovieSection";
 import { StateMessage } from "@/components/StateMessage";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
-import { buildHomeRowSections, getHomeData, selectHomeStripMovies } from "@/lib/home";
+import { buildSeriesRowSections, getSeriesPageData, selectSeriesStripMovies } from "@/lib/home";
 
-export default async function HomePage() {
+export default async function SeriesPage() {
   const hasToken = Boolean(getOptionalTmdbBearerToken());
-  const homeData = await getHomeData();
-  const { featuredSlides, hasError } = homeData;
-  const rowSections = buildHomeRowSections(homeData);
-  const hasAnyMovies = rowSections.some((section) => section.movies.length > 0);
-  const stripMovies = selectHomeStripMovies(homeData);
+  const seriesData = await getSeriesPageData();
+  const { featuredSlides, hasError } = seriesData;
+  const rowSections = buildSeriesRowSections(seriesData);
+  const hasAnySeries = rowSections.some((section) => section.movies.length > 0);
+  const stripMovies = selectSeriesStripMovies(seriesData);
 
   return (
     <main className="-mt-20 home-cinematic-shell">
@@ -26,7 +26,7 @@ export default async function HomePage() {
 
         {hasError && (
           <StateMessage variant="error">
-            Ocurrio un error al cargar datos de TMDb. Intenta nuevamente en unos segundos.
+            Ocurrio un error al cargar series desde TMDb. Intenta nuevamente en unos segundos.
           </StateMessage>
         )}
 
@@ -34,13 +34,13 @@ export default async function HomePage() {
           <div key={section.key} className="space-y-8 sm:space-y-10">
             <MovieSection title={section.title} movies={section.movies} emptyMessage={section.emptyMessage} />
             {index % 2 === 1 && stripMovies[Math.floor(index / 2)] && (
-              <FeaturedStrip movie={stripMovies[Math.floor(index / 2)]} label="Seleccion de la semana" />
+              <FeaturedStrip movie={stripMovies[Math.floor(index / 2)]} label="Recomendacion de series" />
             )}
           </div>
         ))}
 
-        {!hasError && hasToken && !hasAnyMovies && (
-          <StateMessage variant="empty">No hay resultados para mostrar por ahora.</StateMessage>
+        {!hasError && hasToken && !hasAnySeries && (
+          <StateMessage variant="empty">No hay series para mostrar por ahora.</StateMessage>
         )}
       </div>
     </main>

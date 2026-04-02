@@ -56,10 +56,10 @@ export function Navbar() {
             <Link href="/" className={navLinkClassName(pathname === "/")}>
               Home
             </Link>
-            <Link href="/" className={navLinkClassName(pathname === "/movies")}>
+            <Link href="/movies" className={navLinkClassName(pathname === "/movies")}>
               Peliculas
             </Link>
-            <Link href="/" className={navLinkClassName(pathname === "/series")}>
+            <Link href="/series" className={navLinkClassName(pathname === "/series")}>
               Series
             </Link>
           </nav>
