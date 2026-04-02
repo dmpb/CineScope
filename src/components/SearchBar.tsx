@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 type SearchBarProps = {
   defaultValue?: string;
@@ -9,10 +8,9 @@ type SearchBarProps = {
 };
 
 export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps) {
-  const searchParams = useSearchParams();
+  const initialValue = defaultValue.trim();
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const queryFromUrl = searchParams.get("q")?.trim() ?? "";
-  const resolvedDefaultValue = defaultValue || queryFromUrl;
+  const [inputValue, setInputValue] = useState(initialValue);
   const formClassName = compact
     ? "group flex w-full items-center justify-end gap-2"
     : "flex w-full max-w-2xl flex-col gap-2 sm:flex-row";
@@ -26,9 +24,19 @@ export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps
     ? "focus-ring premium-transition h-9 rounded-full border border-zinc-600 bg-zinc-900/70 px-3 text-xs font-semibold uppercase tracking-wide text-zinc-200 hover:border-zinc-400 hover:text-zinc-100"
     : "focus-ring premium-transition rounded-xl border border-zinc-600 bg-zinc-900/80 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:border-zinc-400 hover:text-zinc-100";
 
+  useEffect(() => {
+    // Keep hydration deterministic while still restoring ?q= on client routes.
+    if (initialValue.length > 0 || typeof window === "undefined") {
+      return;
+    }
+    const query = new URLSearchParams(window.location.search).get("q")?.trim() ?? "";
+    if (query.length > 0) {
+      setInputValue(query);
+    }
+  }, [initialValue]);
+
   return (
     <form
-      key={resolvedDefaultValue}
       action="/search"
       method="get"
       role="search"
@@ -43,24 +51,25 @@ export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps
         id="search-query"
         type="search"
         name="q"
-        defaultValue={resolvedDefaultValue}
+        value={inputValue}
         placeholder="Busca una pelicula..."
         className={inputClassName}
+        onChange={(event) => setInputValue(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.preventDefault();
-            event.currentTarget.value = "";
+            setInputValue("");
             event.currentTarget.blur();
           }
         }}
       />
-      {resolvedDefaultValue.length > 0 && (
+      {inputValue.trim().length > 0 && (
         <button
           type="button"
           aria-label="Limpiar busqueda"
           onClick={() => {
+            setInputValue("");
             if (inputRef.current) {
-              inputRef.current.value = "";
               inputRef.current.focus();
             }
           }}

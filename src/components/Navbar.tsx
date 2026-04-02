@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SearchBar } from "@/components/SearchBar";
 
 export function Navbar() {
@@ -65,9 +65,7 @@ export function Navbar() {
           </nav>
 
           <div className="w-full lg:ml-auto lg:max-w-md">
-            <Suspense fallback={<div className="h-9 w-full rounded-full border border-zinc-800/70 bg-zinc-900/70" />}>
-              <SearchBar compact />
-            </Suspense>
+            <SearchBar compact />
           </div>
         </div>
       </div>
