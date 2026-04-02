@@ -69,6 +69,12 @@ Required Endpoints:
 * GET `/movie/top_rated`
 * GET `/search/movie?query={query}`
 * GET `/movie/{id}`
+* GET `/trending/tv/week`
+* GET `/tv/popular`
+* GET `/tv/top_rated`
+* GET `/tv/on_the_air`
+* GET `/tv/airing_today`
+* GET `/tv/{id}`
 
 Image Base URL:
 https://image.tmdb.org/t/p/original
@@ -99,6 +105,19 @@ Do NOT use raw API responses in components.
 * backdropPath: string
 * rating: number
 * releaseDate: string
+
+### Extended Model Rule (Movie + TV)
+
+For mixed Home experiences, the project MUST support a normalized media contract:
+
+* mediaType: `"movie"` | `"tv"`
+* title: string (movie `title` / tv `name`)
+* releaseDate: string (movie `release_date` / tv `first_air_date`)
+* posterPath: string
+* backdropPath: string
+* rating: number
+
+All Movie/TV normalization MUST happen in `/lib/tmdb.ts`.
 
 ---
 
@@ -159,6 +178,7 @@ src/
 ├── app/
 │   ├── page.tsx
 │   ├── movie/[id]/page.tsx
+│   ├── tv/[id]/page.tsx
 │   ├── search/page.tsx
 │
 ├── components/
@@ -167,7 +187,8 @@ src/
 │   └── tmdb.ts
 │
 ├── types/
-│   └── movie.ts
+│   ├── movie.ts
+│   └── media.ts
 ```
 
 ---
@@ -263,8 +284,11 @@ next: { revalidate: 60 }
 ## API Naming Rules
 
 * getTrendingMovies()
+* getTrendingTv()
 * getPopularMovies()
+* getPopularTv()
 * getMovieById(id)
+* getTvById(id)
 * searchMovies(query)
 
 ---
@@ -274,6 +298,9 @@ next: { revalidate: 60 }
 * Use lowercase routes
 * Follow Next.js conventions
 * Use dynamic routes for IDs
+* Mixed catalogs MUST route by media type:
+  * Movies -> `/movie/{id}`
+  * TV -> `/tv/{id}`
 
 ---
 
@@ -317,6 +344,8 @@ next: { revalidate: 60 }
 # 22. Core Entities
 
 * Movie
+* TVSeries
+* MediaItem
 * Genre
 * SearchResult
 
@@ -387,6 +416,8 @@ Modules:
 * MVP-first
 * No overengineering
 * No unnecessary complexity
+* TV scope is limited to mixed Home discovery and baseline detail routing.
+* Do not introduce backend/persistence for TV-specific personalization.
 
 ---
 

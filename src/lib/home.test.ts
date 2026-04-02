@@ -3,26 +3,40 @@ import type { Movie } from "@/types/movie";
 import { getHomeData, selectHomeStripMovies, type HomeData } from "@/lib/home";
 
 vi.mock("@/lib/tmdb", () => ({
+  getAiringTodayTv: vi.fn(),
   getMovieById: vi.fn(),
   getMovieGenres: vi.fn(),
   getMovieTrailerById: vi.fn(),
   getMoviesByGenre: vi.fn(),
   getNowPlayingMovies: vi.fn(),
+  getOnTheAirTv: vi.fn(),
   getPopularMovies: vi.fn(),
+  getPopularTv: vi.fn(),
   getTopRatedMovies: vi.fn(),
+  getTopRatedTv: vi.fn(),
   getTrendingMovies: vi.fn(),
+  getTrendingTv: vi.fn(),
+  getTvById: vi.fn(),
+  getTvTrailerById: vi.fn(),
   getUpcomingMovies: vi.fn()
 }));
 
 import {
+  getAiringTodayTv,
   getMovieById,
   getMovieGenres,
   getMovieTrailerById,
   getMoviesByGenre,
   getNowPlayingMovies,
+  getOnTheAirTv,
   getPopularMovies,
+  getPopularTv,
   getTopRatedMovies,
+  getTopRatedTv,
   getTrendingMovies,
+  getTrendingTv,
+  getTvById,
+  getTvTrailerById,
   getUpcomingMovies
 } from "@/lib/tmdb";
 
@@ -65,9 +79,16 @@ describe("home orchestration", () => {
       { id: 28, name: "Action" },
       { id: 35, name: "Comedy" }
     ]);
+    vi.mocked(getTrendingTv).mockResolvedValue([]);
+    vi.mocked(getPopularTv).mockResolvedValue([]);
+    vi.mocked(getTopRatedTv).mockResolvedValue([]);
+    vi.mocked(getOnTheAirTv).mockResolvedValue([]);
+    vi.mocked(getAiringTodayTv).mockResolvedValue([]);
     vi.mocked(getMoviesByGenre).mockResolvedValue([]);
     vi.mocked(getMovieTrailerById).mockResolvedValue(null);
     vi.mocked(getMovieById).mockResolvedValue(movieFixture);
+    vi.mocked(getTvTrailerById).mockResolvedValue(null);
+    vi.mocked(getTvById).mockResolvedValue(null);
 
     const data = await getHomeData();
 
@@ -82,6 +103,11 @@ describe("home orchestration", () => {
     vi.mocked(getTopRatedMovies).mockResolvedValue([]);
     vi.mocked(getNowPlayingMovies).mockResolvedValue([]);
     vi.mocked(getUpcomingMovies).mockResolvedValue([]);
+    vi.mocked(getTrendingTv).mockResolvedValue([]);
+    vi.mocked(getPopularTv).mockResolvedValue([]);
+    vi.mocked(getTopRatedTv).mockResolvedValue([]);
+    vi.mocked(getOnTheAirTv).mockResolvedValue([]);
+    vi.mocked(getAiringTodayTv).mockResolvedValue([]);
     vi.mocked(getMovieGenres).mockResolvedValue([
       { id: 99, name: "Documentary" },
       { id: 35, name: "Comedy" },
@@ -102,6 +128,11 @@ describe("home orchestration", () => {
       topRated: [{ ...movieFixture, id: 3 }],
       nowPlaying: [{ ...movieFixture, id: 4 }],
       upcoming: [{ ...movieFixture, id: 5 }],
+      trendingTv: [{ ...movieFixture, id: 6, mediaType: "tv" }],
+      popularTv: [{ ...movieFixture, id: 7, mediaType: "tv" }],
+      topRatedTv: [{ ...movieFixture, id: 7, mediaType: "tv" }],
+      onTheAirTv: [{ ...movieFixture, id: 8, mediaType: "tv" }],
+      airingTodayTv: [{ ...movieFixture, id: 9, mediaType: "tv" }],
       genreSections: [],
       featuredMovie: movieFixture,
       featuredTrailerUrl: null,
@@ -109,6 +140,6 @@ describe("home orchestration", () => {
     };
 
     const stripMovies = selectHomeStripMovies(data);
-    expect(stripMovies.map((movie) => movie.id)).toEqual([3, 4, 5, 2]);
+    expect(stripMovies.map((movie) => movie.id)).toEqual([3, 7, 4, 9, 5, 8, 2]);
   });
 });

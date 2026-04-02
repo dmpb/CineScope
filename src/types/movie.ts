@@ -1,5 +1,6 @@
 export interface Movie {
   id: number;
+  mediaType?: "movie" | "tv";
   title: string;
   originalTitle?: string;
   tagline?: string;

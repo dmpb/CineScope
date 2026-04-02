@@ -8,15 +8,9 @@ import { buildHomeRowSections, getHomeData, selectHomeStripMovies } from "@/lib/
 export default async function HomePage() {
   const hasToken = Boolean(getOptionalTmdbBearerToken());
   const homeData = await getHomeData();
-  const { trending, popular, topRated, nowPlaying, upcoming, genreSections, featuredMovie, featuredTrailerUrl, hasError } = homeData;
-  const hasAnyMovies =
-    trending.length > 0 ||
-    popular.length > 0 ||
-    topRated.length > 0 ||
-    nowPlaying.length > 0 ||
-    upcoming.length > 0 ||
-    genreSections.some((section) => section.movies.length > 0);
+  const { featuredMovie, featuredTrailerUrl, hasError } = homeData;
   const rowSections = buildHomeRowSections(homeData);
+  const hasAnyMovies = rowSections.some((section) => section.movies.length > 0);
   const stripMovies = selectHomeStripMovies(homeData);
 
   return (

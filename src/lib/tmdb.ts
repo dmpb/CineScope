@@ -25,8 +25,32 @@ type TmdbMovieDto = {
   genres?: TmdbGenreDto[];
 };
 
+type TmdbTvDto = {
+  id: number;
+  name?: string;
+  original_name?: string;
+  tagline?: string;
+  overview?: string | null;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  vote_average?: number;
+  vote_count?: number;
+  popularity?: number;
+  status?: string;
+  production_countries?: Array<{ iso_3166_1?: string; name?: string }>;
+  origin_country?: string[];
+  first_air_date?: string;
+  original_language?: string;
+  episode_run_time?: number[];
+  genres?: TmdbGenreDto[];
+};
+
 type TmdbMovieListResponse = {
   results?: TmdbMovieDto[];
+};
+
+type TmdbTvListResponse = {
+  results?: TmdbTvDto[];
 };
 
 type TmdbSearchResponse = {
@@ -192,6 +216,59 @@ const MOCK_MOVIES: TmdbMovieDto[] = [
   }
 ];
 
+const MOCK_TV: TmdbTvDto[] = [
+  {
+    id: 1399,
+    name: "Game of Thrones",
+    original_name: "Game of Thrones",
+    overview: "Noble families fight for control of the Iron Throne in Westeros.",
+    poster_path: "/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
+    backdrop_path: "/suopoADq0k8YZr4dQXcU6pToj6s.jpg",
+    vote_average: 8.4,
+    vote_count: 24000,
+    first_air_date: "2011-04-17",
+    original_language: "en",
+    episode_run_time: [57],
+    genres: [
+      { id: 10765, name: "Sci-Fi & Fantasy" },
+      { id: 18, name: "Drama" }
+    ]
+  },
+  {
+    id: 1396,
+    name: "Breaking Bad",
+    original_name: "Breaking Bad",
+    overview: "A chemistry teacher turns to producing methamphetamine.",
+    poster_path: "/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg",
+    backdrop_path: "/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg",
+    vote_average: 8.9,
+    vote_count: 14000,
+    first_air_date: "2008-01-20",
+    original_language: "en",
+    episode_run_time: [47],
+    genres: [
+      { id: 18, name: "Drama" },
+      { id: 80, name: "Crime" }
+    ]
+  },
+  {
+    id: 87108,
+    name: "Chernobyl",
+    original_name: "Chernobyl",
+    overview: "A dramatization of the Chernobyl nuclear disaster.",
+    poster_path: "/hlLXt2tOPT6RRnjiUmoxyG1LTFi.jpg",
+    backdrop_path: "/8uXJ4y4dQ3sS6C0hWfB5w1QdM2A.jpg",
+    vote_average: 8.7,
+    vote_count: 6200,
+    first_air_date: "2019-05-06",
+    original_language: "en",
+    episode_run_time: [65],
+    genres: [
+      { id: 18, name: "Drama" }
+    ]
+  }
+];
+
 function buildImageUrl(path: string | null | undefined): string {
   if (!path) {
     return "";
@@ -208,6 +285,7 @@ function mapMovieDto(dto: TmdbMovieDto): Movie {
 
   return {
     id: dto.id,
+    mediaType: "movie",
     title: dto.title ?? "",
     originalTitle: dto.original_title ?? "",
     tagline: dto.tagline ?? "",
@@ -226,8 +304,41 @@ function mapMovieDto(dto: TmdbMovieDto): Movie {
   };
 }
 
+function mapTvDto(dto: TmdbTvDto): Movie {
+  const productionCountries = (dto.production_countries ?? [])
+    .map((country) => country.name ?? country.iso_3166_1 ?? "")
+    .filter(Boolean);
+
+  const countryFallback = (dto.origin_country ?? []).filter(Boolean);
+  const runtimeFromEpisode = Array.isArray(dto.episode_run_time) ? dto.episode_run_time.find((value) => typeof value === "number" && value > 0) : 0;
+
+  return {
+    id: dto.id,
+    mediaType: "tv",
+    title: dto.name ?? "",
+    originalTitle: dto.original_name ?? "",
+    tagline: dto.tagline ?? "",
+    overview: dto.overview ?? "",
+    posterPath: buildImageUrl(dto.poster_path),
+    backdropPath: buildImageUrl(dto.backdrop_path),
+    rating: typeof dto.vote_average === "number" ? dto.vote_average : 0,
+    popularity: typeof dto.popularity === "number" ? dto.popularity : 0,
+    releaseDate: dto.first_air_date ?? "",
+    status: dto.status ?? "",
+    productionCountries: productionCountries.length > 0 ? productionCountries : countryFallback,
+    genres: (dto.genres ?? []).map((genre) => genre.name ?? "").filter(Boolean),
+    runtime: typeof runtimeFromEpisode === "number" ? runtimeFromEpisode : 0,
+    language: dto.original_language ?? "",
+    voteCount: typeof dto.vote_count === "number" ? dto.vote_count : 0
+  };
+}
+
 function getMockMovies(): Movie[] {
   return MOCK_MOVIES.map(mapMovieDto);
+}
+
+function getMockTvShows(): Movie[] {
+  return MOCK_TV.map(mapTvDto);
 }
 
 function getMockGenres(): MovieGenre[] {
@@ -238,7 +349,7 @@ function getMockGenres(): MovieGenre[] {
   ];
 }
 
-function getMockCastByMovieId(id: number): CastMember[] {
+function getMockCastByMediaId(id: number): CastMember[] {
   const baseCast: Record<number, CastMember[]> = {
     603: [
       { id: 1, name: "Keanu Reeves", character: "Neo", profilePath: buildImageUrl("/rRdru6REr9i3WIHv2mntpcgxnoY.jpg") },
@@ -249,6 +360,11 @@ function getMockCastByMovieId(id: number): CastMember[] {
       { id: 4, name: "Leonardo DiCaprio", character: "Cobb", profilePath: buildImageUrl("/wo2hJpn04vbtmh0B9utCFdsQhxM.jpg") },
       { id: 5, name: "Joseph Gordon-Levitt", character: "Arthur", profilePath: buildImageUrl("/4U9G4YwTlIEbA6wudwZ2fCRfP7a.jpg") },
       { id: 6, name: "Elliot Page", character: "Ariadne", profilePath: buildImageUrl("/g9BQx4A2dUQXbUoVhM8a1fKTf4Q.jpg") }
+    ],
+    1399: [
+      { id: 7, name: "Emilia Clarke", character: "Daenerys Targaryen", profilePath: buildImageUrl("/86jeYCG5M6hYw4Q2j4WZ1pE5qmy.jpg") },
+      { id: 8, name: "Kit Harington", character: "Jon Snow", profilePath: buildImageUrl("/qhvVweQ66Q8aJxC7F7RoYxYhA2r.jpg") },
+      { id: 9, name: "Peter Dinklage", character: "Tyrion Lannister", profilePath: buildImageUrl("/rW6acN8x4fQf4JQ89G5knYVv2v7.jpg") }
     ]
   };
 
@@ -389,6 +505,37 @@ async function enrichMoviesWithDetails(movies: Movie[], limit = RUNTIME_ENRICH_L
   return [...enrichedSubset, ...movies.slice(boundedLimit)];
 }
 
+async function enrichTvWithDetails(series: Movie[], limit = RUNTIME_ENRICH_LIMIT): Promise<Movie[]> {
+  const boundedLimit = Number.isInteger(limit) && limit > 0 ? limit : RUNTIME_ENRICH_LIMIT;
+  const seriesToEnrich = series.slice(0, boundedLimit);
+
+  const enrichedSubset = await Promise.all(
+    seriesToEnrich.map(async (show) => {
+      if (show.runtime > 0 && show.genres.length > 0) {
+        return show;
+      }
+
+      const detail = await tmdbFetchJson<TmdbTvDto>(`/tv/${show.id}`);
+      if (!detail) {
+        return show;
+      }
+
+      const runtimeFromEpisode = Array.isArray(detail.episode_run_time)
+        ? detail.episode_run_time.find((value) => typeof value === "number" && value > 0)
+        : 0;
+      const detailGenres = (detail.genres ?? []).map((genre) => genre.name ?? "").filter(Boolean);
+
+      return {
+        ...show,
+        runtime: typeof runtimeFromEpisode === "number" && runtimeFromEpisode > 0 ? runtimeFromEpisode : show.runtime,
+        genres: detailGenres.length > 0 ? detailGenres : show.genres
+      };
+    })
+  );
+
+  return [...enrichedSubset, ...series.slice(boundedLimit)];
+}
+
 function normalizeSimilarMovies(targetMovieId: number, movies: Movie[]): Movie[] {
   if (!Number.isFinite(targetMovieId) || targetMovieId <= 0) {
     return [];
@@ -481,6 +628,79 @@ export async function getUpcomingMovies(): Promise<Movie[]> {
 
   const movies = data.results.map(mapMovieDto);
   return enrichMoviesWithDetails(movies);
+}
+
+export async function getTrendingTv(): Promise<Movie[]> {
+  if (isTmdbMockMode) {
+    return getMockTvShows();
+  }
+
+  const data = await tmdbFetchJson<TmdbTvListResponse>("/trending/tv/week");
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  const shows = data.results.map(mapTvDto);
+  return enrichTvWithDetails(shows);
+}
+
+export async function getPopularTv(): Promise<Movie[]> {
+  if (isTmdbMockMode) {
+    const tvShows = getMockTvShows();
+    return [tvShows[1], tvShows[0], tvShows[2]].filter(Boolean);
+  }
+
+  const data = await tmdbFetchJson<TmdbTvListResponse>("/tv/popular");
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  const shows = data.results.map(mapTvDto);
+  return enrichTvWithDetails(shows);
+}
+
+export async function getTopRatedTv(): Promise<Movie[]> {
+  if (isTmdbMockMode) {
+    return getMockTvShows()
+      .slice()
+      .sort((a, b) => b.rating - a.rating);
+  }
+
+  const data = await tmdbFetchJson<TmdbTvListResponse>("/tv/top_rated");
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  const shows = data.results.map(mapTvDto);
+  return enrichTvWithDetails(shows);
+}
+
+export async function getOnTheAirTv(): Promise<Movie[]> {
+  if (isTmdbMockMode) {
+    return [getMockTvShows()[0], getMockTvShows()[2]].filter(Boolean);
+  }
+
+  const data = await tmdbFetchJson<TmdbTvListResponse>("/tv/on_the_air");
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  const shows = data.results.map(mapTvDto);
+  return enrichTvWithDetails(shows);
+}
+
+export async function getAiringTodayTv(): Promise<Movie[]> {
+  if (isTmdbMockMode) {
+    return [getMockTvShows()[2], getMockTvShows()[1]].filter(Boolean);
+  }
+
+  const data = await tmdbFetchJson<TmdbTvListResponse>("/tv/airing_today");
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  const shows = data.results.map(mapTvDto);
+  return enrichTvWithDetails(shows);
 }
 
 export async function getMovieGenres(): Promise<MovieGenre[]> {
@@ -578,16 +798,58 @@ export async function getMovieTrailerById(id: number): Promise<string | null> {
   return selectedTrailer?.key ? `https://www.youtube.com/embed/${selectedTrailer.key}` : null;
 }
 
+export async function getTvTrailerById(id: number): Promise<string | null> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return null;
+  }
+
+  if (isTmdbMockMode) {
+    const mockTrailerByTvId: Record<number, string> = {
+      1399: "KPLWWIOCOOQ",
+      1396: "HhesaQXLuRY",
+      87108: "s9APLXM9Ei8"
+    };
+
+    const trailerKey = mockTrailerByTvId[id];
+    return trailerKey ? `https://www.youtube.com/embed/${trailerKey}` : null;
+  }
+
+  const data = await tmdbFetchJson<TmdbVideoListResponse>(`/tv/${id}/videos`);
+  if (!data?.results?.length) {
+    return null;
+  }
+
+  const selectedTrailer = selectYouTubeTrailer(data.results);
+  return selectedTrailer?.key ? `https://www.youtube.com/embed/${selectedTrailer.key}` : null;
+}
+
 export async function getMovieCastById(id: number): Promise<CastMember[]> {
   if (!Number.isFinite(id) || id <= 0) {
     return [];
   }
 
   if (isTmdbMockMode) {
-    return getMockCastByMovieId(id);
+    return getMockCastByMediaId(id);
   }
 
   const data = await tmdbFetchJson<TmdbCreditsResponse>(`/movie/${id}/credits`);
+  if (!data?.cast?.length) {
+    return [];
+  }
+
+  return data.cast.map(mapCastDto);
+}
+
+export async function getTvCastById(id: number): Promise<CastMember[]> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockCastByMediaId(id);
+  }
+
+  const data = await tmdbFetchJson<TmdbCreditsResponse>(`/tv/${id}/credits`);
   if (!data?.cast?.length) {
     return [];
   }
@@ -753,4 +1015,21 @@ export async function getMovieById(id: number): Promise<Movie | null> {
   }
 
   return mapMovieDto(data);
+}
+
+export async function getTvById(id: number): Promise<Movie | null> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return null;
+  }
+
+  if (isTmdbMockMode) {
+    return getMockTvShows().find((show) => show.id === id) ?? null;
+  }
+
+  const data = await tmdbFetchJson<TmdbTvDto>(`/tv/${id}`);
+  if (!data) {
+    return null;
+  }
+
+  return mapTvDto(data);
 }

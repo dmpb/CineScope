@@ -37,6 +37,11 @@ const homeDataFixture: HomeData = {
   topRated: [],
   nowPlaying: [],
   upcoming: [],
+  trendingTv: [],
+  popularTv: [],
+  topRatedTv: [],
+  onTheAirTv: [],
+  airingTodayTv: [],
   genreSections: [
     { genre: { id: 28, name: "Action" }, movies: [] },
     { genre: { id: 35, name: "Comedy" }, movies: [] }

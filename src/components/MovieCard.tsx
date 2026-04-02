@@ -11,13 +11,16 @@ export function MovieCard({ movie }: MovieCardProps) {
   const movieTitle = movie.title || "Sin titulo";
   const movieYear = movie.releaseDate ? movie.releaseDate.slice(0, 4) : "N/D";
   const runtimeText = movie.runtime > 0 ? `${movie.runtime} min` : "Duracion N/D";
+  const isTv = movie.mediaType === "tv";
+  const detailHref = isTv ? `/tv/${movie.id}` : `/movie/${movie.id}`;
+  const mediaLabel = isTv ? "serie" : "pelicula";
 
   return (
     <article className="relative">
-      <FavoriteButton movieId={movie.id} movieTitle={movieTitle} />
+      {!isTv && <FavoriteButton movieId={movie.id} movieTitle={movieTitle} />}
       <Link
-        href={`/movie/${movie.id}`}
-        aria-label={`Ver detalle de ${movieTitle}`}
+        href={detailHref}
+        aria-label={`Ver detalle de ${mediaLabel} ${movieTitle}`}
         className="focus-ring premium-transition group glass-surface-soft block overflow-hidden rounded-xl hover:-translate-y-1 hover:border-zinc-500 hover:shadow-xl hover:shadow-black/40"
       >
         <div className="relative aspect-[2/3] w-full bg-zinc-800 overflow-hidden">

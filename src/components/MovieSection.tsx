@@ -20,7 +20,7 @@ export function MovieSection({ title, movies, emptyMessage }: MovieSectionProps)
         {title}
       </h2>
       {movies.length > 0 ? (
-        <ul className="horizontal-scroll-row" role="list" aria-label={`Fila de peliculas: ${title}`}>
+        <ul className="horizontal-scroll-row" role="list" aria-label={`Fila de titulos: ${title}`}>
           {movies.map((movie) => (
             <li key={movie.id} className="horizontal-scroll-item min-w-[45%] sm:min-w-[31%] md:min-w-[23%] lg:min-w-[19%] xl:min-w-[16%]">
               <MovieCard movie={movie} />

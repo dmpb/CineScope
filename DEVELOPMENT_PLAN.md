@@ -1092,6 +1092,83 @@
   - Riesgo bajo; posible ruido de logs si no se regula.
   - Depende de `Phase 16.A` y `Phase 16.B`.
 
+### Phase 17 — Mixed Home Catalog (Movies + TV) ✅
+
+- `Status`: `Completed`
+- `Execution order`: `Phase 17.A -> Phase 17.B -> Phase 17.C`
+
+#### Phase 17.A — TV Data Layer & Unified Media Model ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Extensión de `src/lib/tmdb.ts` con endpoints TV (`trending/popular/top_rated/on_the_air/airing_today`, detalle, trailer, cast), normalización `name -> title` y `first_air_date -> releaseDate`, y `mediaType` agregado al contrato de `Movie`.
+- **Objective**
+  - Extender la capa de datos para soportar series (`TV`) y habilitar un modelo unificado de media en Home.
+- **Definition of done**
+  - Endpoints TV integrados en `src/lib/tmdb.ts` con normalización consistente.
+  - Existe contrato de datos unificado para render mixto (películas + series).
+  - No se consumen DTO crudos en componentes.
+- **Chunks**
+  1. **Agregar funciones TV en capa TMDb**
+     - Áreas/archivos: `src/lib/tmdb.ts`.
+     - Verificación: disponibles funciones para `trending/popular/top_rated/on_the_air/airing_today` de TV.
+  2. **Definir modelo unificado de media**
+     - Áreas/archivos: `src/types/*`.
+     - Verificación: `mediaType` explícito (`movie`/`tv`) y campos compatibles para Home cards.
+  3. **Normalización y fallback de campos TV**
+     - Áreas/archivos: `src/lib/tmdb.ts`.
+     - Verificación: `name -> title`, `first_air_date -> releaseDate` y fallbacks robustos.
+- **Risks / dependencies**
+  - Riesgo medio por cambios de contratos compartidos.
+  - Depende de estabilidad de endpoints TV en TMDb.
+
+#### Phase 17.B — Home Mixed Rails Composition ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Orquestación Home extendida para datasets TV en `src/lib/home.ts`, rails mixtos movies/series en `buildHomeRowSections`, strips mixtos deduplicados y navegación por tipo en cards/strips/banner.
+- **Objective**
+  - Componer Home con variedad real de películas y series en secciones diferenciadas y/o mixtas.
+- **Definition of done**
+  - Home muestra rails de películas y rails de series con orden claro.
+  - `MovieSection`/cards soportan render mixto sin romper accesibilidad.
+  - Banner destacado mantiene consistencia visual con dataset mixto.
+- **Chunks**
+  1. **Extender orquestación Home para TV**
+     - Áreas/archivos: `src/lib/home.ts`, `src/app/page.tsx`.
+     - Verificación: payload Home incluye datasets TV y combinación definida por prioridad.
+  2. **Ajustar componentes de listado para mediaType**
+     - Áreas/archivos: `src/components/MovieSection.tsx`, `src/components/MovieCard.tsx`.
+     - Verificación: cards construyen rutas/labels correctos según tipo de media.
+  3. **Actualizar tests de Home**
+     - Áreas/archivos: `src/app/page.test.tsx`, `src/lib/home.test.ts`.
+     - Verificación: casos movies-only, tv-only y mixed cubiertos.
+- **Risks / dependencies**
+  - Riesgo medio de regresión visual por densidad de secciones.
+  - Depende de `Phase 17.A`.
+
+#### Phase 17.C — TV Navigation & Detail Baseline ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-03-31 — Nueva ruta `src/app/tv/[id]/page.tsx` con estados de loading/error/empty y detalle base reutilizando `MovieDetail`; navegación Home -> TV detail habilitada sin rutas inválidas.
+- **Objective**
+  - Habilitar navegación mínima para elementos TV desde Home con fallback funcional.
+- **Definition of done**
+  - Items TV no navegan a rutas inválidas.
+  - Existe baseline de detalle TV o fallback controlado y explícito.
+  - E2E smoke mantiene estabilidad con navegación mixta.
+- **Chunks**
+  1. **Definir ruta de detalle TV**
+     - Áreas/archivos: `src/app/tv/[id]/page.tsx` (o fallback explícito en Home).
+     - Verificación: click en item TV produce navegación válida.
+  2. **Render mínimo de detalle TV**
+     - Áreas/archivos: capa app/components reutilizables.
+     - Verificación: título, metadata base, estados loading/error/empty.
+  3. **Pruebas críticas de flujo mixto**
+     - Áreas/archivos: tests unitarios + e2e smoke.
+     - Verificación: Home -> TV detail y Home -> Movie detail conviven sin regresión.
+- **Risks / dependencies**
+  - Riesgo medio por incremento de superficie funcional.
+  - Depende de `Phase 17.A` y `Phase 17.B`.
+
 ### Post-MVP execution priority
 
 1. `Phase 10.B` — Unified Visual Design Tokens (base visual compartida).
@@ -1116,10 +1193,13 @@
 20. `Phase 16.C` — Featured Banner Fetch Optimization.
 21. `Phase 16.D` — Deterministic Home Selection Logic (Genres/Strips).
 22. `Phase 16.E` — Home Runtime Observability & Diagnostics.
+23. `Phase 17.A` — TV Data Layer & Unified Media Model.
+24. `Phase 17.B` — Home Mixed Rails Composition.
+25. `Phase 17.C` — TV Navigation & Detail Baseline.
 
 ### Recommended next subphase
 
-- **Sin subfases pendientes del roadmap actual** — listo para definir una nueva iteración (Phase 17+) centrada en descubrimiento avanzado o personalización.
+- **Sin subfases pendientes del roadmap actual** — listo para definir una nueva iteración (Phase 18+) enfocada en similars TV, búsqueda mixta o filtros avanzados.
 
 ### Alternative paths
 
@@ -1162,13 +1242,12 @@
 - Internacionalización y accesibilidad avanzada fuera de baseline estándar de Next.js.
 - Incorporar nuevas fuentes de datos o proveedores distintos de TMDb.
 - Introducir librerías de UI externas para reemplazar Tailwind o cambiar stack de rendering.
-- Implementar dominio completo de `Series/TV` mientras no se aprueben endpoints y modelos específicos.
+- Implementar dominio completo de `Series/TV` fuera del alcance definido en `Phase 17`.
 
 ## 5) Open Questions
 
 - ¿Se requiere política obligatoria de mocks para TMDb en pruebas y CI, o será opcional por suite?
 - ¿Qué cobertura mínima se considera aceptable para aprobar CI en MVP?
-- ¿`Series` en el header será placeholder visual temporal o se habilitará en una iteración con endpoints TV dedicados?
 - ¿El modal de trailer debe ser componente compartido único entre Home y Detail o se permite variante por contexto?
 - ¿Se prioriza implementación de sugerencias de búsqueda en esta iteración o queda en backlog opcional?
 

@@ -10,6 +10,7 @@ type FeaturedStripProps = {
 export function FeaturedStrip({ movie, label = "Recomendacion destacada" }: FeaturedStripProps) {
   const movieTitle = movie.title || "Sin titulo";
   const imageSrc = movie.backdropPath || movie.posterPath;
+  const detailHref = movie.mediaType === "tv" ? `/tv/${movie.id}` : `/movie/${movie.id}`;
 
   return (
     <section aria-labelledby={`strip-${movie.id}`} className="glass-surface relative overflow-hidden rounded-2xl">
@@ -28,7 +29,7 @@ export function FeaturedStrip({ movie, label = "Recomendacion destacada" }: Feat
             </h3>
             <p className="line-clamp-2 text-sm text-zinc-200">{movie.overview || "Descubre mas de este titulo destacado."}</p>
             <Link
-              href={`/movie/${movie.id}`}
+              href={detailHref}
               className="focus-ring premium-transition inline-flex items-center rounded-md border border-zinc-300/40 bg-black/35 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-100 hover:border-zinc-100/70 hover:bg-black/55"
             >
               Ver detalle
