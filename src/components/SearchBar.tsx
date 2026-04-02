@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
 type SearchBarProps = {
   defaultValue?: string;
   compact?: boolean;
@@ -9,31 +7,10 @@ type SearchBarProps = {
 
 export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps) {
   const initialValue = defaultValue.trim();
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const [inputValue, setInputValue] = useState(initialValue);
-  const formClassName = compact
-    ? "group flex w-full items-center justify-end gap-2"
-    : "flex w-full max-w-2xl flex-col gap-2 sm:flex-row";
+  const formClassName = compact ? "w-full" : "w-full max-w-2xl";
   const inputClassName = compact
-    ? "focus-ring premium-transition h-9 w-full rounded-full border border-zinc-700/80 bg-zinc-900/75 px-3 text-sm text-zinc-100 placeholder:text-zinc-400 sm:w-44 sm:group-focus-within:w-60 lg:w-52 lg:group-focus-within:w-64"
-    : "focus-ring premium-transition w-full rounded-xl border border-zinc-700 bg-zinc-900/85 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-400 focus:border-zinc-500";
-  const buttonClassName = compact
-    ? "focus-ring premium-transition h-9 rounded-full border border-red-500/40 bg-red-600 px-3 text-xs font-semibold uppercase tracking-wide text-white hover:bg-red-500"
-    : "focus-ring premium-transition rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500";
-  const clearButtonClassName = compact
-    ? "focus-ring premium-transition h-9 rounded-full border border-zinc-600 bg-zinc-900/70 px-3 text-xs font-semibold uppercase tracking-wide text-zinc-200 hover:border-zinc-400 hover:text-zinc-100"
-    : "focus-ring premium-transition rounded-xl border border-zinc-600 bg-zinc-900/80 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:border-zinc-400 hover:text-zinc-100";
-
-  useEffect(() => {
-    // Keep hydration deterministic while still restoring ?q= on client routes.
-    if (initialValue.length > 0 || typeof window === "undefined") {
-      return;
-    }
-    const query = new URLSearchParams(window.location.search).get("q")?.trim() ?? "";
-    if (query.length > 0) {
-      setInputValue(query);
-    }
-  }, [initialValue]);
+    ? "focus-ring premium-transition h-9 w-full rounded-full border border-zinc-700/80 bg-zinc-900/75 py-2 pl-3 pr-10 text-sm text-zinc-100 placeholder:text-zinc-400"
+    : "focus-ring premium-transition w-full rounded-xl border border-zinc-700 bg-zinc-900/85 py-2.5 pl-4 pr-11 text-sm text-zinc-100 placeholder:text-zinc-400 focus:border-zinc-500";
 
   return (
     <form
@@ -46,64 +23,29 @@ export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps
       <label htmlFor="search-query" className="sr-only">
         Buscar pelicula por titulo
       </label>
-      <input
-        ref={inputRef}
-        id="search-query"
-        type="search"
-        name="q"
-        value={inputValue}
-        placeholder="Busca una pelicula..."
-        className={inputClassName}
-        onChange={(event) => setInputValue(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            event.preventDefault();
-            setInputValue("");
-            event.currentTarget.blur();
-          }
-        }}
-      />
-      {inputValue.trim().length > 0 && (
-        <button
-          type="button"
-          aria-label="Limpiar busqueda"
-          onClick={() => {
-            setInputValue("");
-            if (inputRef.current) {
-              inputRef.current.focus();
+      <div className="relative">
+        <input
+          id="search-query"
+          type="search"
+          name="q"
+          defaultValue={initialValue}
+          placeholder="Busca una pelicula..."
+          className={inputClassName}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.currentTarget.value = "";
+              event.currentTarget.blur();
             }
           }}
-          className={clearButtonClassName}
-        >
-          {compact ? "Limpiar" : "Borrar"}
-        </button>
-      )}
-      <button
-        type="submit"
-        aria-label="Buscar"
-        className={buttonClassName}
-      >
-        {compact ? (
-          <>
-            <span className="sr-only">Buscar</span>
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </>
-        ) : (
-          "Buscar"
-        )}
-      </button>
+        />
+        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-zinc-400" aria-hidden="true">
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </span>
+      </div>
     </form>
   );
 }

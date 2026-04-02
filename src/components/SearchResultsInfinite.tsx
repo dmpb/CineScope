@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MovieSection } from "@/components/MovieSection";
 import type { Movie } from "@/types/movie";
@@ -17,7 +18,26 @@ type SearchResponse = {
   totalResults: number;
   currentPage: number;
   totalPages: number;
+  error?: string;
 };
+
+function getMediaKey(movie: Movie): string {
+  return `${movie.mediaType ?? "movie"}-${movie.id}`;
+}
+
+function mergeUniqueMovies(previous: Movie[], next: Movie[]): Movie[] {
+  const merged = [...previous];
+  const seen = new Set(previous.map(getMediaKey));
+  for (const movie of next) {
+    const key = getMediaKey(movie);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    merged.push(movie);
+  }
+  return merged;
+}
 
 export function SearchResultsInfinite({
   query,
@@ -31,8 +51,9 @@ export function SearchResultsInfinite({
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const normalizedQuery = query.trim();
 
   const hasMore = useMemo(() => {
     if (totalPages > 0) {
@@ -47,22 +68,22 @@ export function SearchResultsInfinite({
     }
 
     setIsLoadingMore(true);
-    setHasError(false);
+    setErrorMessage(null);
 
     try {
       const nextPage = currentPage + 1;
       const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=${nextPage}`);
+      const data = (await response.json()) as SearchResponse;
       if (!response.ok) {
-        throw new Error("Failed to load next search page");
+        throw new Error(data.error || "No se pudo cargar la siguiente pagina.");
       }
 
-      const data = (await response.json()) as SearchResponse;
-      setResults((prev) => [...prev, ...data.results]);
+      setResults((prev) => mergeUniqueMovies(prev, data.results));
       setTotalResults(data.totalResults);
       setCurrentPage(data.currentPage);
       setTotalPages(data.totalPages);
-    } catch {
-      setHasError(true);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "No se pudo cargar mas resultados.");
     } finally {
       setIsLoadingMore(false);
     }
@@ -70,7 +91,7 @@ export function SearchResultsInfinite({
 
   useEffect(() => {
     const element = sentinelRef.current;
-    if (!element || !hasMore) {
+    if (!element || !hasMore || Boolean(errorMessage)) {
       return;
     }
 
@@ -85,7 +106,7 @@ export function SearchResultsInfinite({
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, [hasMore, loadNextPage]);
+  }, [errorMessage, hasMore, loadNextPage]);
 
   return (
     <section className="space-y-4 sm:space-y-5" aria-labelledby="search-results-title">
@@ -93,23 +114,79 @@ export function SearchResultsInfinite({
         <h2 id="search-results-title" className="text-xl font-semibold text-zinc-100 sm:text-2xl">
           Resultados para "{query}"
         </h2>
-        <p className="text-sm text-zinc-400">
-          {totalResults} {totalResults === 1 ? "resultado" : "resultados"}
-        </p>
+        <div className="text-sm text-zinc-400">
+          <p>
+            {totalResults} {totalResults === 1 ? "resultado" : "resultados"}
+          </p>
+          <p className="text-xs uppercase tracking-wide text-zinc-500">
+            Vista en grid · Pagina {currentPage}{totalPages > 0 ? ` de ${totalPages}` : ""}
+          </p>
+        </div>
       </header>
 
       <MovieSection
         title="Coincidencias"
         movies={results}
-        emptyMessage={`No se encontraron peliculas para "${query}". Prueba con otro titulo o palabras clave.`}
+        emptyMessage={`No se encontraron peliculas para "${query}". Intenta con menos palabras, el titulo original o un termino mas general.`}
+        layout="grid"
       />
 
-      {hasError && (
-        <p className="text-sm text-amber-300">
-          No se pudieron cargar mas resultados. Desplaza nuevamente para reintentar.
-        </p>
+      {results.length === 0 && normalizedQuery.length > 0 && (
+        <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4 text-sm text-zinc-300">
+          <p className="font-medium text-zinc-200">Sugerencias de busqueda</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-zinc-400">
+            <li>Prueba sin acentos o con el titulo original.</li>
+            <li>Usa menos palabras y evita signos especiales.</li>
+            <li>Explora categorias para descubrir titulos relacionados.</li>
+          </ul>
+          <div className="mt-3 flex flex-wrap gap-3 text-xs">
+            <Link href="/movies" className="focus-ring rounded border border-zinc-700 px-2.5 py-1.5 hover:border-zinc-500">
+              Ver peliculas
+            </Link>
+            <Link href="/series" className="focus-ring rounded border border-zinc-700 px-2.5 py-1.5 hover:border-zinc-500">
+              Ver series
+            </Link>
+          </div>
+        </div>
       )}
-      {isLoadingMore && <p className="text-sm text-zinc-400">Cargando mas resultados...</p>}
+      {errorMessage && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3 text-sm text-amber-200">
+          <p>{errorMessage}</p>
+          <button
+            type="button"
+            onClick={() => void loadNextPage()}
+            className="focus-ring mt-2 rounded border border-amber-400/40 px-3 py-1.5 text-xs font-medium hover:border-amber-300"
+          >
+            Reintentar carga
+          </button>
+        </div>
+      )}
+      {isLoadingMore && (
+        <div className="space-y-2">
+          <p className="text-sm text-zinc-400">Cargando mas resultados...</p>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="skeleton-shimmer overflow-hidden rounded-xl">
+                <div className="aspect-[2/3] w-full rounded-xl" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {hasMore && !isLoadingMore && (
+        <button
+          type="button"
+          onClick={() => void loadNextPage()}
+          className="focus-ring premium-transition rounded-lg border border-zinc-600 bg-zinc-900/70 px-4 py-2 text-sm font-medium text-zinc-200 hover:border-zinc-400 hover:text-zinc-100"
+        >
+          Cargar mas resultados
+        </button>
+      )}
+      <p aria-live="polite" className="sr-only">
+        {errorMessage
+          ? `Error: ${errorMessage}`
+          : `Mostrando ${results.length} de ${totalResults} resultados para ${normalizedQuery || "busqueda"}.`}
+      </p>
       <div ref={sentinelRef} aria-hidden="true" className="h-4 w-full" />
     </section>
   );

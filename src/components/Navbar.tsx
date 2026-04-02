@@ -64,7 +64,7 @@ export function Navbar() {
             </Link>
           </nav>
 
-          <div className="w-full lg:ml-auto lg:max-w-md">
+          <div className="w-full lg:ml-auto lg:max-w-[240px]">
             <SearchBar compact />
           </div>
         </div>

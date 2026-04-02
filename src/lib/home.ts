@@ -1,4 +1,5 @@
 import type { Movie } from "@/types/movie";
+import { cache } from "react";
 import {
   getAiringTodayTv,
   getMovieById,
@@ -81,6 +82,11 @@ const PRIORITY_GENRE_IDS = [28, 35];
 const HOME_LOG_PREFIX = "[home]";
 const FEATURED_CAROUSEL_MAX = 5;
 
+const getMovieByIdCached = cache(async (id: number) => getMovieById(id));
+const getTvByIdCached = cache(async (id: number) => getTvById(id));
+const getMovieTrailerByIdCached = cache(async (id: number) => getMovieTrailerById(id));
+const getTvTrailerByIdCached = cache(async (id: number) => getTvTrailerById(id));
+
 function getSettledValue<T>(result: PromiseSettledResult<T>, fallback: T): T {
   return result.status === "fulfilled" ? result.value : fallback;
 }
@@ -134,11 +140,11 @@ function shouldFetchFeaturedDetail(movie: Movie): boolean {
 }
 
 function getMediaDetailFetcher(movie: Movie) {
-  return movie.mediaType === "tv" ? getTvById : getMovieById;
+  return movie.mediaType === "tv" ? getTvByIdCached : getMovieByIdCached;
 }
 
 function getMediaTrailerFetcher(movie: Movie) {
-  return movie.mediaType === "tv" ? getTvTrailerById : getMovieTrailerById;
+  return movie.mediaType === "tv" ? getTvTrailerByIdCached : getMovieTrailerByIdCached;
 }
 
 function getMediaKey(movie: Movie): string {
@@ -231,6 +237,11 @@ async function resolveFeaturedSlidesFromCandidates(candidates: Movie[]): Promise
   return { slides, hasError };
 }
 
+async function selectAndResolveFeaturedSlides(candidates: Movie[]): Promise<{ slides: FeaturedSlide[]; hasError: boolean }> {
+  const featuredCandidates = selectFeaturedCandidates(candidates, FEATURED_CAROUSEL_MAX);
+  return resolveFeaturedSlidesFromCandidates(featuredCandidates);
+}
+
 export async function getHomeData(): Promise<HomeData> {
   const baseResults = await Promise.allSettled([
     runTimedSection("trending", () => getTrendingMovies()),
@@ -289,22 +300,18 @@ export async function getHomeData(): Promise<HomeData> {
     .filter((result): result is PromiseFulfilledResult<HomeGenreSection> => result.status === "fulfilled")
     .map((result) => result.value);
 
-  const featuredCandidates = selectFeaturedCandidates(
-    [
-      ...trending.slice(0, 8),
-      ...trendingTv.slice(0, 8),
-      ...popular.slice(0, 6),
-      ...popularTv.slice(0, 6),
-      ...topRated.slice(0, 4),
-      ...topRatedTv.slice(0, 4),
-      ...nowPlaying.slice(0, 3),
-      ...onTheAirTv.slice(0, 3),
-      ...upcoming.slice(0, 2),
-      ...airingTodayTv.slice(0, 2)
-    ],
-    FEATURED_CAROUSEL_MAX
-  );
-  const featured = await resolveFeaturedSlidesFromCandidates(featuredCandidates);
+  const featured = await selectAndResolveFeaturedSlides([
+    ...trending.slice(0, 8),
+    ...trendingTv.slice(0, 8),
+    ...popular.slice(0, 6),
+    ...popularTv.slice(0, 6),
+    ...topRated.slice(0, 4),
+    ...topRatedTv.slice(0, 4),
+    ...nowPlaying.slice(0, 3),
+    ...onTheAirTv.slice(0, 3),
+    ...upcoming.slice(0, 2),
+    ...airingTodayTv.slice(0, 2)
+  ]);
   const featuredSlides = featured.slides;
   const featuredHasError = featured.hasError;
 
@@ -356,17 +363,13 @@ export async function getMoviesPageData(): Promise<MoviesPageData> {
     .filter((result): result is PromiseFulfilledResult<HomeGenreSection> => result.status === "fulfilled")
     .map((result) => result.value);
 
-  const featuredCandidates = selectFeaturedCandidates(
-    [
-      ...trending.slice(0, 8),
-      ...popular.slice(0, 6),
-      ...topRated.slice(0, 4),
-      ...nowPlaying.slice(0, 3),
-      ...upcoming.slice(0, 2)
-    ],
-    FEATURED_CAROUSEL_MAX
-  );
-  const featured = await resolveFeaturedSlidesFromCandidates(featuredCandidates);
+  const featured = await selectAndResolveFeaturedSlides([
+    ...trending.slice(0, 8),
+    ...popular.slice(0, 6),
+    ...topRated.slice(0, 4),
+    ...nowPlaying.slice(0, 3),
+    ...upcoming.slice(0, 2)
+  ]);
 
   return {
     trending,
@@ -395,17 +398,13 @@ export async function getSeriesPageData(): Promise<SeriesPageData> {
   const onTheAirTv = getSettledValue(baseResults[3], [] as Movie[]);
   const airingTodayTv = getSettledValue(baseResults[4], [] as Movie[]);
 
-  const featuredCandidates = selectFeaturedCandidates(
-    [
-      ...trendingTv.slice(0, 8),
-      ...popularTv.slice(0, 6),
-      ...topRatedTv.slice(0, 4),
-      ...onTheAirTv.slice(0, 3),
-      ...airingTodayTv.slice(0, 2)
-    ],
-    FEATURED_CAROUSEL_MAX
-  );
-  const featured = await resolveFeaturedSlidesFromCandidates(featuredCandidates);
+  const featured = await selectAndResolveFeaturedSlides([
+    ...trendingTv.slice(0, 8),
+    ...popularTv.slice(0, 6),
+    ...topRatedTv.slice(0, 4),
+    ...onTheAirTv.slice(0, 3),
+    ...airingTodayTv.slice(0, 2)
+  ]);
 
   return {
     trendingTv,

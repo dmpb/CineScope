@@ -1000,6 +1000,7 @@
 
 - `Status`: `Completed`
 - `Implemented`: 2026-04-01 — Extracción de capa de composición a `src/lib/home.ts` (`getHomeData`, `buildHomeRowSections`, `selectHomeStripMovies`) dejando `src/app/page.tsx` enfocado en render y ajustando tests de Home para validar orquestación desacoplada.
+- `Implemented`: 2026-04-02 — Refactor incremental en `src/lib/home.ts` para consolidar selección + resolución de destacados en helper único (`selectAndResolveFeaturedSlides`), reduciendo duplicación en Home/Movies/Series y manteniendo contratos de salida.
 - **Objective**
   - Reducir complejidad de `src/app/page.tsx` separando composición de datos en capa reutilizable/testeable.
 - **Definition of done**
@@ -1024,6 +1025,7 @@
 
 - `Status`: `Completed`
 - `Implemented`: 2026-04-01 — Optimización de featured en `src/lib/home.ts` con estrategia condicional para `getMovieById` (solo cuando falta metadata clave), carga controlada de trailer y manejo de fallback por `Promise.allSettled` sin degradar Home.
+- `Implemented`: 2026-04-02 — Hardening de fetch featured con caché por request (`react cache`) para detalle/trailer (`getMovieById|getTvById|getMovieTrailerById|getTvTrailerById`) evitando over-fetch repetido durante render server y manteniendo fallback robusto.
 - **Objective**
   - Reducir sobre-fetch del destacado y controlar costo de requests secundarias (detalle + trailer).
 - **Definition of done**
@@ -1232,6 +1234,66 @@
   - Colisión de IDs en favoritos si no se actúa antes de escalar uso de TV.
   - Depende de `Phase 18.A` y `Phase 18.B` para textos y datos finales en metadata.
 
+### Phase 19 — Search UX/UI Upgrade (`/search`) ✅
+
+- `Status`: `Completed`
+- `Execution order`: `Phase 19.A -> Phase 19.B -> Phase 19.C`
+- `Context`: La búsqueda actual funciona con infinite scroll y fetch server/client, pero los resultados siguen patrón de carrusel horizontal heredado de Home, con margen de mejora en legibilidad (grid), estados UX y robustez (deduplicación/errores/feedback).
+
+#### Phase 19.A — Search Layout & Discoverability (Grid-first) ✅
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-02 — `MovieSection` con variante `layout` (`row` por defecto, `grid` opcional), resultados de `SearchResultsInfinite` migrados a `layout="grid"` sin romper rails horizontales de Home/Movies/Series; encabezado de resultados con contexto de visualización.
+- **Objective**
+  - Convertir la experiencia de resultados de búsqueda a formato grid escaneable, manteniendo consistencia visual de cards y navegación existente.
+- **Definition of done**
+  - Resultados en `/search` se renderizan en **grid responsive** (sin scroll horizontal) con densidad adecuada por breakpoint.
+  - `MovieSection` (o componente equivalente) soporta variante de layout (`row`/`grid`) sin romper Home/Movies/Series.
+  - Header de resultados muestra claramente query + total + contexto de visualización.
+- **Chunks**
+  1. **Grid para resultados** — adaptar `SearchResultsInfinite` y/o `MovieSection` para layout responsive sin `horizontal-scroll-row`.
+  2. **Polish visual del bloque de resultados** — spacing, títulos, contador y jerarquía tipográfica.
+  3. **Validación cross-page** — asegurar que los rails existentes conservan comportamiento horizontal donde corresponde.
+- **Risks / dependencies**
+  - Riesgo bajo de regresión visual compartida si `MovieSection` no queda bien aislado por prop/layout.
+  - Depende de tokens/estilos base existentes en fases 10–14.
+
+#### Phase 19.B — Search Interaction Robustness & Feedback — Pending
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-02 — Dedupe incremental de resultados por `id + mediaType` en `SearchResultsInfinite`; fallback de interacción con botón explícito “Cargar más resultados”; manejo de errores con CTA “Reintentar carga”; `src/app/api/search/route.ts` robustecido con `try/catch` y payload de error estable.
+- **Objective**
+  - Mejorar robustez y feedback de paginación infinita para reducir confusión del usuario y errores silenciosos.
+- **Definition of done**
+  - Concatenación de páginas en cliente evita duplicados por clave de media (`id + mediaType`).
+  - Estado de error incluye CTA de recuperación (ej. reintentar/cargar más), no solo texto informativo.
+  - Existe fallback de interacción para cargar más resultados (botón además de sentinel/intersection observer).
+- **Chunks**
+  1. **Dedupe de resultados** — evitar repetición al paginar.
+  2. **Error UX + retry** — mensaje accionable y control explícito.
+  3. **Fallback de carga manual** — UX accesible cuando observer falle o usuario prefiera control manual.
+- **Risks / dependencies**
+  - Riesgo medio de inconsistencias de paginación si backend y cliente no comparten contrato estable.
+  - Depende de `src/app/api/search/route.ts` y contrato de `searchMovies`.
+
+#### Phase 19.C — Search Polish (A11y, Empty States, Perceived Performance) — Pending
+
+- `Status`: `Completed`
+- `Implemented`: 2026-04-02 — Empty state enriquecido con sugerencias y enlaces a `/movies` y `/series`; loading incremental con skeleton cards en grid; anuncios accesibles con `aria-live` para progreso/error de resultados.
+- **Objective**
+  - Elevar percepción de calidad en búsqueda con estados vacíos más guiados, carga visual consistente y mejoras de accesibilidad.
+- **Definition of done**
+  - Empty state con recomendaciones accionables (término alternativo, menos palabras, navegación a secciones relevantes).
+  - Loading incremental con skeletons/placeholder de cards (en lugar de texto plano únicamente).
+  - Resultados y cambios de estado anuncian información útil vía `aria-live` (o patrón equivalente accesible).
+- **Chunks**
+  1. **Empty state enriquecido** — copy accionable + enlaces útiles.
+  2. **Loading UX** — skeleton cards coherentes con layout final.
+  3. **A11y/announcements** — feedback accesible al cambiar total/resultados/error.
+- **Risks / dependencies**
+  - Riesgo bajo; principal cuidado en no sobrecargar UI con mensajes redundantes.
+  - Depende de `Phase 19.A` para mantener consistencia del layout final.
+
 ### Post-MVP execution priority
 
 1. `Phase 10.B` — Unified Visual Design Tokens (base visual compartida).
@@ -1262,18 +1324,21 @@
 26. `Phase 18.A` — TV detail: paridad de datos con Movie Detail.
 27. `Phase 18.B` — Metadatos de serie y copy en UI.
 28. `Phase 18.C` — Producto, SEO, favoritos y backlog opcional (ficha TV).
+29. `Phase 19.A` — Search Layout & Discoverability (Grid-first).
+30. `Phase 19.B` — Search Interaction Robustness & Feedback.
+31. `Phase 19.C` — Search Polish (A11y, Empty States, Perceived Performance).
 
 ### Recommended next subphase
 
-- **`Phase 19+`** (definir): búsqueda mixta movie/TV, filtros avanzados, o UI de temporadas/episodios en detalle TV.
-- E2E Playwright para flujo `/tv/[id]` opcional cuando haya capacidad QA.
+- **`Phase 20+`** (definir) — evolución funcional de búsqueda: filtros avanzados (tipo/rating/año), metadata dinámica SEO por query, y mejoras de ranking/relevancia.
+- E2E Playwright para flujo de paginación y recuperación de error en `/search` recomendado como cierre de hardening.
 
 ### Alternative paths
 
 - **Ruta UI foundation-first (recomendada)**: `10.A -> 10.B -> 11.A`.
 - **Ruta Home-first visual impact**: `11.A -> 11.B -> 11.C -> 12.A`.
 - **Ruta Detail premium-first**: `13.A -> 13.B -> 14.A`.
-- **Ruta búsqueda avanzada**: `10.A -> 12.B` (sugerencias en modo opcional si no compromete tiempos).
+- **Ruta búsqueda avanzada**: `19.A -> 19.B -> 19.C` (grid + robustez + polish UX).
 - **Ruta performance & finishing**: `14.A -> 14.B -> 14.C` al cierre de la iteración.
 - **Ruta ficha de serie (`/tv/[id]`)**: `18.A -> 18.B -> 18.C` tras `Phase 17` cuando la prioridad sea paridad con detalle de película y metadatos TV.
 

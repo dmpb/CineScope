@@ -11,6 +11,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [], totalResults: 0, currentPage: 1, totalPages: 0 });
   }
 
-  const result = await searchMovies(query, page);
-  return NextResponse.json(result);
+  try {
+    const result = await searchMovies(query, page);
+    return NextResponse.json(result);
+  } catch {
+    return NextResponse.json(
+      {
+        results: [],
+        totalResults: 0,
+        currentPage: page,
+        totalPages: 0,
+        error: "No se pudo procesar la busqueda en este momento."
+      },
+      { status: 500 }
+    );
+  }
 }
