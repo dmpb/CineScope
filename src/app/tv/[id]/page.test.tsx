@@ -102,14 +102,14 @@ describe("TV detail page", () => {
   it("generateMetadata returns title and description when show exists", async () => {
     vi.mocked(getTvById).mockResolvedValue(tvFixture);
     const meta = await generateMetadata({ params: Promise.resolve({ id: "1399" }) });
-    expect(meta.title).toBe("Game of Thrones — CineScope");
+    expect(meta.title).toBe("Game of Thrones");
     expect(typeof meta.description).toBe("string");
     expect(meta.description).toContain("Noble families");
   });
 
   it("generateMetadata handles invalid id", async () => {
     const meta = await generateMetadata({ params: Promise.resolve({ id: "0" }) });
-    expect(meta.title).toBe("Serie — CineScope");
+    expect(meta.title).toBe("Serie no encontrada");
   });
 
   it("shows token warning when token is missing", async () => {

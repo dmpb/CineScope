@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { cache } from "react";
 import { MovieSection } from "@/components/MovieSection";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import {
@@ -24,6 +26,68 @@ function parseMovieId(idParam: string): number | null {
   return parsed;
 }
 
+const getMovieByIdCached = cache(async (id: number) => getMovieById(id));
+
+export async function generateMetadata({ params }: MoviePageProps): Promise<Metadata> {
+  const { id: idParam } = await params;
+  const movieId = parseMovieId(idParam);
+  if (!movieId) {
+    return {
+      title: "Película no encontrada",
+      description: "El identificador de la película no es válido."
+    };
+  }
+
+  const movie = await getMovieByIdCached(movieId);
+  if (!movie) {
+    return {
+      title: "Película no disponible",
+      description: "No se pudo cargar esta película o no existe en TMDb."
+    };
+  }
+
+  const plainOverview = movie.overview.trim();
+  const description =
+    plainOverview.length > 0
+      ? plainOverview.length > 155
+        ? `${plainOverview.slice(0, 155)}…`
+        : plainOverview
+      : `${movie.title}. Ficha, reparto, trailers y títulos similares en CineScope.`;
+
+  const imageUrl = movie.backdropPath || movie.posterPath;
+
+  return {
+    title: movie.title,
+    description,
+    alternates: {
+      canonical: `/movie/${movieId}`
+    },
+    openGraph: {
+      title: movie.title,
+      description,
+      type: "video.movie",
+      url: `/movie/${movieId}`,
+      ...(imageUrl
+        ? {
+            images: [
+              {
+                url: imageUrl,
+                width: movie.backdropPath ? 1280 : 500,
+                height: movie.backdropPath ? 720 : 750
+              }
+            ]
+          }
+        : {})
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: movie.title,
+      description,
+      ...(imageUrl ? { images: [imageUrl] } : {})
+    }
+  };
+}
+
 export default async function MoviePage({ params }: MoviePageProps) {
   const { id: idParam } = await params;
   const movieId = parseMovieId(idParam);
@@ -31,7 +95,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
 
   const [movie, trailerUrl, cast, crew, providers, mediaImages, similarMovies] = movieId
     ? await Promise.all([
-        getMovieById(movieId),
+        getMovieByIdCached(movieId),
         getMovieTrailerById(movieId),
         getMovieCastById(movieId),
         getMovieCrewHighlightsById(movieId),

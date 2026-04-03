@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="CineScope">
+  <rect width="32" height="32" rx="7" fill="#09090b"/>
+  <path
+    fill="none"
+    stroke="#e50914"
+    stroke-width="3.2"
+    stroke-linecap="round"
+    d="M 11.2 10.4a7.5 7.5 0 1 1 0 11.2"
+  />
+</svg>

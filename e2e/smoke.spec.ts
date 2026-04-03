@@ -16,7 +16,7 @@ test("smoke: Home -> Detail", async ({ page }) => {
 test("smoke: Search por query param", async ({ page }) => {
   await page.goto("/search?q=matrix");
 
-  await expect(page.getByRole("heading", { level: 1, name: "Busqueda" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Búsqueda|Busqueda/i })).toBeVisible();
   await expect(page.getByRole("heading", { level: 2, name: /Resultados para "matrix"/i })).toBeVisible();
 
   await page.getByRole("searchbox", { name: /Buscar pelicula/i }).fill("inception");

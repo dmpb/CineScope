@@ -16,9 +16,15 @@ const stackBadges: ReadonlyArray<{
 ];
 
 export const metadata: Metadata = {
-  title: `Acerca de | ${SITE_NAME}`,
+  title: "Acerca de",
   description:
-    "Qué es CineScope, funcionalidades principales, stack técnico y atribución de datos de The Movie Database (TMDb)."
+    "Qué es CineScope, funcionalidades principales, stack técnico y atribución de datos de The Movie Database (TMDb).",
+  openGraph: {
+    url: "/about"
+  },
+  alternates: {
+    canonical: "/about"
+  }
 };
 
 const linkInline =

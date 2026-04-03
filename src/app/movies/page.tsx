@@ -1,9 +1,22 @@
+import type { Metadata } from "next";
 import { FeaturedBannerCarousel } from "@/components/FeaturedBannerCarousel";
 import { FeaturedStrip } from "@/components/FeaturedStrip";
 import { MovieSection } from "@/components/MovieSection";
 import { StateMessage } from "@/components/StateMessage";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { buildMoviesRowSections, getMoviesPageData, selectMoviesStripMovies } from "@/lib/home";
+
+export const metadata: Metadata = {
+  title: "Películas",
+  description:
+    "Descubre películas en CineScope: carruseles, tendencias, géneros y datos en tiempo real desde TMDb.",
+  openGraph: {
+    url: "/movies"
+  },
+  alternates: {
+    canonical: "/movies"
+  }
+};
 
 export default async function MoviesPage() {
   const hasToken = Boolean(getOptionalTmdbBearerToken());

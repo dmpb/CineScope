@@ -1,9 +1,22 @@
+import type { Metadata } from "next";
 import { FeaturedBannerCarousel } from "@/components/FeaturedBannerCarousel";
 import { FeaturedStrip } from "@/components/FeaturedStrip";
 import { MovieSection } from "@/components/MovieSection";
 import { StateMessage } from "@/components/StateMessage";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { buildSeriesRowSections, getSeriesPageData, selectSeriesStripMovies } from "@/lib/home";
+
+export const metadata: Metadata = {
+  title: "Series",
+  description:
+    "Explora series en CineScope: populares, en emisión, top y más con información actualizada desde TMDb.",
+  openGraph: {
+    url: "/series"
+  },
+  alternates: {
+    canonical: "/series"
+  }
+};
 
 export default async function SeriesPage() {
   const hasToken = Boolean(getOptionalTmdbBearerToken());

@@ -1,9 +1,23 @@
+import type { Metadata } from "next";
 import { FeaturedBannerCarousel } from "@/components/FeaturedBannerCarousel";
 import { FeaturedStrip } from "@/components/FeaturedStrip";
 import { MovieSection } from "@/components/MovieSection";
 import { StateMessage } from "@/components/StateMessage";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { buildHomeRowSections, getHomeData, selectHomeStripMovies } from "@/lib/home";
+import { SITE_DEFAULT_DESCRIPTION } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Inicio",
+  description: SITE_DEFAULT_DESCRIPTION,
+  openGraph: {
+    description: SITE_DEFAULT_DESCRIPTION,
+    url: "/"
+  },
+  alternates: {
+    canonical: "/"
+  }
+};
 
 export default async function HomePage() {
   const hasToken = Boolean(getOptionalTmdbBearerToken());

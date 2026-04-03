@@ -25,22 +25,35 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
   const q = (normalizeSearchParam(sp.q) ?? "").trim();
   const typeParam = normalizeSearchParam(sp.type);
   const query = q;
-  const site = "CineScope";
   const mediaKind = parseSearchMediaKind(typeParam);
 
   const typeSuffix =
-    mediaKind === "movie" ? " · Solo peliculas" : mediaKind === "tv" ? " · Solo series" : "";
+    mediaKind === "movie" ? " (solo películas)" : mediaKind === "tv" ? " (solo series)" : "";
 
   if (!query) {
     return {
-      title: `Busqueda | ${site}`,
-      description: "Busca peliculas y series con filtros por tipo, ano y valoracion."
+      title: "Búsqueda",
+      description: "Busca películas y series con filtros por tipo, año y valoración.",
+      openGraph: {
+        url: "/search"
+      },
+      alternates: {
+        canonical: "/search"
+      }
     };
   }
 
+  const safeTitle = query.length > 42 ? `${query.slice(0, 42)}…` : query;
+
   return {
-    title: `"${query}"${typeSuffix} | Busqueda | ${site}`,
-    description: `Resultados para "${query}" en CineScope con filtros opcionales.`
+    title: `"${safeTitle}"`,
+    description: `Resultados para «${query}»${typeSuffix} en CineScope.`,
+    openGraph: {
+      url: `/search?q=${encodeURIComponent(query)}`
+    },
+    alternates: {
+      canonical: `/search?q=${encodeURIComponent(query)}`
+    }
   };
 }
 
@@ -103,7 +116,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       )}
 
       {query.length > 0 && !hasError && (
-        <div className="flex w-full flex-col gap-14 sm:gap-10">
+        <div className="flex w-full flex-col gap-8 sm:gap-10">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl">Búsqueda</h1>
           <SearchFiltersBar query={query} mediaKind={mediaKind} year={year} minVote={minVote} />
           <div className="min-w-0 pt-2 sm:pt-4">
             <SearchResultsInfinite

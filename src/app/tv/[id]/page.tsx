@@ -33,16 +33,16 @@ export async function generateMetadata({ params }: TvPageProps): Promise<Metadat
   const tvId = parseTvId(idParam);
   if (!tvId) {
     return {
-      title: "Serie — CineScope",
-      description: "Explora series y valoraciones en CineScope."
+      title: "Serie no encontrada",
+      description: "El identificador de la serie no es válido."
     };
   }
 
   const show = await getTvByIdCached(tvId);
   if (!show) {
     return {
-      title: "Serie no disponible — CineScope",
-      description: "No se pudo cargar esta serie."
+      title: "Serie no disponible",
+      description: "No se pudo cargar esta serie o no existe en TMDb."
     };
   }
 
@@ -52,14 +52,38 @@ export async function generateMetadata({ params }: TvPageProps): Promise<Metadat
       ? plainOverview.length > 155
         ? `${plainOverview.slice(0, 155)}…`
         : plainOverview
-      : `Serie: ${show.title}. Valoracion, reparto y titulos similares en CineScope.`;
+      : `Serie: ${show.title}. Valoración, reparto y títulos similares en CineScope.`;
+
+  const imageUrl = show.backdropPath || show.posterPath;
 
   return {
-    title: `${show.title} — CineScope`,
+    title: show.title,
     description,
+    alternates: {
+      canonical: `/tv/${tvId}`
+    },
     openGraph: {
       title: show.title,
-      description
+      description,
+      type: "video.tv_show",
+      url: `/tv/${tvId}`,
+      ...(imageUrl
+        ? {
+            images: [
+              {
+                url: imageUrl,
+                width: show.backdropPath ? 1280 : 500,
+                height: show.backdropPath ? 720 : 750
+              }
+            ]
+          }
+        : {})
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: show.title,
+      description,
+      ...(imageUrl ? { images: [imageUrl] } : {})
     }
   };
 }

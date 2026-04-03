@@ -32,16 +32,16 @@ export async function generateMetadata({ params }: PersonPageProps): Promise<Met
   const personId = parsePersonId(idParam);
   if (!personId) {
     return {
-      title: "Persona — CineScope",
-      description: "Ficha de actor o actriz en CineScope."
+      title: "Persona no encontrada",
+      description: "El identificador de la persona no es válido."
     };
   }
 
   const person = await getPersonByIdCached(personId);
   if (!person) {
     return {
-      title: "Persona no disponible — CineScope",
-      description: "No se pudo cargar esta persona."
+      title: "Persona no disponible",
+      description: "No se pudo cargar esta ficha o no existe en TMDb."
     };
   }
 
@@ -53,12 +53,30 @@ export async function generateMetadata({ params }: PersonPageProps): Promise<Met
         : bio
       : `${person.name}. Filmografía, biografía y datos de The Movie Database (TMDb) en CineScope.`;
 
+  const imageUrl = person.profilePath.trim() || undefined;
+
   return {
-    title: `${person.name} — CineScope`,
+    title: person.name,
     description,
+    alternates: {
+      canonical: `/person/${personId}`
+    },
     openGraph: {
       title: person.name,
-      description
+      description,
+      type: "profile",
+      url: `/person/${personId}`,
+      ...(imageUrl
+        ? {
+            images: [{ url: imageUrl, width: 600, height: 900 }]
+          }
+        : {})
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: person.name,
+      description,
+      ...(imageUrl ? { images: [imageUrl] } : {})
     }
   };
 }
