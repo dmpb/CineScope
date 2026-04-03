@@ -1,4 +1,4 @@
-import { getOptionalTmdbBearerToken } from "@/lib/env";
+import { getOptionalTmdbBearerToken, getTmdbLanguage, getTmdbRegion } from "@/lib/env";
 import { filterSearchResults, type SearchMediaKind, type SearchMediaOptions } from "@/lib/search-params";
 import type { CastMember, CrewHighlights, Movie, SearchResult, WatchProvider } from "@/types/movie";
 
@@ -539,6 +539,23 @@ function mapProviderEntries(
     }));
 }
 
+function buildTheatricalListQuery(): string {
+  const params = new URLSearchParams({
+    language: getTmdbLanguage(),
+    region: getTmdbRegion()
+  });
+  return `?${params.toString()}`;
+}
+
+/** Anexa `language` a toda peticion v3 para titulos, sinopsis y generos localizados (defecto es-ES via env). */
+function pathWithTmdbLanguage(path: string): string {
+  if (/[?&]language=/.test(path)) {
+    return path;
+  }
+  const sep = path.includes("?") ? "&" : "?";
+  return `${path}${sep}language=${encodeURIComponent(getTmdbLanguage())}`;
+}
+
 async function tmdbFetchJson<T>(path: string): Promise<T | null> {
   const token = getOptionalTmdbBearerToken();
   if (!token) {
@@ -546,7 +563,7 @@ async function tmdbFetchJson<T>(path: string): Promise<T | null> {
     return null;
   }
 
-  const url = `${TMDB_API_BASE}${path}`;
+  const url = `${TMDB_API_BASE}${pathWithTmdbLanguage(path)}`;
 
   try {
     const res = await fetch(url, {
@@ -701,7 +718,7 @@ export async function getNowPlayingMovies(): Promise<Movie[]> {
     return [movies[2], movies[0], movies[4], movies[1], movies[3]].filter(Boolean);
   }
 
-  const data = await tmdbFetchJson<TmdbMovieListResponse>("/movie/now_playing");
+  const data = await tmdbFetchJson<TmdbMovieListResponse>(`/movie/now_playing${buildTheatricalListQuery()}`);
   if (!data?.results?.length) {
     return [];
   }
@@ -716,7 +733,7 @@ export async function getUpcomingMovies(): Promise<Movie[]> {
     return [movies[5], movies[1], movies[3], movies[0], movies[2]].filter(Boolean);
   }
 
-  const data = await tmdbFetchJson<TmdbMovieListResponse>("/movie/upcoming");
+  const data = await tmdbFetchJson<TmdbMovieListResponse>(`/movie/upcoming${buildTheatricalListQuery()}`);
   if (!data?.results?.length) {
     return [];
   }

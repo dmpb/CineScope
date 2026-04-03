@@ -30,8 +30,8 @@ export function MovieSection({ title, movies, emptyMessage, layout = "row" }: Mo
       </h2>
       {movies.length > 0 ? (
         <ul className={listClassName} role="list" aria-label={listAriaLabel}>
-          {movies.map((movie) => (
-            <li key={movie.id} className={itemClassName}>
+          {movies.map((movie, index) => (
+            <li key={`${movie.mediaType ?? "movie"}-${movie.id}-${index}`} className={itemClassName}>
               <MovieCard movie={movie} />
             </li>
           ))}

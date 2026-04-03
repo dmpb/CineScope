@@ -489,29 +489,12 @@ export function buildHomeRowSections(data: HomeData): HomeRowSection[] {
     ...genreSections
   ];
 
-  const globalSeen = new Set<string>();
-  for (const slide of data.featuredSlides) {
-    globalSeen.add(getMediaKey(slide.movie));
-  }
-
-  return candidateSections.map((section) => {
-    const sectionMovies = section.movies.filter((movie) => {
-      const key = getMediaKey(movie);
-      if (globalSeen.has(key)) {
-        return false;
-      }
-      globalSeen.add(key);
-      return true;
-    });
-    return {
-      ...section,
-      movies: sectionMovies
-    };
-  });
+  return candidateSections;
 }
 
+/** Listas de /movies: una fila por endpoint TMDb, sin quitar titulos por solaparse entre secciones. */
 export function buildMoviesRowSections(data: MoviesPageData): HomeRowSection[] {
-  const candidateSections: HomeRowSection[] = [
+  return [
     {
       key: "trending-movies",
       title: "Tendencias de peliculas",
@@ -549,23 +532,6 @@ export function buildMoviesRowSections(data: MoviesPageData): HomeRowSection[] {
       emptyMessage: `No hay peliculas para el genero ${genre.name} en este momento.`
     }))
   ];
-
-  const globalSeen = new Set<string>();
-  for (const slide of data.featuredSlides) {
-    globalSeen.add(getMediaKey(slide.movie));
-  }
-
-  return candidateSections.map((section) => ({
-    ...section,
-    movies: section.movies.filter((movie) => {
-      const key = getMediaKey(movie);
-      if (globalSeen.has(key)) {
-        return false;
-      }
-      globalSeen.add(key);
-      return true;
-    })
-  }));
 }
 
 export function buildSeriesRowSections(data: SeriesPageData): HomeRowSection[] {
@@ -602,22 +568,7 @@ export function buildSeriesRowSections(data: SeriesPageData): HomeRowSection[] {
     }
   ];
 
-  const globalSeen = new Set<string>();
-  for (const slide of data.featuredSlides) {
-    globalSeen.add(getMediaKey(slide.movie));
-  }
-
-  return candidateSections.map((section) => ({
-    ...section,
-    movies: section.movies.filter((movie) => {
-      const key = getMediaKey(movie);
-      if (globalSeen.has(key)) {
-        return false;
-      }
-      globalSeen.add(key);
-      return true;
-    })
-  }));
+  return candidateSections;
 }
 
 export function selectHomeStripMovies(data: HomeData): Movie[] {

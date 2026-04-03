@@ -43,24 +43,6 @@ type SearchResponse = {
   error?: string;
 };
 
-function getMediaKey(movie: Movie): string {
-  return `${movie.mediaType ?? "movie"}-${movie.id}`;
-}
-
-function mergeUniqueMovies(previous: Movie[], next: Movie[]): Movie[] {
-  const merged = [...previous];
-  const seen = new Set(previous.map(getMediaKey));
-  for (const movie of next) {
-    const key = getMediaKey(movie);
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    merged.push(movie);
-  }
-  return merged;
-}
-
 export function SearchResultsInfinite({
   query,
   mediaKind,
@@ -114,7 +96,7 @@ export function SearchResultsInfinite({
         throw new Error(data.error || "No se pudo cargar la siguiente pagina.");
       }
 
-      setResults((prev) => mergeUniqueMovies(prev, data.results));
+      setResults((prev) => [...prev, ...data.results]);
       if (!filtersActive) {
         setTotalResults(data.totalResults);
       }
