@@ -70,7 +70,7 @@ export function Navbar() {
               Home
             </Link>
             <Link href="/movies" className={navLinkClassName(pathname === "/movies")}>
-              Peliculas
+              Películas
             </Link>
             <Link href="/series" className={navLinkClassName(pathname === "/series")}>
               Series
