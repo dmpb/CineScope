@@ -1,6 +1,15 @@
 import { getOptionalTmdbBearerToken, getTmdbLanguage, getTmdbRegion } from "@/lib/env";
 import { filterSearchResults, type SearchMediaKind, type SearchMediaOptions } from "@/lib/search-params";
 import type { CastMember, CrewHighlights, Movie, SearchResult, WatchProvider } from "@/types/movie";
+import type {
+  PersonCastCredit,
+  PersonCombinedCredits,
+  PersonCrewCredit,
+  PersonDetail,
+  PersonExternalIds,
+  PersonProfileImage,
+  PersonTaggedImage
+} from "@/types/person";
 
 export type { SearchMediaKind, SearchMediaOptions } from "@/lib/search-params";
 
@@ -1359,4 +1368,625 @@ export async function getTvById(id: number): Promise<Movie | null> {
   }
 
   return mapTvDto(data);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Person (actor / crew)                                                       */
+/* -------------------------------------------------------------------------- */
+
+type TmdbPersonDto = {
+  id?: number;
+  name?: string;
+  biography?: string | null;
+  also_known_as?: string[];
+  birthday?: string | null;
+  deathday?: string | null;
+  gender?: number;
+  homepage?: string | null;
+  adult?: boolean;
+  known_for_department?: string | null;
+  popularity?: number;
+  profile_path?: string | null;
+  imdb_id?: string | null;
+  place_of_birth?: string | null;
+};
+
+type TmdbPersonCombinedCastDto = {
+  credit_id?: string;
+  id?: number;
+  title?: string;
+  name?: string;
+  original_title?: string;
+  original_name?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  overview?: string | null;
+  vote_average?: number;
+  popularity?: number;
+  media_type?: string;
+  character?: string | null;
+  release_date?: string | null;
+  first_air_date?: string | null;
+  episode_count?: number;
+};
+
+type TmdbPersonCombinedCrewDto = {
+  credit_id?: string;
+  id?: number;
+  title?: string;
+  name?: string;
+  original_title?: string;
+  original_name?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  overview?: string | null;
+  vote_average?: number;
+  popularity?: number;
+  media_type?: string;
+  job?: string | null;
+  department?: string | null;
+  release_date?: string | null;
+  first_air_date?: string | null;
+};
+
+type TmdbPersonCombinedCreditsResponse = {
+  cast?: TmdbPersonCombinedCastDto[];
+  crew?: TmdbPersonCombinedCrewDto[];
+};
+
+type TmdbPersonImagesResponse = {
+  profiles?: Array<{
+    aspect_ratio?: number;
+    height?: number;
+    width?: number;
+    file_path?: string | null;
+    vote_average?: number;
+    vote_count?: number;
+  }>;
+};
+
+type TmdbPersonTaggedImagesResponse = {
+  results?: Array<{
+    aspect_ratio?: number;
+    height?: number;
+    width?: number;
+    file_path?: string | null;
+    media?: {
+      id?: number;
+      title?: string;
+      name?: string;
+    };
+    media_type?: string;
+  }>;
+};
+
+type TmdbPersonExternalIdsDto = {
+  imdb_id?: string | null;
+  facebook_id?: string | null;
+  instagram_id?: string | null;
+  twitter_id?: string | null;
+  freebase_id?: string | null;
+  freebase_mid?: string | null;
+  tvrage_id?: number | null;
+  wikidata_id?: string | null;
+};
+
+function mapGenderLabel(gender: number | undefined): string {
+  switch (gender) {
+    case 1:
+      return "Mujer";
+    case 2:
+      return "Hombre";
+    case 3:
+      return "No binario";
+    case 0:
+    default:
+      return "No especificado";
+  }
+}
+
+function emptyExternalIds(): PersonExternalIds {
+  return {
+    imdbId: "",
+    facebookId: "",
+    instagramId: "",
+    twitterId: "",
+    youtubeId: "",
+    freebaseId: "",
+    freebaseMid: "",
+    tvrageId: "",
+    wikidataId: ""
+  };
+}
+
+function mapExternalIdsDto(dto: TmdbPersonExternalIdsDto | null): PersonExternalIds {
+  if (!dto) {
+    return emptyExternalIds();
+  }
+
+  return {
+    imdbId: dto.imdb_id?.trim() ?? "",
+    facebookId: dto.facebook_id?.trim() ?? "",
+    instagramId: dto.instagram_id?.trim() ?? "",
+    twitterId: dto.twitter_id?.trim() ?? "",
+    youtubeId: "",
+    freebaseId: dto.freebase_id?.trim() ?? "",
+    freebaseMid: dto.freebase_mid?.trim() ?? "",
+    tvrageId: dto.tvrage_id != null ? String(dto.tvrage_id) : "",
+    wikidataId: dto.wikidata_id?.trim() ?? ""
+  };
+}
+
+function mapPersonDetailDto(dto: TmdbPersonDto): PersonDetail | null {
+  if (!dto.id || !Number.isFinite(dto.id)) {
+    return null;
+  }
+
+  const alsoKnownAs = (dto.also_known_as ?? []).map((alias) => alias.trim()).filter(Boolean);
+
+  return {
+    id: dto.id,
+    name: dto.name?.trim() || "Sin nombre",
+    biography: (dto.biography ?? "").trim(),
+    alsoKnownAs,
+    birthday: dto.birthday?.trim() ?? "",
+    deathday: dto.deathday?.trim() ?? "",
+    genderLabel: mapGenderLabel(dto.gender),
+    placeOfBirth: dto.place_of_birth?.trim() ?? "",
+    homepage: dto.homepage?.trim() ?? "",
+    adult: Boolean(dto.adult),
+    knownForDepartment: dto.known_for_department?.trim() ?? "",
+    popularity: typeof dto.popularity === "number" ? dto.popularity : 0,
+    profilePath: buildImageUrl(dto.profile_path),
+    imdbId: dto.imdb_id?.trim() ?? ""
+  };
+}
+
+function creditSortDate(cast: TmdbPersonCombinedCastDto): string {
+  return (cast.release_date ?? cast.first_air_date ?? "").trim();
+}
+
+function creditSortDateCrew(crew: TmdbPersonCombinedCrewDto): string {
+  return (crew.release_date ?? crew.first_air_date ?? "").trim();
+}
+
+function mapPersonCastCredit(dto: TmdbPersonCombinedCastDto): PersonCastCredit | null {
+  const mediaType = dto.media_type === "tv" ? "tv" : "movie";
+  const mediaId = typeof dto.id === "number" ? dto.id : 0;
+  if (!mediaId) {
+    return null;
+  }
+
+  const title =
+    mediaType === "tv"
+      ? (dto.name ?? dto.original_name ?? "").trim() || "Sin titulo"
+      : (dto.title ?? dto.original_title ?? "").trim() || "Sin titulo";
+
+  const originalTitle =
+    mediaType === "tv"
+      ? (dto.original_name ?? dto.name ?? "").trim() || title
+      : (dto.original_title ?? dto.title ?? "").trim() || title;
+
+  return {
+    creditId: dto.credit_id?.trim() || `${mediaType}-${mediaId}-cast`,
+    mediaType,
+    mediaId,
+    title,
+    originalTitle,
+    posterPath: buildImageUrl(dto.poster_path),
+    backdropPath: buildImageUrl(dto.backdrop_path),
+    character: (dto.character ?? "").trim() || "—",
+    overview: (dto.overview ?? "").trim(),
+    voteAverage: typeof dto.vote_average === "number" ? dto.vote_average : 0,
+    popularity: typeof dto.popularity === "number" ? dto.popularity : 0,
+    releaseDate: creditSortDate(dto),
+    episodeCount: typeof dto.episode_count === "number" ? dto.episode_count : 0
+  };
+}
+
+function mapPersonCrewCredit(dto: TmdbPersonCombinedCrewDto): PersonCrewCredit | null {
+  const mediaType = dto.media_type === "tv" ? "tv" : "movie";
+  const mediaId = typeof dto.id === "number" ? dto.id : 0;
+  if (!mediaId) {
+    return null;
+  }
+
+  const title =
+    mediaType === "tv"
+      ? (dto.name ?? dto.original_name ?? "").trim() || "Sin titulo"
+      : (dto.title ?? dto.original_title ?? "").trim() || "Sin titulo";
+
+  const originalTitle =
+    mediaType === "tv"
+      ? (dto.original_name ?? dto.name ?? "").trim() || title
+      : (dto.original_title ?? dto.title ?? "").trim() || title;
+
+  return {
+    creditId: dto.credit_id?.trim() || `${mediaType}-${mediaId}-${dto.job ?? "crew"}`,
+    mediaType,
+    mediaId,
+    title,
+    originalTitle,
+    posterPath: buildImageUrl(dto.poster_path),
+    backdropPath: buildImageUrl(dto.backdrop_path),
+    job: (dto.job ?? "").trim() || "—",
+    department: (dto.department ?? "").trim() || "—",
+    overview: (dto.overview ?? "").trim(),
+    voteAverage: typeof dto.vote_average === "number" ? dto.vote_average : 0,
+    popularity: typeof dto.popularity === "number" ? dto.popularity : 0,
+    releaseDate: creditSortDateCrew(dto)
+  };
+}
+
+function sortCreditsByDate<T extends { releaseDate: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const da = a.releaseDate || "0000-00-00";
+    const db = b.releaseDate || "0000-00-00";
+    if (da === db) {
+      return 0;
+    }
+    if (!a.releaseDate) {
+      return 1;
+    }
+    if (!b.releaseDate) {
+      return -1;
+    }
+    return db.localeCompare(da);
+  });
+}
+
+function mapCombinedCreditsResponse(data: TmdbPersonCombinedCreditsResponse | null): PersonCombinedCredits {
+  const castRaw = (data?.cast ?? []).map(mapPersonCastCredit).filter((c): c is PersonCastCredit => c != null);
+  const crewRaw = (data?.crew ?? []).map(mapPersonCrewCredit).filter((c): c is PersonCrewCredit => c != null);
+
+  const castSeen = new Set<string>();
+  const cast = castRaw.filter((c) => {
+    const key = `${c.mediaType}-${c.mediaId}-${c.character}`;
+    if (castSeen.has(key)) {
+      return false;
+    }
+    castSeen.add(key);
+    return true;
+  });
+
+  const crewSeen = new Set<string>();
+  const crew = crewRaw.filter((c) => {
+    const key = `${c.mediaType}-${c.mediaId}-${c.job}-${c.department}`;
+    if (crewSeen.has(key)) {
+      return false;
+    }
+    crewSeen.add(key);
+    return true;
+  });
+
+  return {
+    cast: sortCreditsByDate(cast),
+    crew: sortCreditsByDate(crew)
+  };
+}
+
+function mapProfileImagesResponse(data: TmdbPersonImagesResponse | null): PersonProfileImage[] {
+  return (data?.profiles ?? [])
+    .filter((p) => typeof p.file_path === "string" && p.file_path.length > 0)
+    .map((p) => ({
+      filePath: buildImageUrl(p.file_path),
+      aspectRatio: typeof p.aspect_ratio === "number" ? p.aspect_ratio : 0,
+      height: typeof p.height === "number" ? p.height : 0,
+      width: typeof p.width === "number" ? p.width : 0,
+      voteAverage: typeof p.vote_average === "number" ? p.vote_average : 0,
+      voteCount: typeof p.vote_count === "number" ? p.vote_count : 0
+    }));
+}
+
+function mapTaggedImagesResponse(data: TmdbPersonTaggedImagesResponse | null): PersonTaggedImage[] {
+  return (data?.results ?? [])
+    .filter((entry) => typeof entry.file_path === "string" && entry.file_path.length > 0)
+    .map((entry): PersonTaggedImage | null => {
+      const mediaType: "movie" | "tv" = entry.media_type === "tv" ? "tv" : "movie";
+      const mediaId = typeof entry.media?.id === "number" ? entry.media.id : 0;
+      const mediaTitle =
+        (entry.media?.title ?? entry.media?.name ?? "").trim() || (mediaId ? `ID ${mediaId}` : "Sin titulo");
+      if (!mediaId) {
+        return null;
+      }
+      return {
+        filePath: buildImageUrl(entry.file_path),
+        aspectRatio: typeof entry.aspect_ratio === "number" ? entry.aspect_ratio : 0,
+        height: typeof entry.height === "number" ? entry.height : 0,
+        width: typeof entry.width === "number" ? entry.width : 0,
+        mediaType,
+        mediaId,
+        mediaTitle
+      };
+    })
+    .filter((entry): entry is PersonTaggedImage => entry != null);
+}
+
+const MOCK_PERSON_BY_ID: Record<number, TmdbPersonDto> = {
+  1: {
+    id: 1,
+    name: "Keanu Reeves",
+    biography:
+      "Actor canadiense conocido por Matrix, John Wick y otras producciones de accion y ciencia ficcion. Datos de ejemplo en modo mock.",
+    also_known_as: ["Keanu Charles Reeves"],
+    birthday: "1964-09-02",
+    gender: 2,
+    place_of_birth: "Beirut, Libano",
+    homepage: "",
+    adult: false,
+    known_for_department: "Acting",
+    popularity: 18.5,
+    profile_path: "/rRdru6REr9i3WIHv2mntpcgxnoY.jpg",
+    imdb_id: "nm0000206"
+  },
+  2: {
+    id: 2,
+    name: "Carrie-Anne Moss",
+    biography: "Actriz canadiense. Mock para desarrollo sin API.",
+    also_known_as: [],
+    birthday: "1967-08-21",
+    gender: 1,
+    place_of_birth: "Vancouver, Canada",
+    adult: false,
+    known_for_department: "Acting",
+    popularity: 12.3,
+    profile_path: "/xD4jTA3KmVp5Rq3aHcymL9DUGjD.jpg",
+    imdb_id: "nm0005251"
+  },
+  3: {
+    id: 3,
+    name: "Laurence Fishburne",
+    biography: "Actor estadounidense. Mock para desarrollo sin API.",
+    also_known_as: ["Larry Fishburne"],
+    birthday: "1961-07-30",
+    gender: 2,
+    place_of_birth: "Augusta, Georgia, USA",
+    adult: false,
+    known_for_department: "Acting",
+    popularity: 9.8,
+    profile_path: "/8SuOhUmPbfKqDQ17jQ1Gy0mIvof.jpg",
+    imdb_id: "nm0000401"
+  }
+};
+
+function getMockPersonCombinedCredits(personId: number): PersonCombinedCredits {
+  const matrixCast: PersonCastCredit = {
+    creditId: "mock-cast-matrix",
+    mediaType: "movie",
+    mediaId: 603,
+    title: "The Matrix",
+    originalTitle: "The Matrix",
+    posterPath: buildImageUrl("/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg"),
+    backdropPath: buildImageUrl("/icmmSD4vTTDKOq2vvdulafOGw93.jpg"),
+    character: personId === 1 ? "Neo" : personId === 2 ? "Trinity" : "Morpheus",
+    overview: "Un hacker descubre que la realidad es una simulacion.",
+    voteAverage: 8.2,
+    popularity: 40,
+    releaseDate: "1999-03-31",
+    episodeCount: 0
+  };
+
+  if (personId === 1 || personId === 2 || personId === 3) {
+    return {
+      cast: sortCreditsByDate([matrixCast]),
+      crew: []
+    };
+  }
+
+  return { cast: [], crew: [] };
+}
+
+function getMockPersonProfileImages(personId: number): PersonProfileImage[] {
+  const p = MOCK_PERSON_BY_ID[personId];
+  if (!p?.profile_path) {
+    return [];
+  }
+
+  return [
+    {
+      filePath: buildImageUrl(p.profile_path),
+      aspectRatio: 0.667,
+      height: 900,
+      width: 600,
+      voteAverage: 5.2,
+      voteCount: 42
+    }
+  ];
+}
+
+function getMockPersonTaggedImages(personId: number): PersonTaggedImage[] {
+  if (personId !== 1 && personId !== 2 && personId !== 3) {
+    return [];
+  }
+
+  return [
+    {
+      filePath: buildImageUrl("/icmmSD4vTTDKOq2vvdulafOGw93.jpg"),
+      aspectRatio: 1.78,
+      height: 720,
+      width: 1280,
+      mediaType: "movie",
+      mediaId: 603,
+      mediaTitle: "The Matrix"
+    }
+  ];
+}
+
+function getMockPersonExternalIds(personId: number): PersonExternalIds {
+  const base = emptyExternalIds();
+  if (personId === 1) {
+    base.imdbId = "nm0000206";
+    base.twitterId = "KeanuReevess_";
+  }
+  return base;
+}
+
+export async function getPersonById(id: number): Promise<PersonDetail | null> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return null;
+  }
+
+  if (isTmdbMockMode) {
+    const dto = MOCK_PERSON_BY_ID[id];
+    return dto ? mapPersonDetailDto(dto) : null;
+  }
+
+  const data = await tmdbFetchJson<TmdbPersonDto>(`/person/${id}`);
+  if (!data) {
+    return null;
+  }
+
+  return mapPersonDetailDto(data);
+}
+
+export async function getPersonCombinedCreditsById(id: number): Promise<PersonCombinedCredits> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return { cast: [], crew: [] };
+  }
+
+  if (isTmdbMockMode) {
+    return getMockPersonCombinedCredits(id);
+  }
+
+  const data = await tmdbFetchJson<TmdbPersonCombinedCreditsResponse>(`/person/${id}/combined_credits`);
+  return mapCombinedCreditsResponse(data);
+}
+
+export async function getPersonProfileImagesById(id: number): Promise<PersonProfileImage[]> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockPersonProfileImages(id);
+  }
+
+  const data = await tmdbFetchJson<TmdbPersonImagesResponse>(`/person/${id}/images`);
+  return mapProfileImagesResponse(data);
+}
+
+export async function getPersonTaggedImagesById(id: number): Promise<PersonTaggedImage[]> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockPersonTaggedImages(id);
+  }
+
+  const data = await tmdbFetchJson<TmdbPersonTaggedImagesResponse>(`/person/${id}/tagged_images`);
+  return mapTaggedImagesResponse(data);
+}
+
+export async function getPersonExternalIdsById(id: number): Promise<PersonExternalIds> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return emptyExternalIds();
+  }
+
+  if (isTmdbMockMode) {
+    return getMockPersonExternalIds(id);
+  }
+
+  const data = await tmdbFetchJson<TmdbPersonExternalIdsDto>(`/person/${id}/external_ids`);
+  return mapExternalIdsDto(data);
+}
+
+const HERO_BACKDROP_ENRICH_LIMIT = 6;
+
+function mergeCreditRowsForHero(
+  items: Array<PersonCastCredit | PersonCrewCredit>
+): Array<{ backdropPath: string; releaseDate: string; popularity: number; mediaType: "movie" | "tv"; mediaId: number }> {
+  const byKey = new Map<
+    string,
+    { backdropPath: string; releaseDate: string; popularity: number; mediaType: "movie" | "tv"; mediaId: number }
+  >();
+
+  for (const c of items) {
+    const key = `${c.mediaType}-${c.mediaId}`;
+    const next = {
+      backdropPath: c.backdropPath,
+      releaseDate: c.releaseDate,
+      popularity: c.popularity,
+      mediaType: c.mediaType,
+      mediaId: c.mediaId
+    };
+    const prev = byKey.get(key);
+    if (!prev || next.popularity > prev.popularity) {
+      byKey.set(key, next);
+      continue;
+    }
+    if (next.popularity === prev.popularity) {
+      const nd = next.releaseDate || "";
+      const pd = prev.releaseDate || "";
+      if (nd > pd) {
+        byKey.set(key, next);
+      }
+    }
+  }
+
+  return [...byKey.values()].sort((a, b) => {
+    const da = a.releaseDate || "0000-00-00";
+    const db = b.releaseDate || "0000-00-00";
+    if (da !== db) {
+      return db.localeCompare(da);
+    }
+    return b.popularity - a.popularity;
+  });
+}
+
+function firstBackdropUrlFromCredits(credits: PersonCombinedCredits): string | null {
+  const merged = mergeCreditRowsForHero([...credits.cast, ...credits.crew]);
+  for (const row of merged) {
+    if (row.backdropPath.trim()) {
+      return row.backdropPath;
+    }
+  }
+  return null;
+}
+
+/** Cola de obras para enriquecer: primero interpretación; si no hay, equipo. Misma prioridad (reciente + popular). */
+function workQueueForHeroEnrichment(credits: PersonCombinedCredits): Array<{ mediaType: "movie" | "tv"; mediaId: number }> {
+  const castRows = mergeCreditRowsForHero(credits.cast);
+  if (castRows.length > 0) {
+    return castRows.map((r) => ({ mediaType: r.mediaType, mediaId: r.mediaId }));
+  }
+  return mergeCreditRowsForHero(credits.crew).map((r) => ({ mediaType: r.mediaType, mediaId: r.mediaId }));
+}
+
+/**
+ * Backdrop horizontal (16:9 típico) para el hero: primero datos en combined_credits;
+ * si no vienen, pide el detalle de las obras más recientes / populares del intérprete.
+ */
+export async function resolvePersonHeroBackdropUrl(credits: PersonCombinedCredits): Promise<string | null> {
+  const fromCredits = firstBackdropUrlFromCredits(credits);
+  if (fromCredits) {
+    return fromCredits;
+  }
+
+  const queue = workQueueForHeroEnrichment(credits).slice(0, HERO_BACKDROP_ENRICH_LIMIT);
+  if (queue.length === 0) {
+    return null;
+  }
+
+  const resolved = await Promise.all(
+    queue.map(async (item) => {
+      if (item.mediaType === "movie") {
+        const movie = await getMovieById(item.mediaId);
+        const path = movie?.backdropPath?.trim();
+        return path ? path : null;
+      }
+
+      const show = await getTvById(item.mediaId);
+      const path = show?.backdropPath?.trim();
+      return path ? path : null;
+    })
+  );
+
+  for (const url of resolved) {
+    if (url) {
+      return url;
+    }
+  }
+
+  return null;
 }

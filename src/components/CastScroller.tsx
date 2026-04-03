@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRef } from "react";
 import type { CastMember } from "@/types/movie";
 
@@ -57,19 +58,23 @@ export function CastScroller({ cast }: CastScrollerProps) {
         <ul className="inline-flex min-w-max flex-nowrap gap-3 sm:gap-4" role="list">
           {cast.slice(0, 20).map((member) => (
             <li key={member.id} className="w-[120px] flex-none">
-              <article className="group space-y-2 text-center">
-                <div className="relative mx-auto h-20 w-20 overflow-hidden rounded-full border border-zinc-700/80 bg-zinc-800 premium-transition group-hover:border-zinc-400 group-focus-within:border-zinc-400">
+              <Link
+                href={`/person/${member.id}`}
+                className="group block space-y-2 text-center focus-visible:outline-none"
+                aria-label={`Ver ficha de ${member.name}`}
+              >
+                <div className="relative mx-auto h-20 w-20 overflow-hidden rounded-full border border-zinc-700/80 bg-zinc-800 premium-transition group-hover:border-zinc-400 group-focus-visible:border-zinc-400 group-focus-visible:ring-2 group-focus-visible:ring-zinc-300 group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-zinc-950">
                   {member.profilePath ? (
-                    <Image src={member.profilePath} alt={`Foto de ${member.name}`} fill loading="lazy" className="object-cover" sizes="80px" />
+                    <Image src={member.profilePath} alt="" fill loading="lazy" className="object-cover" sizes="80px" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-[10px] text-zinc-500">N/A</div>
                   )}
                 </div>
-                <p className="line-clamp-1 text-xs font-medium text-zinc-100">{member.name}</p>
+                <p className="line-clamp-1 text-xs font-medium text-zinc-100 group-hover:text-white">{member.name}</p>
                 <p className="line-clamp-1 text-[11px] text-zinc-400 premium-transition group-hover:text-zinc-300">
                   {member.character}
                 </p>
-              </article>
+              </Link>
             </li>
           ))}
         </ul>
