@@ -62,6 +62,9 @@ export function Navbar() {
             <Link href="/series" className={navLinkClassName(pathname === "/series")}>
               Series
             </Link>
+            <Link href="/favoritos" className={navLinkClassName(pathname === "/favoritos")}>
+              Favoritos
+            </Link>
           </nav>
 
           <div className="w-full lg:ml-auto lg:max-w-[240px]">

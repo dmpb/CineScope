@@ -17,7 +17,7 @@ export function MovieCard({ movie }: MovieCardProps) {
 
   return (
     <article className="relative">
-      {!isTv && <FavoriteButton movieId={movie.id} movieTitle={movieTitle} />}
+      <FavoriteButton movieId={movie.id} movieTitle={movieTitle} mediaKind={isTv ? "tv" : "movie"} />
       <Link
         href={detailHref}
         aria-label={`Ver detalle de ${mediaLabel} ${movieTitle}`}

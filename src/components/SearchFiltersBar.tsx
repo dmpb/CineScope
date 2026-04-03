@@ -91,7 +91,7 @@ export function SearchFiltersBar({ query, mediaKind, year, minVote }: SearchFilt
 
       <div className="flex min-w-[9rem] flex-col gap-1">
         <label htmlFor="search-filter-year" className="text-[11px] font-medium text-zinc-500">
-          Ano
+          Año
         </label>
         <div className="relative">
           <select
