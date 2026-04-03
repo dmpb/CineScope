@@ -1,36 +1,57 @@
 export default function LoadingTvDetail() {
   return (
-    <main className="-mt-20 home-cinematic-shell">
-      <div className="home-content-container space-y-8 pb-10 pt-24">
-        <div className="grid gap-6 md:grid-cols-[280px_1fr]">
-          <div className="skeleton-shimmer aspect-[2/3] w-full max-w-[280px] rounded-xl" />
-          <div className="space-y-4">
-            <div className="skeleton-shimmer h-10 w-2/3 rounded" />
-            <div className="skeleton-shimmer h-5 w-1/2 rounded" />
-            <div className="skeleton-shimmer h-20 w-full rounded-xl" />
-            <div className="skeleton-shimmer h-10 w-36 rounded-lg" />
+    <main className="-mt-28 lg:-mt-20 home-cinematic-shell">
+      <div className="home-content-container space-y-8 pb-10 pt-28 lg:pt-24">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-6 md:grid-cols-[280px_1fr] md:gap-8">
+          <div className="skeleton-shimmer mx-auto aspect-[2/3] w-full max-w-[min(100%,280px)] rounded-xl border border-zinc-800/50 md:mx-0" />
+
+          <div className="min-w-0 space-y-4 sm:space-y-5">
+            <div className="flex flex-wrap items-center gap-2" aria-hidden="true">
+              <div className="skeleton-shimmer h-3.5 w-12 rounded sm:h-4 sm:w-14" />
+              <span className="select-none text-zinc-600">/</span>
+              <div className="skeleton-shimmer h-3.5 min-w-0 max-w-[12rem] flex-1 rounded sm:h-4 sm:max-w-xs" />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <div key={idx} className="skeleton-shimmer h-7 w-[4.5rem] rounded-full sm:w-20" />
+              ))}
+            </div>
+
+            <div className="skeleton-shimmer h-9 w-full max-w-md rounded-lg sm:h-10" />
+            <div className="skeleton-shimmer h-4 w-full max-w-[12rem] rounded sm:h-5" />
+            <div className="skeleton-shimmer h-[4.5rem] w-full rounded-xl sm:h-24" />
+            <div className="skeleton-shimmer h-10 w-full max-w-[9rem] rounded-lg" />
+
             <div className="space-y-2">
-              <div className="skeleton-shimmer h-5 w-40 rounded" />
-              <div className="horizontal-scroll-row">
-                {Array.from({ length: 7 }).map((_, idx) => (
-                  <div key={idx} className="space-y-2 min-w-[120px]">
-                    <div className="skeleton-shimmer mx-auto h-20 w-20 rounded-full" />
-                    <div className="skeleton-shimmer h-3 w-full rounded" />
-                  </div>
-                ))}
+              <div className="skeleton-shimmer h-4 w-28 rounded sm:w-40" />
+              <div className="-mx-1 overflow-x-auto pb-1">
+                <div className="flex w-max gap-3 px-1">
+                  {Array.from({ length: 7 }).map((_, idx) => (
+                    <div key={idx} className="w-[100px] shrink-0 space-y-2 sm:w-[120px]">
+                      <div className="skeleton-shimmer mx-auto h-[4.5rem] w-[4.5rem] rounded-full sm:h-20 sm:w-20" />
+                      <div className="skeleton-shimmer mx-auto h-3 w-full max-w-[5.5rem] rounded" />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="skeleton-shimmer h-8 w-72 rounded-lg" />
-          <div className="horizontal-scroll-row">
-            {Array.from({ length: 6 }).map((_, idx) => (
-              <div key={idx} className="skeleton-shimmer min-w-[45%] rounded-xl sm:min-w-[31%] md:min-w-[23%] lg:min-w-[19%] xl:min-w-[16%]">
-                <div className="aspect-[2/3] w-full rounded-xl" />
-              </div>
-            ))}
+        <div className="min-w-0 space-y-3">
+          <div className="skeleton-shimmer h-7 w-full max-w-xs rounded-lg sm:h-8 sm:max-w-sm" />
+          <div className="-mx-1 overflow-x-auto pb-1">
+            <div className="flex w-max gap-3 px-1 sm:gap-4">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="skeleton-shimmer w-[42vw] max-w-[160px] shrink-0 rounded-xl sm:w-[31vw] sm:max-w-none md:w-[23vw] lg:w-[19vw] xl:w-[16vw]"
+                >
+                  <div className="aspect-[2/3] w-full rounded-xl" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

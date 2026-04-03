@@ -36,23 +36,36 @@ export function Navbar() {
       }`}
     >
       <div className="mx-auto w-full max-w-[1400px] px-4 py-3 sm:px-6">
-        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:gap-6">
-          {pathname === "/" ? (
-            <h1 className="w-fit text-lg font-semibold tracking-tight text-zinc-100">
-              <Link href="/" className="focus-ring premium-transition rounded-md hover:text-zinc-200">
+        {/*
+          Movil: fila 1 = marca + busqueda (2 columnas); fila 2 = enlaces a ancho completo.
+          lg+: una fila [marca | nav centrado | busqueda alineada a la derecha].
+        */}
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-3 lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:gap-x-6 lg:gap-y-0">
+          <div className="col-start-1 row-start-1 flex min-w-0 items-center self-center">
+            {pathname === "/" ? (
+              <h1 className="text-lg font-semibold tracking-tight text-zinc-100">
+                <Link href="/" className="focus-ring premium-transition rounded-md hover:text-zinc-200">
+                  CineScope
+                </Link>
+              </h1>
+            ) : (
+              <Link
+                href="/"
+                className="focus-ring premium-transition rounded-md text-lg font-semibold tracking-tight text-zinc-100 hover:text-zinc-200"
+              >
                 CineScope
               </Link>
-            </h1>
-          ) : (
-            <Link
-              href="/"
-              className="focus-ring premium-transition w-fit rounded-md text-lg font-semibold tracking-tight text-zinc-100 hover:text-zinc-200"
-            >
-              CineScope
-            </Link>
-          )}
+            )}
+          </div>
 
-          <nav aria-label="Navegacion principal" className="flex items-center justify-start gap-1 lg:justify-center">
+          <div className="col-start-2 row-start-1 min-w-0 self-center lg:col-start-3 lg:row-start-1 lg:justify-self-end lg:w-full lg:max-w-[240px]">
+            <SearchBar compact />
+          </div>
+
+          <nav
+            aria-label="Navegacion principal"
+            className="col-span-2 row-start-2 flex flex-wrap items-center gap-x-1 gap-y-2 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:flex-nowrap lg:justify-center lg:justify-self-center lg:gap-1"
+          >
             <Link href="/" className={navLinkClassName(pathname === "/")}>
               Home
             </Link>
@@ -66,10 +79,6 @@ export function Navbar() {
               Favoritos
             </Link>
           </nav>
-
-          <div className="w-full lg:ml-auto lg:max-w-[240px]">
-            <SearchBar compact />
-          </div>
         </div>
       </div>
     </header>

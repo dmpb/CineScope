@@ -14,7 +14,7 @@ export default async function HomePage() {
   const stripMovies = selectHomeStripMovies(homeData);
 
   return (
-    <main className="-mt-20 home-cinematic-shell">
+    <main className="-mt-28 lg:-mt-20 home-cinematic-shell">
       {featuredSlides.length > 0 && <FeaturedBannerCarousel slides={featuredSlides} />}
 
       <div className="home-content-container home-content-stack">

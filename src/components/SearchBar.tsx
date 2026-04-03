@@ -9,7 +9,7 @@ export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps
   const initialValue = defaultValue.trim();
   const formClassName = compact ? "w-full" : "w-full max-w-2xl";
   const inputClassName = compact
-    ? "focus-ring premium-transition h-9 w-full rounded-full border border-zinc-700/80 bg-zinc-900/75 py-2 pl-3 pr-10 text-sm text-zinc-100 placeholder:text-zinc-400"
+    ? "focus-ring premium-transition h-9 w-full max-w-[240px] rounded-full border border-zinc-700/80 bg-zinc-900/75 py-2 pl-3 pr-10 text-sm text-zinc-100 placeholder:text-zinc-400"
     : "focus-ring premium-transition w-full rounded-xl border border-zinc-700 bg-zinc-900/85 py-2.5 pl-4 pr-11 text-sm text-zinc-100 placeholder:text-zinc-400 focus:border-zinc-500";
 
   return (
@@ -23,7 +23,7 @@ export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps
       <label htmlFor="search-query" className="sr-only">
         Buscar pelicula por titulo
       </label>
-      <div className="relative">
+      <div className="relative text-right">
         <input
           id="search-query"
           type="search"

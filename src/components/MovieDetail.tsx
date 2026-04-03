@@ -88,7 +88,7 @@ export function MovieDetail({
       <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/78 to-black/35" />
       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent" />
 
-      <div className="relative z-10 flex min-h-[72vh] w-full items-end px-4 pb-10 pt-24 sm:px-6 lg:px-10">
+      <div className="relative z-10 flex min-h-[72vh] w-full items-end px-4 pb-10 pt-28 lg:pt-24 sm:px-6 lg:px-10">
         <div className="grid w-full gap-6 md:grid-cols-[280px_1fr]">
           <div className="relative mx-auto aspect-[2/3] w-full max-w-[280px] overflow-hidden rounded-xl border border-zinc-700/70 bg-zinc-800 shadow-xl shadow-black/50">
             {movie.posterPath ? (

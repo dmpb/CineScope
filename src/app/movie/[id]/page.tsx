@@ -42,7 +42,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
     : [null, null, [], { directors: [], writers: [] }, [], [], []];
 
   return (
-    <main className="-mt-20 home-cinematic-shell">
+    <main className="-mt-28 lg:-mt-20 home-cinematic-shell">
       {(!hasToken || !movieId || (movieId && !movie)) && (
         <div className="home-content-container space-y-4 pt-6">
           {!hasToken && (

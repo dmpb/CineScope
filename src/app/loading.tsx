@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <main className="-mt-20 home-cinematic-shell">
+    <main className="-mt-28 lg:-mt-20 home-cinematic-shell">
       <div className="skeleton-shimmer h-[72vh] min-h-[460px] w-full" />
 
       <div className="home-content-container home-content-stack">

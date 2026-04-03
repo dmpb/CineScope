@@ -82,7 +82,7 @@ export default async function TvPage({ params }: TvPageProps) {
     : [null, null, [], { directors: [], writers: [] }, [], [], []];
 
   return (
-    <main className="-mt-20 home-cinematic-shell">
+    <main className="-mt-28 lg:-mt-20 home-cinematic-shell">
       {(!hasToken || !tvId || (tvId && !tvShow)) && (
         <div className="home-content-container space-y-4 pt-6">
           {!hasToken && (
