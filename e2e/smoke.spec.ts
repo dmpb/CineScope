@@ -19,8 +19,9 @@ test("smoke: Search por query param", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: /Búsqueda|Busqueda/i })).toBeVisible();
   await expect(page.getByRole("heading", { level: 2, name: /Resultados para "matrix"/i })).toBeVisible();
 
-  await page.getByRole("searchbox", { name: /Buscar pelicula/i }).fill("inception");
-  await page.getByRole("button", { name: /Buscar/i }).click();
+  const searchInput = page.getByRole("searchbox", { name: /Buscar pelicula/i });
+  await searchInput.fill("inception");
+  await searchInput.press("Enter");
 
   await expect(page).toHaveURL(/\/search\?q=inception$/);
   await expect(page.getByRole("heading", { level: 2, name: /Resultados para "inception"/i })).toBeVisible();
