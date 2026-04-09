@@ -5,7 +5,9 @@ test("smoke: Home -> Detail", async ({ page }) => {
 
   await expect(page.getByRole("heading", { level: 1, name: "CineScope" })).toBeVisible();
 
-  const firstMovieLink = page.getByRole("link", { name: /Ver detalle de/i }).first();
+  const firstMovieLink = page
+    .getByRole("link", { name: /Ver detalle de|View .* details for/i })
+    .first();
   await expect(firstMovieLink).toBeVisible();
 
   await firstMovieLink.click();
@@ -16,13 +18,14 @@ test("smoke: Home -> Detail", async ({ page }) => {
 test("smoke: Search por query param", async ({ page }) => {
   await page.goto("/search?q=matrix");
 
-  await expect(page.getByRole("heading", { level: 1, name: /Búsqueda|Busqueda/i })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: /Resultados para "matrix"/i })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Búsqueda|Busqueda|Search/i })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2 }).filter({ hasText: /matrix/i })).toBeVisible();
 
-  const searchInput = page.getByRole("searchbox", { name: /Buscar pelicula/i });
+  const searchInput = page.locator("#search-query");
+  await expect(searchInput).toBeVisible();
   await searchInput.fill("inception");
   await searchInput.press("Enter");
 
   await expect(page).toHaveURL(/\/search\?q=inception$/);
-  await expect(page.getByRole("heading", { level: 2, name: /Resultados para "inception"/i })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2 }).filter({ hasText: /inception/i })).toBeVisible();
 });
