@@ -1,4 +1,5 @@
-import { getOptionalTmdbBearerToken, getTmdbLanguage, getTmdbRegion } from "@/lib/env";
+import { getOptionalTmdbBearerToken, getTmdbRegion } from "@/lib/env";
+import { resolveTmdbLanguageForRequest } from "@/lib/tmdb-language-server";
 import { filterSearchResults, type SearchMediaKind, type SearchMediaOptions } from "@/lib/search-params";
 import type { CastMember, CrewHighlights, Movie, SearchResult, WatchProvider } from "@/types/movie";
 import type {
@@ -548,21 +549,22 @@ function mapProviderEntries(
     }));
 }
 
-function buildTheatricalListQuery(): string {
+async function buildTheatricalListQuery(): Promise<string> {
+  const language = await resolveTmdbLanguageForRequest();
   const params = new URLSearchParams({
-    language: getTmdbLanguage(),
+    language,
     region: getTmdbRegion()
   });
   return `?${params.toString()}`;
 }
 
-/** Anexa `language` a toda peticion v3 para titulos, sinopsis y generos localizados (defecto es-ES via env). */
-function pathWithTmdbLanguage(path: string): string {
+/** Anexa `language` a toda peticion v3 para titulos, sinopsis y generos localizados. */
+function pathWithTmdbLanguage(path: string, language: string): string {
   if (/[?&]language=/.test(path)) {
     return path;
   }
   const sep = path.includes("?") ? "&" : "?";
-  return `${path}${sep}language=${encodeURIComponent(getTmdbLanguage())}`;
+  return `${path}${sep}language=${encodeURIComponent(language)}`;
 }
 
 async function tmdbFetchJson<T>(path: string): Promise<T | null> {
@@ -572,7 +574,8 @@ async function tmdbFetchJson<T>(path: string): Promise<T | null> {
     return null;
   }
 
-  const url = `${TMDB_API_BASE}${pathWithTmdbLanguage(path)}`;
+  const language = await resolveTmdbLanguageForRequest();
+  const url = `${TMDB_API_BASE}${pathWithTmdbLanguage(path, language)}`;
 
   try {
     const res = await fetch(url, {
@@ -727,7 +730,7 @@ export async function getNowPlayingMovies(): Promise<Movie[]> {
     return [movies[2], movies[0], movies[4], movies[1], movies[3]].filter(Boolean);
   }
 
-  const data = await tmdbFetchJson<TmdbMovieListResponse>(`/movie/now_playing${buildTheatricalListQuery()}`);
+  const data = await tmdbFetchJson<TmdbMovieListResponse>(`/movie/now_playing${await buildTheatricalListQuery()}`);
   if (!data?.results?.length) {
     return [];
   }
@@ -742,7 +745,7 @@ export async function getUpcomingMovies(): Promise<Movie[]> {
     return [movies[5], movies[1], movies[3], movies[0], movies[2]].filter(Boolean);
   }
 
-  const data = await tmdbFetchJson<TmdbMovieListResponse>(`/movie/upcoming${buildTheatricalListQuery()}`);
+  const data = await tmdbFetchJson<TmdbMovieListResponse>(`/movie/upcoming${await buildTheatricalListQuery()}`);
   if (!data?.results?.length) {
     return [];
   }

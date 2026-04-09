@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import type { SearchResult } from "@/types/movie";
 import SearchPage from "@/app/search/page";
 
+vi.mock("@/lib/tmdb-language-server", () => ({
+  resolveTmdbLanguageForRequest: vi.fn().mockResolvedValue("es-ES")
+}));
+
 vi.mock("@/lib/env", () => ({
   getOptionalTmdbBearerToken: vi.fn()
 }));
@@ -41,7 +45,7 @@ describe("Search page", () => {
 
     render(await SearchPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByText(/Ingresa un termino/)).toBeInTheDocument();
+    expect(screen.getByText(/Ingresa un término/)).toBeInTheDocument();
   });
 
   it("renders query results", async () => {

@@ -13,6 +13,8 @@ import {
 } from "@/lib/tmdb";
 import { MovieDetail } from "@/components/MovieDetail";
 import { StateMessage } from "@/components/StateMessage";
+import { resolveTmdbLanguageForRequest } from "@/lib/tmdb-language-server";
+import { getUiMessages } from "@/lib/ui-i18n";
 
 type MoviePageProps = {
   params: Promise<{ id: string }>;
@@ -29,20 +31,21 @@ function parseMovieId(idParam: string): number | null {
 const getMovieByIdCached = cache(async (id: number) => getMovieById(id));
 
 export async function generateMetadata({ params }: MoviePageProps): Promise<Metadata> {
+  const ui = getUiMessages(await resolveTmdbLanguageForRequest());
   const { id: idParam } = await params;
   const movieId = parseMovieId(idParam);
   if (!movieId) {
     return {
-      title: "Película no encontrada",
-      description: "El identificador de la película no es válido."
+      title: ui.metaMovieNotFoundTitle,
+      description: ui.metaMovieNotFoundDesc
     };
   }
 
   const movie = await getMovieByIdCached(movieId);
   if (!movie) {
     return {
-      title: "Película no disponible",
-      description: "No se pudo cargar esta película o no existe en TMDb."
+      title: ui.metaMovieUnavailableTitle,
+      description: ui.metaMovieUnavailableDesc
     };
   }
 
@@ -52,7 +55,7 @@ export async function generateMetadata({ params }: MoviePageProps): Promise<Meta
       ? plainOverview.length > 155
         ? `${plainOverview.slice(0, 155)}…`
         : plainOverview
-      : `${movie.title}. Ficha, reparto, trailers y títulos similares en CineScope.`;
+      : ui.metaMovieFallbackDescription(movie.title);
 
   const imageUrl = movie.backdropPath || movie.posterPath;
 
@@ -92,6 +95,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
   const { id: idParam } = await params;
   const movieId = parseMovieId(idParam);
   const hasToken = Boolean(getOptionalTmdbBearerToken());
+  const ui = getUiMessages(await resolveTmdbLanguageForRequest());
 
   const [movie, trailerUrl, cast, crew, providers, mediaImages, similarMovies] = movieId
     ? await Promise.all([
@@ -111,29 +115,36 @@ export default async function MoviePage({ params }: MoviePageProps) {
         <div className="home-content-container space-y-4 pt-6">
           {!hasToken && (
             <StateMessage variant="warning">
-              Falta configurar <code>TMDB_BEARER_TOKEN</code> en <code>.env.local</code>.
+              {ui.tokenWarningBefore}
+              <code>TMDB_BEARER_TOKEN</code>
+              {ui.tokenWarningAfter}
             </StateMessage>
           )}
 
-          {!movieId && (
-            <StateMessage variant="empty">El ID de la pelicula no es valido.</StateMessage>
-          )}
+          {!movieId && <StateMessage variant="empty">{ui.movieInvalidId}</StateMessage>}
 
-          {movieId && !movie && (
-            <StateMessage variant="error">
-              No se pudo cargar la pelicula solicitada. Puede no existir o estar temporalmente no disponible.
-            </StateMessage>
-          )}
+          {movieId && !movie && <StateMessage variant="error">{ui.movieLoadError}</StateMessage>}
         </div>
       )}
 
-      {movie && <MovieDetail movie={movie} trailerUrl={trailerUrl} cast={cast} crew={crew} providers={providers} mediaImages={mediaImages} />}
+      {movie && (
+        <MovieDetail
+          movie={movie}
+          ui={ui}
+          trailerUrl={trailerUrl}
+          cast={cast}
+          crew={crew}
+          providers={providers}
+          mediaImages={mediaImages}
+        />
+      )}
       {movie && (
         <div id="similar-movies" className="anchor-target home-content-container home-content-stack">
           <MovieSection
-            title={`Similares a "${movie.title}"`}
+            title={ui.similarMoviesTitle(movie.title)}
             movies={similarMovies}
-            emptyMessage="No se encontraron peliculas similares relevantes para este titulo."
+            emptyMessage={ui.similarMoviesEmpty}
+            ui={ui}
           />
         </div>
       )}

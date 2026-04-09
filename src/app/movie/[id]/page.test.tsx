@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import type { Movie } from "@/types/movie";
 import MoviePage from "@/app/movie/[id]/page";
 
+vi.mock("@/lib/tmdb-language-server", () => ({
+  resolveTmdbLanguageForRequest: vi.fn().mockResolvedValue("es-ES")
+}));
+
 vi.mock("@/lib/env", () => ({
   getOptionalTmdbBearerToken: vi.fn()
 }));
@@ -74,7 +78,7 @@ describe("Movie detail page", () => {
     expect(screen.getByText("Interstellar")).toBeInTheDocument();
     expect(screen.getByText("Adventure, Science Fiction")).toBeInTheDocument();
     expect(screen.getByText("169 min")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ver trailer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ver tráiler" })).toBeInTheDocument();
     expect(screen.getByText("Christopher Nolan")).toBeInTheDocument();
     expect(screen.getByText("Netflix")).toBeInTheDocument();
     expect(screen.getByText("Matthew McConaughey")).toBeInTheDocument();
@@ -94,7 +98,7 @@ describe("Movie detail page", () => {
 
     render(await MoviePage({ params: Promise.resolve({ id: "1" }) }));
 
-    expect(screen.getByText(/No se encontraron peliculas similares relevantes/i)).toBeInTheDocument();
+    expect(screen.getByText(/No se encontraron películas similares relevantes/i)).toBeInTheDocument();
   });
 
   it("shows invalid id fallback", async () => {
@@ -102,6 +106,6 @@ describe("Movie detail page", () => {
 
     render(await MoviePage({ params: Promise.resolve({ id: "abc" }) }));
 
-    expect(screen.getByText(/no es valido/i)).toBeInTheDocument();
+    expect(screen.getByText(/no es válido/i)).toBeInTheDocument();
   });
 });

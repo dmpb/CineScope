@@ -4,6 +4,10 @@ import type { Movie } from "@/types/movie";
 import HomePage from "@/app/page";
 import type { HomeData } from "@/lib/home";
 
+vi.mock("@/lib/tmdb-language-server", () => ({
+  resolveTmdbLanguageForRequest: vi.fn().mockResolvedValue("es-ES")
+}));
+
 vi.mock("@/lib/env", () => ({
   getOptionalTmdbBearerToken: vi.fn()
 }));
@@ -89,8 +93,8 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
-    expect(screen.getByText("Pelicula destacada")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ver trailer" })).toBeInTheDocument();
+    expect(screen.getByText("Película destacada")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ver tráiler" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver detalle" })).toHaveAttribute("href", "/movie/1");
     expect(screen.getByText("Tendencias de la semana")).toBeInTheDocument();
     expect(screen.getByText("Genero: Action")).toBeInTheDocument();
@@ -125,7 +129,7 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
-    expect(screen.getByText(/Ocurrio un error al cargar datos de TMDb/i)).toBeInTheDocument();
+    expect(screen.getByText(/Ocurrió un error al cargar datos de TMDb/i)).toBeInTheDocument();
     expect(screen.getByText("Tendencias de la semana")).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useUiMessages } from "@/components/LocaleProvider";
 import { TrailerModal } from "@/components/TrailerModal";
 import type { FeaturedSlide } from "@/lib/home";
 
@@ -12,6 +13,7 @@ type FeaturedBannerCarouselProps = {
 };
 
 export function FeaturedBannerCarousel({ slides, autoPlayMs = 8000 }: FeaturedBannerCarouselProps) {
+  const ui = useUiMessages();
   const [activeIndex, setActiveIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
   const count = slides.length;
@@ -55,19 +57,20 @@ export function FeaturedBannerCarousel({ slides, autoPlayMs = 8000 }: FeaturedBa
   return (
     <section
       aria-roledescription="carrusel"
-      aria-label="Destacados"
+      aria-label={ui.carouselAria}
       className="relative h-[620px] overflow-hidden"
     >
       <div className="relative h-[620px] w-full">
         {slides.map((slide, index) => {
           const movie = slide.movie;
-          const movieTitle = movie.title || "Sin titulo";
+          const movieTitle = movie.title || ui.untitled;
           const isTv = movie.mediaType === "tv";
-          const movieOverview = movie.overview || "Sin sinopsis disponible para esta pelicula.";
+          const movieOverview =
+            movie.overview || (isTv ? ui.carouselOverviewFallbackTv : ui.carouselOverviewFallbackMovie);
           const imageSrc = movie.backdropPath || movie.posterPath;
-          const runtimeText = movie.runtime > 0 ? `${movie.runtime} min` : "Duracion N/D";
+          const runtimeText = movie.runtime > 0 ? `${movie.runtime} min` : ui.carouselRuntimeNA;
           const genresText =
-            movie.genres.length > 0 ? movie.genres.slice(0, 3).join(" · ") : "Genero N/D";
+            movie.genres.length > 0 ? movie.genres.slice(0, 3).join(" · ") : ui.carouselGenreNA;
           const isActive = index === safeIndex;
           const titleId = `featured-banner-title-${index}`;
 
@@ -98,7 +101,7 @@ export function FeaturedBannerCarousel({ slides, autoPlayMs = 8000 }: FeaturedBa
               <div className="home-content-container relative z-10 flex h-full items-end pb-12">
                 <div className="max-w-3xl space-y-4 sm:space-y-5">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-300">
-                    {isTv ? "Serie destacada" : "Pelicula destacada"}
+                    {isTv ? ui.carouselFeaturedTv : ui.carouselFeaturedMovie}
                   </p>
                   <h2
                     id={titleId}
@@ -118,7 +121,7 @@ export function FeaturedBannerCarousel({ slides, autoPlayMs = 8000 }: FeaturedBa
                       href={isTv ? `/tv/${movie.id}` : `/movie/${movie.id}`}
                       className="focus-ring premium-transition accent-button inline-flex items-center rounded-lg px-4 py-2.5 text-sm font-medium shadow-lg shadow-red-950/40"
                     >
-                      Ver detalle
+                      {ui.carouselSeeDetail}
                     </Link>
                   </div>
                 </div>
@@ -131,7 +134,7 @@ export function FeaturedBannerCarousel({ slides, autoPlayMs = 8000 }: FeaturedBa
           <div
             className="absolute bottom-8 right-6 z-20 flex items-center gap-2 sm:right-10 lg:right-14"
             role="tablist"
-            aria-label="Seleccionar destacado"
+            aria-label={ui.carouselPickFeatured}
           >
             {slides.map((slide, index) => {
               const isActive = index === safeIndex;
@@ -141,7 +144,7 @@ export function FeaturedBannerCarousel({ slides, autoPlayMs = 8000 }: FeaturedBa
                   type="button"
                   role="tab"
                   aria-selected={isActive}
-                  aria-label={`Ir al destacado ${index + 1} de ${count}`}
+                  aria-label={ui.carouselGoToSlide(index + 1, count)}
                   tabIndex={isActive ? 0 : -1}
                   onClick={() => goTo(index)}
                   className={`focus-ring h-2.5 w-2.5 rounded-full premium-transition ${

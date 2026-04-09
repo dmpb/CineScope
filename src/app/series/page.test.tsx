@@ -4,6 +4,10 @@ import type { Movie } from "@/types/movie";
 import SeriesPage from "@/app/series/page";
 import type { SeriesPageData } from "@/lib/home";
 
+vi.mock("@/lib/tmdb-language-server", () => ({
+  resolveTmdbLanguageForRequest: vi.fn().mockResolvedValue("es-ES")
+}));
+
 vi.mock("@/lib/env", () => ({
   getOptionalTmdbBearerToken: vi.fn()
 }));

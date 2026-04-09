@@ -1,6 +1,7 @@
 import type { Movie } from "@/types/movie";
 import { MovieCard } from "@/components/MovieCard";
 import { StateMessage } from "@/components/StateMessage";
+import type { UiMessages } from "@/lib/ui-i18n";
 
 type MovieSectionProps = {
   title: string;
@@ -9,9 +10,10 @@ type MovieSectionProps = {
   movies: Movie[];
   emptyMessage: string;
   layout?: "row" | "grid";
+  ui: UiMessages;
 };
 
-export function MovieSection({ title, headingId, movies, emptyMessage, layout = "row" }: MovieSectionProps) {
+export function MovieSection({ title, headingId, movies, emptyMessage, layout = "row", ui }: MovieSectionProps) {
   const sectionId = `section-${title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -24,7 +26,7 @@ export function MovieSection({ title, headingId, movies, emptyMessage, layout = 
   const itemClassName = isGrid
     ? "min-w-0"
     : "horizontal-scroll-item min-w-[45%] sm:min-w-[31%] md:min-w-[23%] lg:min-w-[19%] xl:min-w-[16%]";
-  const listAriaLabel = isGrid ? `Grid de titulos: ${title}` : `Fila de titulos: ${title}`;
+  const listAriaLabel = isGrid ? ui.sectionAriaGrid(title) : ui.sectionAriaRow(title);
 
   return (
     <section className="space-y-4 sm:space-y-5" aria-labelledby={headingDomId}>
@@ -35,7 +37,7 @@ export function MovieSection({ title, headingId, movies, emptyMessage, layout = 
         <ul className={listClassName} role="list" aria-label={listAriaLabel}>
           {movies.map((movie, index) => (
             <li key={`${movie.mediaType ?? "movie"}-${movie.id}-${index}`} className={itemClassName}>
-              <MovieCard movie={movie} />
+              <MovieCard movie={movie} ui={ui} />
             </li>
           ))}
         </ul>

@@ -3,6 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Movie } from "@/types/movie";
 import TvPage, { generateMetadata } from "@/app/tv/[id]/page";
 
+vi.mock("@/lib/tmdb-language-server", () => ({
+  resolveTmdbLanguageForRequest: vi.fn().mockResolvedValue("es-ES")
+}));
+
 vi.mock("@/lib/env", () => ({
   getOptionalTmdbBearerToken: vi.fn()
 }));
@@ -87,14 +91,14 @@ describe("TV detail page", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Game of Thrones" })).toBeInTheDocument();
     expect(screen.getByText("Drama")).toBeInTheDocument();
     expect(screen.getByText("57 min")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ver trailer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ver tráiler" })).toBeInTheDocument();
     expect(screen.getByText("George R. R. Martin")).toBeInTheDocument();
     expect(screen.getByText(/David Benioff/)).toBeInTheDocument();
     expect(screen.getByText("HBO Max")).toBeInTheDocument();
     expect(screen.getByText("Emilia Clarke")).toBeInTheDocument();
     expect(screen.getByText('Similares a "Game of Thrones"')).toBeInTheDocument();
     expect(screen.getByText("Breaking Bad")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Navegacion interna de detalle de serie" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Navegación interna de detalle de serie" })).toBeInTheDocument();
     const seriesCrumb = screen.getByRole("link", { name: "Series" });
     expect(seriesCrumb).toHaveAttribute("href", "/series");
   });
@@ -154,7 +158,7 @@ describe("TV detail page", () => {
 
     render(await TvPage({ params: Promise.resolve({ id: "1399" }) }));
 
-    expect(screen.getByText(/No se encontraron series similares relevantes/i)).toBeInTheDocument();
+    expect(screen.getByText(/No se encontraron series similares relevantes para este título/i)).toBeInTheDocument();
   });
 
   it("shows invalid id fallback", async () => {
@@ -162,6 +166,6 @@ describe("TV detail page", () => {
 
     render(await TvPage({ params: Promise.resolve({ id: "abc" }) }));
 
-    expect(screen.getByText(/no es valido/i)).toBeInTheDocument();
+    expect(screen.getByText(/no es válido/i)).toBeInTheDocument();
   });
 });

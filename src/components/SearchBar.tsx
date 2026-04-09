@@ -1,11 +1,14 @@
 "use client";
 
+import { useUiMessages } from "@/components/LocaleProvider";
+
 type SearchBarProps = {
   defaultValue?: string;
   compact?: boolean;
 };
 
 export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps) {
+  const ui = useUiMessages();
   const initialValue = defaultValue.trim();
   const formClassName = compact ? "w-full" : "w-full max-w-2xl";
   const inputClassName = compact
@@ -17,11 +20,11 @@ export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps
       action="/search"
       method="get"
       role="search"
-      aria-label="Buscar peliculas"
+      aria-label={ui.searchFormAria}
       className={formClassName}
     >
       <label htmlFor="search-query" className="sr-only">
-        Buscar pelicula por titulo
+        {ui.searchInputLabel}
       </label>
       <div className="relative text-right">
         <input
@@ -29,7 +32,7 @@ export function SearchBar({ defaultValue = "", compact = false }: SearchBarProps
           type="search"
           name="q"
           defaultValue={initialValue}
-          placeholder="Busca una pelicula..."
+          placeholder={ui.searchPlaceholder}
           className={inputClassName}
           onKeyDown={(event) => {
             if (event.key === "Escape") {

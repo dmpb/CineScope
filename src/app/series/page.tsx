@@ -5,24 +5,31 @@ import { MovieSection } from "@/components/MovieSection";
 import { StateMessage } from "@/components/StateMessage";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { buildSeriesRowSections, getSeriesPageData, selectSeriesStripMovies } from "@/lib/home";
+import { resolveTmdbLanguageForRequest } from "@/lib/tmdb-language-server";
+import { getUiMessages } from "@/lib/ui-i18n";
 
-export const metadata: Metadata = {
-  title: "Series",
-  description:
-    "Explora series en CineScope: populares, en emisión, top y más con información actualizada desde TMDb.",
-  openGraph: {
-    url: "/series"
-  },
-  alternates: {
-    canonical: "/series"
-  }
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const code = await resolveTmdbLanguageForRequest();
+  const ui = getUiMessages(code);
+  return {
+    title: ui.metaSeriesTitle,
+    description: ui.metaSeriesDescription,
+    openGraph: {
+      url: "/series"
+    },
+    alternates: {
+      canonical: "/series"
+    }
+  };
+}
 
 export default async function SeriesPage() {
   const hasToken = Boolean(getOptionalTmdbBearerToken());
+  const tmdbLanguage = await resolveTmdbLanguageForRequest();
+  const ui = getUiMessages(tmdbLanguage);
   const seriesData = await getSeriesPageData();
   const { featuredSlides, hasError } = seriesData;
-  const rowSections = buildSeriesRowSections(seriesData);
+  const rowSections = buildSeriesRowSections(seriesData, ui);
   const hasAnySeries = rowSections.some((section) => section.movies.length > 0);
   const stripMovies = selectSeriesStripMovies(seriesData);
 
@@ -33,27 +40,25 @@ export default async function SeriesPage() {
       <div className="home-content-container home-content-stack">
         {!hasToken && (
           <StateMessage variant="warning">
-            Falta configurar <code>TMDB_BEARER_TOKEN</code> en <code>.env.local</code>.
+            {ui.tokenWarningBefore}
+            <code>TMDB_BEARER_TOKEN</code>
+            {ui.tokenWarningAfter}
           </StateMessage>
         )}
 
-        {hasError && (
-          <StateMessage variant="error">
-            Ocurrio un error al cargar series desde TMDb. Intenta nuevamente en unos segundos.
-          </StateMessage>
-        )}
+        {hasError && <StateMessage variant="error">{ui.errorLoadSeries}</StateMessage>}
 
         {rowSections.map((section, index) => (
           <div key={section.key} className="space-y-8 sm:space-y-10">
-            <MovieSection title={section.title} movies={section.movies} emptyMessage={section.emptyMessage} />
+            <MovieSection title={section.title} movies={section.movies} emptyMessage={section.emptyMessage} ui={ui} />
             {index % 2 === 1 && stripMovies[Math.floor(index / 2)] && (
-              <FeaturedStrip movie={stripMovies[Math.floor(index / 2)]} label="Recomendacion de series" />
+              <FeaturedStrip movie={stripMovies[Math.floor(index / 2)]} label={ui.featuredSeriesRec} ui={ui} />
             )}
           </div>
         ))}
 
         {!hasError && hasToken && !hasAnySeries && (
-          <StateMessage variant="empty">No hay series para mostrar por ahora.</StateMessage>
+          <StateMessage variant="empty">{ui.emptyNoSeries}</StateMessage>
         )}
       </div>
     </main>

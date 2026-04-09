@@ -4,6 +4,10 @@ import type { Movie } from "@/types/movie";
 import MoviesPage from "@/app/movies/page";
 import type { MoviesPageData } from "@/lib/home";
 
+vi.mock("@/lib/tmdb-language-server", () => ({
+  resolveTmdbLanguageForRequest: vi.fn().mockResolvedValue("es-ES")
+}));
+
 vi.mock("@/lib/env", () => ({
   getOptionalTmdbBearerToken: vi.fn()
 }));
@@ -64,7 +68,7 @@ describe("MoviesPage", () => {
 
     render(await MoviesPage());
 
-    expect(screen.getByText("Pelicula destacada")).toBeInTheDocument();
+    expect(screen.getByText("Película destacada")).toBeInTheDocument();
     expect(screen.getByText("Tendencias de peliculas")).toBeInTheDocument();
   });
 

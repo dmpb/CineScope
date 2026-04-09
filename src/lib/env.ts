@@ -1,8 +1,8 @@
 const TMDB_BEARER_TOKEN = process.env.TMDB_BEARER_TOKEN;
 
 /**
- * Idioma de textos TMDb (param `language` en la API v3): titulos, sinopsis, generos.
- * Por defecto es-ES; mas adelante puede sustituirse por preferencia de usuario (cookie / cuenta).
+ * Idioma por defecto de textos TMDb (param `language` en la API v3).
+ * La preferencia del usuario (cookie `cinescope_tmdb_lang`) tiene prioridad en runtime; véase `tmdb-language-server.ts`.
  */
 const TMDB_LANGUAGE_DEFAULT = "es-ES";
 

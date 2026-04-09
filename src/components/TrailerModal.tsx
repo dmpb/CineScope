@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useUiMessages } from "@/components/LocaleProvider";
 import { createPortal } from "react-dom";
 
 type TrailerModalProps = {
@@ -9,6 +10,7 @@ type TrailerModalProps = {
 };
 
 export function TrailerModal({ trailerUrl, movieTitle }: TrailerModalProps) {
+  const ui = useUiMessages();
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -51,7 +53,7 @@ export function TrailerModal({ trailerUrl, movieTitle }: TrailerModalProps) {
         }}
         className="focus-ring premium-transition inline-flex items-center rounded-lg border border-zinc-400/30 bg-black/35 px-4 py-2.5 text-sm font-medium text-zinc-100 hover:border-zinc-200/60 hover:bg-black/55 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Ver trailer
+        {ui.trailerWatch}
       </button>
 
       {isMounted &&
@@ -66,24 +68,24 @@ export function TrailerModal({ trailerUrl, movieTitle }: TrailerModalProps) {
             <div
               role="dialog"
               aria-modal="true"
-              aria-label={`Trailer de ${movieTitle}`}
+              aria-label={ui.trailerDialogTitle(movieTitle)}
               onClick={(event) => event.stopPropagation()}
               className="glass-surface relative z-[210] w-full max-w-4xl overflow-hidden rounded-2xl"
             >
               <div className="flex items-center justify-between border-b border-zinc-700/70 px-4 py-3">
-                <p className="truncate text-sm font-medium text-zinc-100">Trailer de {movieTitle}</p>
+                <p className="truncate text-sm font-medium text-zinc-100">{ui.trailerDialogTitle(movieTitle)}</p>
                 <button
                   ref={closeButtonRef}
                   type="button"
                   onClick={() => setIsOpen(false)}
                   className="focus-ring premium-transition rounded-md px-2 py-1 text-sm text-zinc-300 hover:text-zinc-100"
                 >
-                  Cerrar
+                  {ui.trailerClose}
                 </button>
               </div>
               <iframe
                 src={trailerUrl}
-                title={`Trailer de ${movieTitle}`}
+                title={ui.trailerDialogTitle(movieTitle)}
                 className="aspect-video w-full"
                 loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
