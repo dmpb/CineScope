@@ -1,26 +1,23 @@
-import js from "@eslint/js";
-import globals from "globals";
-import tseslint from "typescript-eslint";
+import nextVitals from "eslint-config-next/core-web-vitals";
 
-export default tseslint.config(
+export default [
+  ...nextVitals,
   {
-    ignores: [".next/**", "node_modules/**", "coverage/**", "dist/**"]
+    ignores: ["coverage/**", "dist/**"]
   },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
   {
-    files: ["**/*.{ts,tsx}"],
-    languageOptions: {
-      parserOptions: {
-        projectService: true
-      },
-      globals: {
-        ...globals.browser,
-        ...globals.node
-      }
-    },
     rules: {
+      "import/no-anonymous-default-export": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react/no-unescaped-entities": "off",
       "@typescript-eslint/no-explicit-any": "off"
     }
+  },
+  {
+    files: ["src/test/**/*.{ts,tsx}"],
+    rules: {
+      "@next/next/no-img-element": "off",
+      "jsx-a11y/alt-text": "off"
+    }
   }
-);
+];
