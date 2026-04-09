@@ -3,9 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useUiMessages } from "@/components/LocaleProvider";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { SearchBar } from "@/components/SearchBar";
 
-export function Navbar() {
+type NavbarProps = {
+  initialTmdbLanguage: string;
+};
+
+export function Navbar({ initialTmdbLanguage }: NavbarProps) {
+  const ui = useUiMessages();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -58,25 +65,28 @@ export function Navbar() {
             )}
           </div>
 
-          <div className="col-start-2 row-start-1 min-w-0 self-center lg:col-start-3 lg:row-start-1 lg:justify-self-end lg:w-full lg:max-w-[240px]">
-            <SearchBar compact />
+          <div className="col-start-2 row-start-1 flex min-w-0 items-center justify-end gap-2 self-center lg:col-start-3 lg:row-start-1 lg:w-full lg:max-w-[min(100%,380px)] lg:justify-self-end">
+            <LanguageSelector initialCode={initialTmdbLanguage} />
+            <div className="min-w-0 flex-1 lg:max-w-[240px]">
+              <SearchBar compact />
+            </div>
           </div>
 
           <nav
-            aria-label="Navegacion principal"
+            aria-label={ui.navAriaLabel}
             className="col-span-2 row-start-2 flex flex-wrap items-center gap-x-1 gap-y-2 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:flex-nowrap lg:justify-center lg:justify-self-center lg:gap-1"
           >
             <Link href="/" className={navLinkClassName(pathname === "/")}>
-              Home
+              {ui.navHome}
             </Link>
             <Link href="/movies" className={navLinkClassName(pathname === "/movies")}>
-              Películas
+              {ui.navMovies}
             </Link>
             <Link href="/series" className={navLinkClassName(pathname === "/series")}>
-              Series
+              {ui.navSeries}
             </Link>
             <Link href="/favoritos" className={navLinkClassName(pathname === "/favoritos")}>
-              Favoritos
+              {ui.navFavorites}
             </Link>
           </nav>
         </div>

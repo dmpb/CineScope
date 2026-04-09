@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useUiMessages } from "@/components/LocaleProvider";
 import { FAVORITES_CHANGED_EVENT, readFavoritesFromStorage } from "@/lib/favorites-storage";
 import { applyFavoritesSortAndFilter, type FavoritesFilterMode, type FavoritesSortMode } from "@/lib/favorites-display";
 import { FavoritesPageHeader } from "@/components/FavoritesPageHeader";
@@ -14,6 +15,7 @@ type FavoritesPageClientProps = {
 };
 
 export function FavoritesPageClient({ hasToken }: FavoritesPageClientProps) {
+  const ui = useUiMessages();
   const [movies, setMovies] = useState<Movie[]>([]);
   /** Siempre igual en servidor y primer render cliente; la lectura de localStorage va en useEffect. */
   const [loading, setLoading] = useState(false);
@@ -93,27 +95,27 @@ export function FavoritesPageClient({ hasToken }: FavoritesPageClientProps) {
 
   const handleShare = useCallback(async () => {
     const text = movies.map((m) => m.title).join(" · ");
-    const title = "Mis favoritos — CineScope";
+    const title = ui.favoritesShareTitle;
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({ title, text: text.slice(0, 4000) });
       } else if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(`${title}\n${text}`);
-        window.alert("Lista copiada al portapapeles.");
+        window.alert(ui.favoritesShareCopied);
       }
     } catch {
       /* usuario cancelo o fallo */
     }
-  }, [movies]);
+  }, [movies, ui]);
 
   const stripMovie = displayMovies.length > 0 ? displayMovies[Math.min(1, displayMovies.length - 1)] : null;
 
   const sectionEmptyMessage =
     movies.length === 0 && storedKeysCount > 0
-      ? "Tienes favoritos guardados pero no se pudieron cargar desde TMDb. Revisa la conexion o el token, o vuelve a agregarlos."
+      ? ui.favoritesEmptyLoadError
       : movies.length > 0 && displayMovies.length === 0
-        ? "No hay titulos con este filtro. Prueba «Todos» u otro orden."
-        : "Aun no tienes favoritos. Usa la estrella en las tarjetas o en la ficha de pelicula o serie.";
+        ? ui.favoritesEmptyFilter
+        : ui.favoritesEmptyNone;
 
   const showGridSkeleton = loading && storedKeysCount > 0;
 
@@ -121,15 +123,13 @@ export function FavoritesPageClient({ hasToken }: FavoritesPageClientProps) {
     <div className="home-content-container home-content-stack">
       {!hasToken && (
         <StateMessage variant="warning">
-          Falta configurar <code>TMDB_BEARER_TOKEN</code> en <code>.env.local</code>.
+          {ui.tokenWarningBefore}
+          <code>TMDB_BEARER_TOKEN</code>
+          {ui.tokenWarningAfter}
         </StateMessage>
       )}
 
-      {loadError && (
-        <StateMessage variant="error">
-          Ocurrio un error al cargar tus favoritos desde TMDb. Intenta nuevamente en unos segundos.
-        </StateMessage>
-      )}
+      {loadError && <StateMessage variant="error">{ui.favoritesLoadError}</StateMessage>}
 
       <>
         <FavoritesPageHeader
@@ -161,13 +161,14 @@ export function FavoritesPageClient({ hasToken }: FavoritesPageClientProps) {
           ) : (
             <div className="space-y-8 sm:space-y-10">
               <MovieSection
-                title="Titulos en tu lista"
+                title={ui.favoritesSectionTitle}
                 headingId="favoritos-grid-heading"
                 movies={displayMovies}
                 emptyMessage={sectionEmptyMessage}
                 layout="grid"
+                ui={ui}
               />
-              {stripMovie && <FeaturedStrip movie={stripMovie} label="Destacado de tu lista" />}
+              {stripMovie && <FeaturedStrip movie={stripMovie} label={ui.favoritesStripFeatured} ui={ui} />}
             </div>
           ))}
       </>

@@ -4,10 +4,12 @@ import { CastScroller } from "@/components/CastScroller";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { MovieMediaGallery } from "@/components/MovieMediaGallery";
 import { TrailerModal } from "@/components/TrailerModal";
+import type { UiMessages } from "@/lib/ui-i18n";
 import type { CastMember, CrewHighlights, Movie, WatchProvider } from "@/types/movie";
 
 type MovieDetailProps = {
   movie: Movie;
+  ui: UiMessages;
   trailerUrl?: string | null;
   cast?: CastMember[];
   crew?: CrewHighlights;
@@ -15,7 +17,7 @@ type MovieDetailProps = {
   mediaImages?: string[];
 };
 
-function formatEpisodeRuntimeDisplay(movie: Movie): string {
+function formatEpisodeRuntimeDisplay(movie: Movie, ui: UiMessages): string {
   const times =
     movie.episodeRunTimes && movie.episodeRunTimes.length > 0
       ? movie.episodeRunTimes
@@ -23,7 +25,7 @@ function formatEpisodeRuntimeDisplay(movie: Movie): string {
         ? [movie.runtime]
         : [];
   if (times.length === 0) {
-    return "No disponible";
+    return ui.detailNotAvailable;
   }
   if (times.length === 1) {
     return `${times[0]} min`;
@@ -35,6 +37,7 @@ function formatEpisodeRuntimeDisplay(movie: Movie): string {
 
 export function MovieDetail({
   movie,
+  ui,
   trailerUrl = null,
   cast = [],
   crew = { directors: [], writers: [] },
@@ -42,35 +45,37 @@ export function MovieDetail({
   mediaImages = []
 }: MovieDetailProps) {
   const isTv = movie.mediaType === "tv";
-  const movieTitle = movie.title || "Sin titulo";
+  const movieTitle = movie.title || ui.untitled;
   const originalTitleText = movie.originalTitle && movie.originalTitle !== movieTitle ? movie.originalTitle : null;
   const taglineText = movie.tagline?.trim() || null;
-  const genresText = movie.genres.length > 0 ? movie.genres.join(", ") : "No disponible";
-  const runtimeText = movie.runtime > 0 ? `${movie.runtime} min` : "No disponible";
-  const episodeRuntimeText = formatEpisodeRuntimeDisplay(movie);
-  const languageText = movie.language ? movie.language.toUpperCase() : "No disponible";
-  const voteCountText = movie.voteCount > 0 ? new Intl.NumberFormat("es-ES").format(movie.voteCount) : "Sin votos";
-  const popularityText = typeof movie.popularity === "number" && movie.popularity > 0 ? movie.popularity.toFixed(1) : "No disponible";
-  const statusText = movie.status?.trim() || "No disponible";
+  const genresText = movie.genres.length > 0 ? movie.genres.join(", ") : ui.detailNotAvailable;
+  const runtimeText = movie.runtime > 0 ? `${movie.runtime} min` : ui.detailNotAvailable;
+  const episodeRuntimeText = formatEpisodeRuntimeDisplay(movie, ui);
+  const languageText = movie.language ? movie.language.toUpperCase() : ui.detailNotAvailable;
+  const voteCountText =
+    movie.voteCount > 0 ? new Intl.NumberFormat(ui.intlLocale).format(movie.voteCount) : ui.detailVotesNone;
+  const popularityText =
+    typeof movie.popularity === "number" && movie.popularity > 0
+      ? movie.popularity.toFixed(1)
+      : ui.detailNotAvailable;
+  const statusText = movie.status?.trim() || ui.detailNotAvailable;
   const countriesText =
     Array.isArray(movie.productionCountries) && movie.productionCountries.length > 0
       ? movie.productionCountries.join(", ")
-      : "No disponible";
+      : ui.detailNotAvailable;
   const imageSrc = movie.backdropPath || movie.posterPath;
-  const directorsText = crew.directors.length > 0 ? crew.directors.join(", ") : "No disponible";
-  const writersText = crew.writers.length > 0 ? crew.writers.join(", ") : "No disponible";
+  const directorsText = crew.directors.length > 0 ? crew.directors.join(", ") : ui.detailNotAvailable;
+  const writersText = crew.writers.length > 0 ? crew.writers.join(", ") : ui.detailNotAvailable;
   const creatorsText =
-    movie.creators && movie.creators.length > 0 ? movie.creators.join(", ") : "No disponible";
+    movie.creators && movie.creators.length > 0 ? movie.creators.join(", ") : ui.detailNotAvailable;
   const networksText =
-    movie.networkNames && movie.networkNames.length > 0 ? movie.networkNames.join(", ") : "No disponible";
+    movie.networkNames && movie.networkNames.length > 0 ? movie.networkNames.join(", ") : ui.detailNotAvailable;
   const lastAirText = movie.lastAirDate?.trim() || "";
-  const overviewFallback = isTv
-    ? "No hay sinopsis disponible para esta serie."
-    : "No hay sinopsis disponible para esta pelicula.";
-  const watchHeading = isTv ? "Donde ver" : "Donde verla";
-  const detailNavLabel = isTv ? "Navegacion interna de detalle de serie" : "Navegacion interna de detalle de pelicula";
+  const overviewFallback = isTv ? ui.detailOverviewFallbackTv : ui.detailOverviewFallbackMovie;
+  const watchHeading = isTv ? ui.detailWatchTv : ui.detailWatchMovie;
+  const detailNavLabel = isTv ? ui.detailNavTv : ui.detailNavMovie;
   const similarAnchor = isTv ? "#similar-titles" : "#similar-movies";
-  const firstAiredLabel = isTv ? "Primera emision" : "Fecha de estreno";
+  const dateLabelSr = isTv ? ui.detailFirstAir : ui.detailReleaseTheater;
 
   const providersByCategory = {
     flatrate: providers.filter((provider) => provider.category === "flatrate"),
@@ -81,9 +86,9 @@ export function MovieDetail({
   return (
     <article className="relative min-h-[72vh] overflow-hidden bg-zinc-900">
       {imageSrc ? (
-        <Image src={imageSrc} alt={`Backdrop de ${movieTitle}`} fill className="object-cover" priority sizes="100vw" />
+        <Image src={imageSrc} alt={ui.detailBackdropAlt(movieTitle)} fill className="object-cover" priority sizes="100vw" />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-sm text-zinc-400">Backdrop no disponible</div>
+        <div className="absolute inset-0 flex items-center justify-center text-sm text-zinc-400">{ui.detailBackdropMissing}</div>
       )}
       <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/78 to-black/35" />
       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent" />
@@ -92,17 +97,17 @@ export function MovieDetail({
         <div className="grid w-full gap-6 md:grid-cols-[280px_1fr]">
           <div className="relative mx-auto aspect-[2/3] w-full max-w-[280px] overflow-hidden rounded-xl border border-zinc-700/70 bg-zinc-800 shadow-xl shadow-black/50">
             {movie.posterPath ? (
-              <Image src={movie.posterPath} alt={`Poster de ${movieTitle}`} fill className="object-cover" sizes="280px" />
+              <Image src={movie.posterPath} alt={ui.detailPosterAlt(movieTitle)} fill className="object-cover" sizes="280px" />
             ) : (
-              <div className="flex h-full items-center justify-center px-3 text-center text-xs text-zinc-400">Poster no disponible</div>
+              <div className="flex h-full items-center justify-center px-3 text-center text-xs text-zinc-400">{ui.detailPosterMissing}</div>
             )}
           </div>
 
           <div className="space-y-4 sm:space-y-5 overflow-hidden">
             {isTv && (
-              <nav aria-label="Migas de pan" className="flex flex-wrap items-center gap-1 text-xs text-zinc-400">
+              <nav aria-label={ui.detailMigas} className="flex flex-wrap items-center gap-1 text-xs text-zinc-400">
                 <Link href="/series" className="focus-ring premium-transition rounded hover:text-zinc-100">
-                  Series
+                  {ui.detailBreadcrumbSeries}
                 </Link>
                 <span aria-hidden="true" className="text-zinc-600">
                   /
@@ -112,101 +117,105 @@ export function MovieDetail({
             )}
             <nav aria-label={detailNavLabel} className="flex flex-wrap gap-2 text-xs text-zinc-300">
               <a href="#detail-summary" className="focus-ring premium-transition rounded-full border border-zinc-600/70 px-3 py-1 hover:border-zinc-400">
-                Resumen
+                {ui.detailNavSummary}
               </a>
               <a href="#detail-cast" className="focus-ring premium-transition rounded-full border border-zinc-600/70 px-3 py-1 hover:border-zinc-400">
-                Cast
+                {ui.detailNavCast}
               </a>
               <a href="#detail-data" className="focus-ring premium-transition rounded-full border border-zinc-600/70 px-3 py-1 hover:border-zinc-400">
-                Datos
+                {ui.detailNavFacts}
               </a>
               <a href="#detail-media" className="focus-ring premium-transition rounded-full border border-zinc-600/70 px-3 py-1 hover:border-zinc-400">
-                Media
+                {ui.detailNavMedia}
               </a>
               <a href={similarAnchor} className="focus-ring premium-transition rounded-full border border-zinc-600/70 px-3 py-1 hover:border-zinc-400">
-                Similares
+                {ui.detailNavSimilar}
               </a>
             </nav>
             <h1 className="text-3xl font-semibold tracking-tight text-zinc-100 sm:text-4xl lg:text-5xl">{movieTitle}</h1>
-            {originalTitleText && <p className="text-sm text-zinc-300">Titulo original: {originalTitleText}</p>}
+            {originalTitleText && (
+              <p className="text-sm text-zinc-300">
+                {ui.detailOriginalTitle} {originalTitleText}
+              </p>
+            )}
             {taglineText && <p className="text-sm italic text-zinc-300">"{taglineText}"</p>}
             <section id="detail-summary" className="anchor-target space-y-4">
               <dl className="text-sm text-zinc-300">
                 <div className="flex flex-wrap items-center gap-2">
-                  <dt className="sr-only">{firstAiredLabel}</dt>
-                  <dd>{movie.releaseDate || "Fecha desconocida"}</dd>
+                  <dt className="sr-only">{dateLabelSr}</dt>
+                  <dd>{movie.releaseDate || ui.detailUnknownDate}</dd>
                   <span aria-hidden="true">·</span>
-                  <dt className="sr-only">Calificacion</dt>
+                  <dt className="sr-only">{ui.detailRatingSr}</dt>
                   <dd>⭐ {movie.rating.toFixed(1)}</dd>
                 </div>
               </dl>
               <dl id="detail-data" className="anchor-target grid gap-2 text-sm text-zinc-300 sm:grid-cols-2">
                 <div>
-                  <dt className="text-zinc-400">Generos</dt>
+                  <dt className="text-zinc-400">{ui.detailGenres}</dt>
                   <dd>{genresText}</dd>
                 </div>
                 {isTv && typeof movie.numberOfSeasons === "number" && movie.numberOfSeasons > 0 && (
                   <div>
-                    <dt className="text-zinc-400">Temporadas</dt>
+                    <dt className="text-zinc-400">{ui.detailSeasons}</dt>
                     <dd>{movie.numberOfSeasons}</dd>
                   </div>
                 )}
                 {isTv && typeof movie.numberOfEpisodes === "number" && movie.numberOfEpisodes > 0 && (
                   <div>
-                    <dt className="text-zinc-400">Episodios</dt>
+                    <dt className="text-zinc-400">{ui.detailEpisodes}</dt>
                     <dd>{movie.numberOfEpisodes}</dd>
                   </div>
                 )}
                 <div>
-                  <dt className="text-zinc-400">{isTv ? "Duracion por episodio" : "Duracion"}</dt>
+                  <dt className="text-zinc-400">{isTv ? ui.detailDurationEpisode : ui.detailDuration}</dt>
                   <dd>{isTv ? episodeRuntimeText : runtimeText}</dd>
                 </div>
                 {isTv && (
                   <div className="sm:col-span-2">
-                    <dt className="text-zinc-400">Emision en</dt>
+                    <dt className="text-zinc-400">{ui.detailAiredOn}</dt>
                     <dd>{networksText}</dd>
                   </div>
                 )}
                 <div>
-                  <dt className="text-zinc-400">Idioma</dt>
+                  <dt className="text-zinc-400">{ui.detailLanguage}</dt>
                   <dd>{languageText}</dd>
                 </div>
                 <div>
-                  <dt className="text-zinc-400">Votos</dt>
+                  <dt className="text-zinc-400">{ui.detailVotes}</dt>
                   <dd>{voteCountText}</dd>
                 </div>
                 <div>
-                  <dt className="text-zinc-400">Estado</dt>
+                  <dt className="text-zinc-400">{ui.detailStatus}</dt>
                   <dd>{statusText}</dd>
                 </div>
                 <div>
-                  <dt className="text-zinc-400">Popularidad</dt>
+                  <dt className="text-zinc-400">{ui.detailPopularity}</dt>
                   <dd>{popularityText}</dd>
                 </div>
                 <div className="sm:col-span-2">
-                  <dt className="text-zinc-400">Paises de produccion</dt>
+                  <dt className="text-zinc-400">{ui.detailCountries}</dt>
                   <dd>{countriesText}</dd>
                 </div>
                 {isTv && lastAirText && (
                   <div className="sm:col-span-2">
-                    <dt className="text-zinc-400">Ultima emision</dt>
+                    <dt className="text-zinc-400">{ui.detailLastAired}</dt>
                     <dd>{lastAirText}</dd>
                   </div>
                 )}
                 {isTv && (
                   <div className="sm:col-span-2">
-                    <dt className="text-zinc-400">Creadores</dt>
+                    <dt className="text-zinc-400">{ui.detailCreators}</dt>
                     <dd>{creatorsText}</dd>
                   </div>
                 )}
                 {!isTv && (
                   <div className="sm:col-span-2">
-                    <dt className="text-zinc-400">Direccion</dt>
+                    <dt className="text-zinc-400">{ui.detailDirectors}</dt>
                     <dd>{directorsText}</dd>
                   </div>
                 )}
                 <div className="sm:col-span-2">
-                  <dt className="text-zinc-400">Guion</dt>
+                  <dt className="text-zinc-400">{ui.detailWriters}</dt>
                   <dd>{writersText}</dd>
                 </div>
               </dl>
@@ -220,7 +229,7 @@ export function MovieDetail({
                   href={similarAnchor}
                   className="focus-ring premium-transition inline-flex items-center rounded-lg border border-zinc-500/70 bg-black/35 px-4 py-2.5 text-sm font-medium text-zinc-100 hover:border-zinc-300 hover:bg-black/55"
                 >
-                  Ver similares
+                  {ui.detailSeeSimilar}
                 </a>
               </div>
             </section>
@@ -228,7 +237,7 @@ export function MovieDetail({
               {cast.length > 0 ? (
                 <CastScroller cast={cast} />
               ) : (
-                <p className="text-sm text-zinc-400">No hay informacion de cast disponible.</p>
+                <p className="text-sm text-zinc-400">{ui.detailNoCast}</p>
               )}
             </section>
             <section className="space-y-2">
@@ -237,27 +246,33 @@ export function MovieDetail({
                 <div className="space-y-2 text-sm text-zinc-300">
                   {providersByCategory.flatrate.length > 0 && (
                     <p>
-                      <span className="text-zinc-400">Suscripcion:</span>{" "}
+                      <span className="text-zinc-400">{ui.detailWatchSubscription}</span>{" "}
                       {providersByCategory.flatrate.map((provider) => provider.name).join(", ")}
                     </p>
                   )}
                   {providersByCategory.rent.length > 0 && (
                     <p>
-                      <span className="text-zinc-400">Renta:</span> {providersByCategory.rent.map((provider) => provider.name).join(", ")}
+                      <span className="text-zinc-400">{ui.detailWatchRent}</span>{" "}
+                      {providersByCategory.rent.map((provider) => provider.name).join(", ")}
                     </p>
                   )}
                   {providersByCategory.buy.length > 0 && (
                     <p>
-                      <span className="text-zinc-400">Compra:</span> {providersByCategory.buy.map((provider) => provider.name).join(", ")}
+                      <span className="text-zinc-400">{ui.detailWatchBuy}</span>{" "}
+                      {providersByCategory.buy.map((provider) => provider.name).join(", ")}
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-zinc-400">No hay proveedores disponibles para la region configurada.</p>
+                <p className="text-sm text-zinc-400">{ui.detailNoProviders}</p>
               )}
             </section>
-            <section id="detail-media" className="anchor-target space-y-2" aria-label={isTv ? "Galeria de imagenes de la serie" : "Galeria de imagenes de la pelicula"}>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">Media</h2>
+            <section
+              id="detail-media"
+              className="anchor-target space-y-2"
+              aria-label={isTv ? ui.detailMediaGalleryTv : ui.detailMediaGalleryMovie}
+            >
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">{ui.detailMediaHeading}</h2>
               <MovieMediaGallery images={mediaImages} />
             </section>
           </div>

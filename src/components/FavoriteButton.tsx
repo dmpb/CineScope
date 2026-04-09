@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useUiMessages } from "@/components/LocaleProvider";
 import { readFavoritesFromStorage, toFavoriteKey, writeFavoritesToStorage, type FavoriteMediaKind } from "@/lib/favorites-storage";
 
 type FavoriteButtonProps = {
@@ -12,12 +13,13 @@ type FavoriteButtonProps = {
 };
 
 export function FavoriteButton({ movieId, movieTitle, mediaKind = "movie", variant = "card" }: FavoriteButtonProps) {
+  const ui = useUiMessages();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const favoriteKey = useMemo(() => toFavoriteKey(mediaKind, movieId), [mediaKind, movieId]);
   const label = useMemo(
-    () => (isFavorite ? `Quitar ${movieTitle} de favoritos` : `Agregar ${movieTitle} a favoritos`),
-    [isFavorite, movieTitle]
+    () => (isFavorite ? ui.favoriteRemove(movieTitle) : ui.favoriteAdd(movieTitle)),
+    [isFavorite, movieTitle, ui]
   );
 
   useEffect(() => {

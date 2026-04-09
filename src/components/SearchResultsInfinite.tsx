@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useUiMessages } from "@/components/LocaleProvider";
 import { MovieSection } from "@/components/MovieSection";
 import type { SearchMediaKind } from "@/lib/search-params";
 import type { Movie } from "@/types/movie";
@@ -53,6 +54,7 @@ export function SearchResultsInfinite({
   initialPage,
   initialTotalPages
 }: SearchResultsInfiniteProps) {
+  const ui = useUiMessages();
   const [results, setResults] = useState<Movie[]>(initialResults);
   const [totalResults, setTotalResults] = useState(initialTotalResults);
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -63,6 +65,14 @@ export function SearchResultsInfinite({
   const normalizedQuery = query.trim();
   const filtersActive = year !== undefined || minVote !== undefined;
   const displayedResultCount = filtersActive ? results.length : totalResults;
+  const queryLabel = normalizedQuery || ui.searchQueryFallback;
+
+  const emptyCopy =
+    mediaKind === "tv"
+      ? ui.searchEmptyTv(query)
+      : mediaKind === "movie"
+        ? ui.searchEmptyMovie(query)
+        : ui.searchEmptyAll(query);
 
   useEffect(() => {
     setResults(initialResults);
@@ -93,7 +103,7 @@ export function SearchResultsInfinite({
       const response = await fetch(`/api/search?${qs}`);
       const data = (await response.json()) as SearchResponse;
       if (!response.ok) {
-        throw new Error(data.error || "No se pudo cargar la siguiente pagina.");
+        throw new Error(data.error || ui.searchNextPageError);
       }
 
       setResults((prev) => [...prev, ...data.results]);
@@ -103,11 +113,11 @@ export function SearchResultsInfinite({
       setCurrentPage(data.currentPage);
       setTotalPages(data.totalPages);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No se pudo cargar mas resultados.");
+      setErrorMessage(error instanceof Error ? error.message : ui.searchLoadMoreError);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [currentPage, filtersActive, hasMore, isLoadingMore, mediaKind, minVote, query, year]);
+  }, [currentPage, filtersActive, hasMore, isLoadingMore, mediaKind, minVote, query, ui, year]);
 
   useEffect(() => {
     const element = sentinelRef.current;
@@ -128,49 +138,45 @@ export function SearchResultsInfinite({
     return () => observer.disconnect();
   }, [errorMessage, hasMore, loadNextPage]);
 
-  const emptyCopy =
-    mediaKind === "tv"
-      ? `No se encontraron series para "${query}". Prueba el titulo original o un termino mas corto.`
-      : mediaKind === "movie"
-        ? `No se encontraron peliculas para "${query}". Intenta con menos palabras, el titulo original o un termino mas general.`
-        : `No se encontraron peliculas ni series para "${query}". Intenta con menos palabras, el titulo original o un termino mas general.`;
+  const pageLine =
+    totalPages > 0 ? ui.searchPageOf(currentPage, totalPages) : ui.searchPageCurrent(currentPage);
 
   return (
     <section className="w-full max-w-none space-y-4 sm:space-y-5" aria-labelledby="search-results-title">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <h2 id="search-results-title" className="text-xl font-semibold text-zinc-100 sm:text-2xl">
-          Resultados para "{query}"
+          {ui.searchResultsFor(query)}
         </h2>
         <div className="text-sm text-zinc-400">
           <p>
             {displayedResultCount}{" "}
-            {displayedResultCount === 1 ? "resultado" : "resultados"}
-            {filtersActive ? " mostrados" : ""}
+            {displayedResultCount === 1 ? ui.searchResultCount : ui.searchResultCountPlural}
+            {filtersActive ? ui.searchShownWithFilters : ""}
           </p>
           <p className="text-xs uppercase tracking-wide text-zinc-500">
-            {filtersActive ? "Filtro local · " : ""}
-            Vista en grid · Pagina {currentPage}
-            {totalPages > 0 ? ` de ${totalPages}` : ""}
+            {filtersActive ? ui.searchLocalFilter : ""}
+            {ui.searchGridView}
+            {pageLine}
           </p>
         </div>
       </header>
 
-      <MovieSection title="Coincidencias" movies={results} emptyMessage={emptyCopy} layout="grid" />
+      <MovieSection title={ui.searchMatchesSection} movies={results} emptyMessage={emptyCopy} layout="grid" ui={ui} />
 
       {results.length === 0 && normalizedQuery.length > 0 && (
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4 text-sm text-zinc-300">
-          <p className="font-medium text-zinc-200">Sugerencias de busqueda</p>
+          <p className="font-medium text-zinc-200">{ui.searchSuggestionsTitle}</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-zinc-400">
-            <li>Prueba sin acentos o con el titulo original.</li>
-            <li>Usa menos palabras y evita signos especiales.</li>
-            <li>Ajusta los filtros o explora peliculas y series desde el menu.</li>
+            <li>{ui.searchSuggestion1}</li>
+            <li>{ui.searchSuggestion2}</li>
+            <li>{ui.searchSuggestion3}</li>
           </ul>
           <div className="mt-3 flex flex-wrap gap-3 text-xs">
             <Link href="/movies" className="focus-ring rounded border border-zinc-700 px-2.5 py-1.5 hover:border-zinc-500">
-              Ver peliculas
+              {ui.searchGoMovies}
             </Link>
             <Link href="/series" className="focus-ring rounded border border-zinc-700 px-2.5 py-1.5 hover:border-zinc-500">
-              Ver series
+              {ui.searchGoSeries}
             </Link>
           </div>
         </div>
@@ -183,13 +189,13 @@ export function SearchResultsInfinite({
             onClick={() => void loadNextPage()}
             className="focus-ring mt-2 rounded border border-amber-400/40 px-3 py-1.5 text-xs font-medium hover:border-amber-300"
           >
-            Reintentar carga
+            {ui.searchRetryLoad}
           </button>
         </div>
       )}
       {isLoadingMore && (
         <div className="space-y-2">
-          <p className="text-sm text-zinc-400">Cargando mas resultados...</p>
+          <p className="text-sm text-zinc-400">{ui.searchLoadingMore}</p>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="skeleton-shimmer overflow-hidden rounded-xl">
@@ -205,15 +211,15 @@ export function SearchResultsInfinite({
           onClick={() => void loadNextPage()}
           className="focus-ring premium-transition rounded-lg border border-zinc-600 bg-zinc-900/70 px-4 py-2 text-sm font-medium text-zinc-200 hover:border-zinc-400 hover:text-zinc-100"
         >
-          Cargar mas resultados
+          {ui.searchLoadMore}
         </button>
       )}
       <p aria-live="polite" className="sr-only">
         {errorMessage
-          ? `Error: ${errorMessage}`
+          ? ui.searchAnnounceError(errorMessage)
           : filtersActive
-            ? `${results.length} resultados visibles con filtros para ${normalizedQuery || "busqueda"}.`
-            : `Mostrando ${results.length} de ${totalResults} resultados para ${normalizedQuery || "busqueda"}.`}
+            ? ui.searchAnnounceFiltered(results.length, queryLabel)
+            : ui.searchAnnounceDefault(results.length, totalResults, queryLabel)}
       </p>
       <div ref={sentinelRef} aria-hidden="true" className="h-4 w-full" />
     </section>

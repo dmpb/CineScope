@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
+import { LocaleProvider } from "@/components/LocaleProvider";
 import { Navbar } from "@/components/Navbar";
+import { tmdbLanguageToHtmlLang } from "@/lib/tmdb-language";
+import { resolveTmdbLanguageForRequest } from "@/lib/tmdb-language-server";
 import { getSiteUrl, SITE_DEFAULT_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import "./globals.css";
 
@@ -54,15 +57,19 @@ type RootLayoutProps = Readonly<{
   children: React.ReactNode;
 }>;
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const tmdbLanguage = await resolveTmdbLanguageForRequest();
+  const htmlLang = tmdbLanguageToHtmlLang(tmdbLanguage);
   return (
-    <html lang="es">
+    <html lang={htmlLang}>
       <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
-        <div className="flex min-h-screen flex-col">
-          <Navbar />
-          <div className="flex-1 pt-28 lg:pt-20">{children}</div>
-          <Footer />
-        </div>
+        <LocaleProvider tmdbLanguage={tmdbLanguage}>
+          <div className="flex min-h-screen flex-col">
+            <Navbar initialTmdbLanguage={tmdbLanguage} />
+            <div className="flex-1 pt-28 lg:pt-20">{children}</div>
+            <Footer />
+          </div>
+        </LocaleProvider>
       </body>
     </html>
   );

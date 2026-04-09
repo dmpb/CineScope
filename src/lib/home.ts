@@ -1,3 +1,4 @@
+import type { UiMessages } from "@/lib/ui-i18n";
 import type { Movie } from "@/types/movie";
 import { cache } from "react";
 import {
@@ -417,74 +418,74 @@ export async function getSeriesPageData(): Promise<SeriesPageData> {
   };
 }
 
-export function buildHomeRowSections(data: HomeData): HomeRowSection[] {
+export function buildHomeRowSections(data: HomeData, ui: UiMessages): HomeRowSection[] {
   const genreSections = data.genreSections.map(({ genre, movies }) => ({
     key: `genre-${genre.id}`,
-    title: `Genero: ${genre.name}`,
+    title: ui.genreTitle(genre.name),
     movies: dedupeMedia(movies),
-    emptyMessage: `No hay peliculas para el genero ${genre.name} en este momento.`
+    emptyMessage: ui.genreEmpty(genre.name)
   }));
 
   const candidateSections: HomeRowSection[] = [
     {
       key: "trending-movies",
-      title: "Tendencias de peliculas",
+      title: ui.sectionTrendingMovies,
       movies: dedupeMedia(data.trending),
-      emptyMessage: "No hay peliculas en tendencia para mostrar en este momento."
+      emptyMessage: ui.emptyTrendingMovies
     },
     {
       key: "trending-tv",
-      title: "Series en tendencia",
+      title: ui.sectionTrendingTv,
       movies: dedupeMedia(data.trendingTv),
-      emptyMessage: "No hay series en tendencia para mostrar por ahora."
+      emptyMessage: ui.emptyTrendingTv
     },
     {
       key: "popular-movies",
-      title: "Peliculas populares",
+      title: ui.sectionPopularMovies,
       movies: dedupeMedia(data.popular),
-      emptyMessage: "No se encontraron peliculas populares en este momento."
+      emptyMessage: ui.emptyPopularMovies
     },
     {
       key: "popular-tv",
-      title: "Series populares",
+      title: ui.sectionPopularTv,
       movies: dedupeMedia(data.popularTv),
-      emptyMessage: "No se encontraron series populares en este momento."
+      emptyMessage: ui.emptyPopularTv
     },
     {
       key: "top-rated-movies",
-      title: "Peliculas mejor valoradas",
+      title: ui.sectionTopRatedMovies,
       movies: dedupeMedia(data.topRated),
-      emptyMessage: "No hay peliculas mejor valoradas para mostrar."
+      emptyMessage: ui.emptyTopRatedMovies
     },
     {
       key: "top-rated-tv",
-      title: "Series mejor valoradas",
+      title: ui.sectionTopRatedTv,
       movies: dedupeMedia(data.topRatedTv),
-      emptyMessage: "No hay series mejor valoradas para mostrar."
+      emptyMessage: ui.emptyTopRatedTv
     },
     {
       key: "now-playing",
-      title: "En cartelera",
+      title: ui.sectionNowPlaying,
       movies: dedupeMedia(data.nowPlaying),
-      emptyMessage: "No hay peliculas en cartelera disponibles en este momento."
+      emptyMessage: ui.emptyNowPlaying
     },
     {
       key: "airing-today-tv",
-      title: "Series emitiendo hoy",
+      title: ui.sectionAiringTodayTv,
       movies: dedupeMedia(data.airingTodayTv),
-      emptyMessage: "No hay episodios en emision para hoy."
+      emptyMessage: ui.emptyAiringTodayTv
     },
     {
       key: "upcoming",
-      title: "Proximamente",
+      title: ui.sectionUpcoming,
       movies: dedupeMedia(data.upcoming),
-      emptyMessage: "No hay proximos lanzamientos para mostrar."
+      emptyMessage: ui.emptyUpcoming
     },
     {
       key: "on-the-air-tv",
-      title: "Series en emision",
+      title: ui.sectionOnTheAirTv,
       movies: dedupeMedia(data.onTheAirTv),
-      emptyMessage: "No hay series en emision disponibles en este momento."
+      emptyMessage: ui.emptyOnTheAirTv
     },
     ...genreSections
   ];
@@ -493,78 +494,78 @@ export function buildHomeRowSections(data: HomeData): HomeRowSection[] {
 }
 
 /** Listas de /movies: una fila por endpoint TMDb, sin quitar titulos por solaparse entre secciones. */
-export function buildMoviesRowSections(data: MoviesPageData): HomeRowSection[] {
+export function buildMoviesRowSections(data: MoviesPageData, ui: UiMessages): HomeRowSection[] {
   return [
     {
       key: "trending-movies",
-      title: "Tendencias de peliculas",
+      title: ui.sectionTrendingMovies,
       movies: dedupeMedia(data.trending),
-      emptyMessage: "No hay peliculas en tendencia para mostrar en este momento."
+      emptyMessage: ui.emptyTrendingMovies
     },
     {
       key: "popular-movies",
-      title: "Peliculas populares",
+      title: ui.sectionPopularMovies,
       movies: dedupeMedia(data.popular),
-      emptyMessage: "No se encontraron peliculas populares en este momento."
+      emptyMessage: ui.emptyPopularMovies
     },
     {
       key: "top-rated-movies",
-      title: "Peliculas mejor valoradas",
+      title: ui.sectionTopRatedMovies,
       movies: dedupeMedia(data.topRated),
-      emptyMessage: "No hay peliculas mejor valoradas para mostrar."
+      emptyMessage: ui.emptyTopRatedMovies
     },
     {
       key: "now-playing",
-      title: "En cartelera",
+      title: ui.sectionNowPlaying,
       movies: dedupeMedia(data.nowPlaying),
-      emptyMessage: "No hay peliculas en cartelera disponibles en este momento."
+      emptyMessage: ui.emptyNowPlaying
     },
     {
       key: "upcoming",
-      title: "Proximamente",
+      title: ui.sectionUpcoming,
       movies: dedupeMedia(data.upcoming),
-      emptyMessage: "No hay proximos lanzamientos para mostrar."
+      emptyMessage: ui.emptyUpcoming
     },
     ...data.genreSections.map(({ genre, movies }) => ({
       key: `genre-${genre.id}`,
-      title: `Genero: ${genre.name}`,
+      title: ui.genreTitle(genre.name),
       movies: dedupeMedia(movies),
-      emptyMessage: `No hay peliculas para el genero ${genre.name} en este momento.`
+      emptyMessage: ui.genreEmpty(genre.name)
     }))
   ];
 }
 
-export function buildSeriesRowSections(data: SeriesPageData): HomeRowSection[] {
+export function buildSeriesRowSections(data: SeriesPageData, ui: UiMessages): HomeRowSection[] {
   const candidateSections: HomeRowSection[] = [
     {
       key: "trending-tv",
-      title: "Series en tendencia",
+      title: ui.sectionTrendingTv,
       movies: dedupeMedia(data.trendingTv),
-      emptyMessage: "No hay series en tendencia para mostrar por ahora."
+      emptyMessage: ui.emptyTrendingTv
     },
     {
       key: "popular-tv",
-      title: "Series populares",
+      title: ui.sectionPopularTv,
       movies: dedupeMedia(data.popularTv),
-      emptyMessage: "No se encontraron series populares en este momento."
+      emptyMessage: ui.emptyPopularTv
     },
     {
       key: "top-rated-tv",
-      title: "Series mejor valoradas",
+      title: ui.sectionTopRatedTv,
       movies: dedupeMedia(data.topRatedTv),
-      emptyMessage: "No hay series mejor valoradas para mostrar."
+      emptyMessage: ui.emptyTopRatedTv
     },
     {
       key: "airing-today-tv",
-      title: "Series emitiendo hoy",
+      title: ui.sectionAiringTodayTv,
       movies: dedupeMedia(data.airingTodayTv),
-      emptyMessage: "No hay episodios en emision para hoy."
+      emptyMessage: ui.emptyAiringTodayTv
     },
     {
       key: "on-the-air-tv",
-      title: "Series en emision",
+      title: ui.sectionOnTheAirTv,
       movies: dedupeMedia(data.onTheAirTv),
-      emptyMessage: "No hay series en emision disponibles en este momento."
+      emptyMessage: ui.emptyOnTheAirTv
     }
   ];
 

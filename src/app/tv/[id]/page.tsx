@@ -13,6 +13,8 @@ import {
   getTvTrailerById,
   getTvWatchProvidersById
 } from "@/lib/tmdb";
+import { resolveTmdbLanguageForRequest } from "@/lib/tmdb-language-server";
+import { getUiMessages } from "@/lib/ui-i18n";
 
 type TvPageProps = {
   params: Promise<{ id: string }>;
@@ -29,20 +31,21 @@ function parseTvId(idParam: string): number | null {
 const getTvByIdCached = cache(async (id: number) => getTvById(id));
 
 export async function generateMetadata({ params }: TvPageProps): Promise<Metadata> {
+  const ui = getUiMessages(await resolveTmdbLanguageForRequest());
   const { id: idParam } = await params;
   const tvId = parseTvId(idParam);
   if (!tvId) {
     return {
-      title: "Serie no encontrada",
-      description: "El identificador de la serie no es válido."
+      title: ui.metaTvNotFoundTitle,
+      description: ui.metaTvNotFoundDesc
     };
   }
 
   const show = await getTvByIdCached(tvId);
   if (!show) {
     return {
-      title: "Serie no disponible",
-      description: "No se pudo cargar esta serie o no existe en TMDb."
+      title: ui.metaTvUnavailableTitle,
+      description: ui.metaTvUnavailableDesc
     };
   }
 
@@ -52,7 +55,7 @@ export async function generateMetadata({ params }: TvPageProps): Promise<Metadat
       ? plainOverview.length > 155
         ? `${plainOverview.slice(0, 155)}…`
         : plainOverview
-      : `Serie: ${show.title}. Valoración, reparto y títulos similares en CineScope.`;
+      : ui.metaTvFallbackDescription(show.title);
 
   const imageUrl = show.backdropPath || show.posterPath;
 
@@ -92,6 +95,7 @@ export default async function TvPage({ params }: TvPageProps) {
   const { id: idParam } = await params;
   const tvId = parseTvId(idParam);
   const hasToken = Boolean(getOptionalTmdbBearerToken());
+  const ui = getUiMessages(await resolveTmdbLanguageForRequest());
 
   const [tvShow, trailerUrl, cast, crew, providers, mediaImages, similarTv] = tvId
     ? await Promise.all([
@@ -111,23 +115,22 @@ export default async function TvPage({ params }: TvPageProps) {
         <div className="home-content-container space-y-4 pt-6">
           {!hasToken && (
             <StateMessage variant="warning">
-              Falta configurar <code>TMDB_BEARER_TOKEN</code> en <code>.env.local</code>.
+              {ui.tokenWarningBefore}
+              <code>TMDB_BEARER_TOKEN</code>
+              {ui.tokenWarningAfter}
             </StateMessage>
           )}
 
-          {!tvId && <StateMessage variant="empty">El ID de la serie no es valido.</StateMessage>}
+          {!tvId && <StateMessage variant="empty">{ui.tvInvalidId}</StateMessage>}
 
-          {tvId && !tvShow && (
-            <StateMessage variant="error">
-              No se pudo cargar la serie solicitada. Puede no existir o estar temporalmente no disponible.
-            </StateMessage>
-          )}
+          {tvId && !tvShow && <StateMessage variant="error">{ui.tvLoadError}</StateMessage>}
         </div>
       )}
 
       {tvShow && (
         <MovieDetail
           movie={tvShow}
+          ui={ui}
           trailerUrl={trailerUrl}
           cast={cast}
           crew={crew}
@@ -138,9 +141,10 @@ export default async function TvPage({ params }: TvPageProps) {
       {tvShow && (
         <div id="similar-titles" className="anchor-target home-content-container home-content-stack">
           <MovieSection
-            title={`Similares a "${tvShow.title}"`}
+            title={ui.similarTvTitle(tvShow.title)}
             movies={similarTv}
-            emptyMessage="No se encontraron series similares relevantes para este titulo."
+            emptyMessage={ui.similarTvEmpty}
+            ui={ui}
           />
         </div>
       )}
