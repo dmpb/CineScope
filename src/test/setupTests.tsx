@@ -41,6 +41,12 @@ beforeAll(() => {
       dispatchEvent: vi.fn()
     }))
   });
+
+  globalThis.ResizeObserver = class {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  };
 });
 
 afterEach(() => {

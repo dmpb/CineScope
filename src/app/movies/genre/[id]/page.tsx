@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GenreCategoryRail } from "@/components/GenreCategoryRail";
-import { MovieSection } from "@/components/MovieSection";
+import { GenreDiscoverInfinite } from "@/components/GenreDiscoverInfinite";
 import { StateMessage } from "@/components/StateMessage";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
-import { getMovieGenres, getMoviesByGenre } from "@/lib/tmdb";
+import { getDiscoverMoviesByGenrePage, getMovieGenres } from "@/lib/tmdb";
 import { resolveTmdbLanguageForRequest } from "@/lib/tmdb-language-server";
 import { getUiMessages } from "@/lib/ui-i18n";
 
@@ -53,7 +52,7 @@ export default async function MoviesGenrePage({ params }: GenreMoviePageProps) {
   const tmdbLanguage = await resolveTmdbLanguageForRequest();
   const ui = getUiMessages(tmdbLanguage);
   const hasToken = Boolean(getOptionalTmdbBearerToken());
-  const [genres, movies] = await Promise.all([getMovieGenres(), getMoviesByGenre(genreId)]);
+  const [genres, discover] = await Promise.all([getMovieGenres(), getDiscoverMoviesByGenrePage(genreId, 1)]);
   const genre = genres.find((g) => g.id === genreId);
   const genreName = genre?.name ?? `ID ${genreId}`;
 
@@ -84,12 +83,16 @@ export default async function MoviesGenrePage({ params }: GenreMoviePageProps) {
           </div>
         </div>
 
-        <MovieSection
-          title={ui.genreResultsMovies}
-          movies={movies}
+        <GenreDiscoverInfinite
+          kind="movie"
+          genreId={genreId}
+          genreName={genreName}
+          sectionTitle={ui.genreResultsMovies}
           emptyMessage={ui.genreEmpty(genreName)}
-          layout="grid"
-          ui={ui}
+          initialResults={discover.results}
+          initialTotalResults={discover.totalResults}
+          initialPage={discover.currentPage}
+          initialTotalPages={discover.totalPages}
         />
       </div>
     </main>
