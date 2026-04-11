@@ -22,6 +22,14 @@ import type {
 
 export type { SearchMediaKind, SearchMediaOptions } from "@/lib/search-params";
 
+/** Una pagina de resultados Discover por genero (peliculas o TV). */
+export type DiscoverByGenrePageResult = {
+  results: Movie[];
+  totalResults: number;
+  currentPage: number;
+  totalPages: number;
+};
+
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/original";
 const isTmdbMockMode = process.env.TMDB_MOCK_MODE === "1";
@@ -81,10 +89,16 @@ type TmdbTvDto = {
 
 type TmdbMovieListResponse = {
   results?: TmdbMovieDto[];
+  page?: number;
+  total_pages?: number;
+  total_results?: number;
 };
 
 type TmdbTvListResponse = {
   results?: TmdbTvDto[];
+  page?: number;
+  total_pages?: number;
+  total_results?: number;
 };
 
 type TmdbSearchResponse = {
@@ -883,30 +897,131 @@ export async function getMovieGenres(): Promise<MovieGenre[]> {
     }));
 }
 
-export async function getMoviesByGenre(genreId: number): Promise<Movie[]> {
-  if (!Number.isInteger(genreId) || genreId <= 0) {
-    return [];
+const MOCK_GENRE_DISCOVER_PAGE_SIZE = 2;
+
+function paginateMockGenreDiscover(all: Movie[], page: number, pageSize: number): DiscoverByGenrePageResult {
+  const normalizedPage = Number.isInteger(page) && page > 0 ? page : 1;
+  const start = (normalizedPage - 1) * pageSize;
+  const results = all.slice(start, start + pageSize);
+  const totalResults = all.length;
+  const totalPages = totalResults === 0 ? 0 : Math.ceil(totalResults / pageSize);
+  return { results, totalResults, currentPage: normalizedPage, totalPages };
+}
+
+function mockMoviesPoolForGenre(genreId: number): Movie[] {
+  const movies = getMockMovies();
+  if (genreId === 28) {
+    return [movies[0], movies[2], movies[3]].filter(Boolean) as Movie[];
   }
+  if (genreId === 35) {
+    return [movies[4], movies[1], movies[5]].filter(Boolean) as Movie[];
+  }
+  return movies.slice(0, 5);
+}
+
+function mockTvPoolForGenre(genreId: number): Movie[] {
+  const shows = getMockTvShows();
+  if (genreId === 28) {
+    return [shows[0], shows[2]].filter(Boolean) as Movie[];
+  }
+  if (genreId === 35) {
+    return [shows[0], shows[1]].filter(Boolean) as Movie[];
+  }
+  return shows.slice(0, 5);
+}
+
+export async function getDiscoverMoviesByGenrePage(genreId: number, page = 1): Promise<DiscoverByGenrePageResult> {
+  if (!Number.isInteger(genreId) || genreId <= 0) {
+    return { results: [], totalResults: 0, currentPage: 1, totalPages: 0 };
+  }
+
+  const normalizedPage = Number.isInteger(page) && page > 0 ? page : 1;
 
   if (isTmdbMockMode) {
-    const movies = getMockMovies();
-    if (genreId === 28) {
-      return [movies[0], movies[2], movies[3]].filter(Boolean);
-    }
-    if (genreId === 35) {
-      return [movies[4], movies[1], movies[5]].filter(Boolean);
-    }
-    return movies.slice(0, 5);
+    return paginateMockGenreDiscover(mockMoviesPoolForGenre(genreId), normalizedPage, MOCK_GENRE_DISCOVER_PAGE_SIZE);
   }
 
-  const path = `/discover/movie?${new URLSearchParams({ with_genres: String(genreId) }).toString()}`;
+  const path = `/discover/movie?${new URLSearchParams({
+    with_genres: String(genreId),
+    page: String(normalizedPage)
+  }).toString()}`;
   const data = await tmdbFetchJson<TmdbMovieListResponse>(path);
-  if (!data?.results?.length) {
+  if (!data) {
+    return { results: [], totalResults: 0, currentPage: normalizedPage, totalPages: 0 };
+  }
+
+  const raw = (data.results ?? []).map(mapMovieDto);
+  const enrichLimit = normalizedPage === 1 ? RUNTIME_ENRICH_LIMIT : 6;
+  const results = await enrichMoviesWithDetails(raw, enrichLimit);
+  const totalResults = data.total_results ?? results.length;
+  const totalPages = normalizeSearchTotalPages(totalResults, data.total_pages ?? 0);
+  return {
+    results,
+    totalResults,
+    currentPage: data.page ?? normalizedPage,
+    totalPages
+  };
+}
+
+export async function getMoviesByGenre(genreId: number): Promise<Movie[]> {
+  const page = await getDiscoverMoviesByGenrePage(genreId, 1);
+  return page.results;
+}
+
+export async function getTvGenres(): Promise<MovieGenre[]> {
+  if (isTmdbMockMode) {
+    return getMockGenres();
+  }
+
+  const data = await tmdbFetchJson<TmdbGenreListResponse>("/genre/tv/list");
+  if (!data?.genres?.length) {
     return [];
   }
 
-  const movies = data.results.map(mapMovieDto);
-  return enrichMoviesWithDetails(movies);
+  return data.genres
+    .filter((genre) => Number.isInteger(genre.id))
+    .map((genre) => ({
+      id: genre.id,
+      name: genre.name ?? `Genre ${genre.id}`
+    }));
+}
+
+export async function getDiscoverTvByGenrePage(genreId: number, page = 1): Promise<DiscoverByGenrePageResult> {
+  if (!Number.isInteger(genreId) || genreId <= 0) {
+    return { results: [], totalResults: 0, currentPage: 1, totalPages: 0 };
+  }
+
+  const normalizedPage = Number.isInteger(page) && page > 0 ? page : 1;
+
+  if (isTmdbMockMode) {
+    return paginateMockGenreDiscover(mockTvPoolForGenre(genreId), normalizedPage, MOCK_GENRE_DISCOVER_PAGE_SIZE);
+  }
+
+  const path = `/discover/tv?${new URLSearchParams({
+    with_genres: String(genreId),
+    page: String(normalizedPage)
+  }).toString()}`;
+  const data = await tmdbFetchJson<TmdbTvListResponse>(path);
+  if (!data) {
+    return { results: [], totalResults: 0, currentPage: normalizedPage, totalPages: 0 };
+  }
+
+  const raw = (data.results ?? []).map(mapTvDto);
+  const enrichLimit = normalizedPage === 1 ? RUNTIME_ENRICH_LIMIT : 6;
+  const results = await enrichTvWithDetails(raw, enrichLimit);
+  const totalResults = data.total_results ?? results.length;
+  const totalPages = normalizeSearchTotalPages(totalResults, data.total_pages ?? 0);
+  return {
+    results,
+    totalResults,
+    currentPage: data.page ?? normalizedPage,
+    totalPages
+  };
+}
+
+export async function getTvShowsByGenre(genreId: number): Promise<Movie[]> {
+  const page = await getDiscoverTvByGenrePage(genreId, 1);
+  return page.results;
 }
 
 function selectYouTubeTrailer(videos: TmdbVideoDto[]): TmdbVideoDto | null {

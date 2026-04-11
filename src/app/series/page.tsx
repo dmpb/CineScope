@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { FeaturedBannerCarousel } from "@/components/FeaturedBannerCarousel";
 import { FeaturedStrip } from "@/components/FeaturedStrip";
+import { GenreCategoryRail } from "@/components/GenreCategoryRail";
 import { MovieSection } from "@/components/MovieSection";
 import { StateMessage } from "@/components/StateMessage";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { buildSeriesRowSections, getSeriesPageData, selectSeriesStripMovies } from "@/lib/home";
+import { getTvGenres } from "@/lib/tmdb";
 import { resolveTmdbLanguageForRequest } from "@/lib/tmdb-language-server";
 import { getUiMessages } from "@/lib/ui-i18n";
 
@@ -27,7 +29,7 @@ export default async function SeriesPage() {
   const hasToken = Boolean(getOptionalTmdbBearerToken());
   const tmdbLanguage = await resolveTmdbLanguageForRequest();
   const ui = getUiMessages(tmdbLanguage);
-  const seriesData = await getSeriesPageData();
+  const [seriesData, tvGenres] = await Promise.all([getSeriesPageData(), getTvGenres()]);
   const { featuredSlides, hasError } = seriesData;
   const rowSections = buildSeriesRowSections(seriesData, ui);
   const hasAnySeries = rowSections.some((section) => section.movies.length > 0);
@@ -36,6 +38,13 @@ export default async function SeriesPage() {
   return (
     <main className="-mt-28 lg:-mt-20 home-cinematic-shell">
       {featuredSlides.length > 0 && <FeaturedBannerCarousel slides={featuredSlides} />}
+
+      <GenreCategoryRail
+        genres={tvGenres}
+        basePath="/series"
+        ariaLabel={ui.genreRailAriaSeries}
+        browseHint={ui.genreBrowseHint}
+      />
 
       <div className="home-content-container home-content-stack">
         {!hasToken && (

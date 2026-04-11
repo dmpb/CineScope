@@ -77,6 +77,10 @@ Required Endpoints:
 * GET `/tv/on_the_air`
 * GET `/tv/airing_today`
 * GET `/tv/{id}`
+* GET `/genre/movie/list`
+* GET `/genre/tv/list`
+* GET `/discover/movie` (with `with_genres` for category pages)
+* GET `/discover/tv` (with `with_genres` for category pages)
 
 Image Base URL:
 https://image.tmdb.org/t/p/original

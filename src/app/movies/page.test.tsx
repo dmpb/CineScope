@@ -18,6 +18,13 @@ vi.mock("@/lib/home", () => ({
   selectMoviesStripMovies: vi.fn()
 }));
 
+vi.mock("@/lib/tmdb", () => ({
+  getMovieGenres: vi.fn().mockResolvedValue([
+    { id: 28, name: "Acción" },
+    { id: 35, name: "Comedia" }
+  ])
+}));
+
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import { buildMoviesRowSections, getMoviesPageData, selectMoviesStripMovies } from "@/lib/home";
 
