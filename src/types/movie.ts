@@ -1,3 +1,15 @@
+/** Persona en listados de búsqueda (TMDb `/search/multi` o `/search/person`). */
+export interface PersonSearchHit {
+  mediaType: "person";
+  id: number;
+  name: string;
+  profilePath: string;
+  popularity: number;
+  knownForDepartment?: string;
+}
+
+export type SearchListItem = Movie | PersonSearchHit;
+
 export interface Movie {
   id: number;
   mediaType?: "movie" | "tv";
@@ -54,7 +66,7 @@ export interface MovieListResult {
 }
 
 export interface SearchResult {
-  results: Movie[];
+  results: SearchListItem[];
   totalResults: number;
   currentPage: number;
   totalPages: number;

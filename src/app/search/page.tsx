@@ -31,7 +31,13 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
   const mediaKind = parseSearchMediaKind(typeParam);
 
   const typeNote =
-    mediaKind === "movie" ? ui.searchTypeNoteMovie : mediaKind === "tv" ? ui.searchTypeNoteTv : ui.searchTypeNoteAll;
+    mediaKind === "movie"
+      ? ui.searchTypeNoteMovie
+      : mediaKind === "tv"
+        ? ui.searchTypeNoteTv
+        : mediaKind === "person"
+          ? ui.searchTypeNotePerson
+          : ui.searchTypeNoteAll;
 
   if (!query) {
     return {
@@ -91,7 +97,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   }
 
   const searchErrorKind =
-    mediaKind === "tv" ? ui.searchErrorTv : mediaKind === "movie" ? ui.searchErrorMovie : ui.searchErrorAll;
+    mediaKind === "tv"
+      ? ui.searchErrorTv
+      : mediaKind === "movie"
+        ? ui.searchErrorMovie
+        : mediaKind === "person"
+          ? ui.searchErrorPerson
+          : ui.searchErrorAll;
 
   return (
     <main className="w-full max-w-none px-4 pb-16 pt-2 sm:px-6 lg:px-8 lg:pb-24 xl:px-10 2xl:px-12">

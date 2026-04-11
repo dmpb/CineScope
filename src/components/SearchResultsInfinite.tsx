@@ -3,9 +3,33 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUiMessages } from "@/components/LocaleProvider";
-import { MovieSection } from "@/components/MovieSection";
+import { SearchResultsGrid } from "@/components/SearchResultsGrid";
 import type { SearchMediaKind } from "@/lib/search-params";
-import type { Movie } from "@/types/movie";
+import type { Movie, SearchListItem } from "@/types/movie";
+
+function searchHitDedupeKey(item: SearchListItem): string {
+  if (item.mediaType === "person") {
+    return `person-${item.id}`;
+  }
+  const m = item as Movie;
+  return `${m.mediaType ?? "movie"}-${m.id}`;
+}
+
+function appendResultsDeduped(prev: SearchListItem[], batch: SearchListItem[]): SearchListItem[] {
+  if (batch.length === 0) {
+    return prev;
+  }
+  const seen = new Set(prev.map(searchHitDedupeKey));
+  const next = [...prev];
+  for (const m of batch) {
+    const key = searchHitDedupeKey(m);
+    if (!seen.has(key)) {
+      seen.add(key);
+      next.push(m);
+    }
+  }
+  return next;
+}
 
 function buildSearchApiQuery(
   query: string,
@@ -30,14 +54,14 @@ type SearchResultsInfiniteProps = {
   mediaKind: SearchMediaKind;
   year?: number;
   minVote?: number;
-  initialResults: Movie[];
+  initialResults: SearchListItem[];
   initialTotalResults: number;
   initialPage: number;
   initialTotalPages: number;
 };
 
 type SearchResponse = {
-  results: Movie[];
+  results: SearchListItem[];
   totalResults: number;
   currentPage: number;
   totalPages: number;
@@ -55,13 +79,16 @@ export function SearchResultsInfinite({
   initialTotalPages
 }: SearchResultsInfiniteProps) {
   const ui = useUiMessages();
-  const [results, setResults] = useState<Movie[]>(initialResults);
+  const [results, setResults] = useState<SearchListItem[]>(initialResults);
   const [totalResults, setTotalResults] = useState(initialTotalResults);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const loadNextPageRef = useRef<() => Promise<void>>(async () => {});
+  const loadingLockRef = useRef(false);
+  const hasMoreRef = useRef(false);
   const normalizedQuery = query.trim();
   const filtersActive = year !== undefined || minVote !== undefined;
   const displayedResultCount = filtersActive ? results.length : totalResults;
@@ -72,7 +99,9 @@ export function SearchResultsInfinite({
       ? ui.searchEmptyTv(query)
       : mediaKind === "movie"
         ? ui.searchEmptyMovie(query)
-        : ui.searchEmptyAll(query);
+        : mediaKind === "person"
+          ? ui.searchEmptyPerson(query)
+          : ui.searchEmptyAll(query);
 
   useEffect(() => {
     setResults(initialResults);
@@ -80,6 +109,7 @@ export function SearchResultsInfinite({
     setCurrentPage(initialPage);
     setTotalPages(initialTotalPages);
     setErrorMessage(null);
+    loadingLockRef.current = false;
   }, [query, mediaKind, year, minVote, initialResults, initialTotalResults, initialPage, initialTotalPages]);
 
   const hasMore = useMemo(() => {
@@ -89,35 +119,61 @@ export function SearchResultsInfinite({
     return results.length < totalResults;
   }, [currentPage, results.length, totalPages, totalResults]);
 
+  hasMoreRef.current = hasMore;
+
   const loadNextPage = useCallback(async () => {
-    if (isLoadingMore || !hasMore) {
+    if (loadingLockRef.current || !hasMoreRef.current) {
       return;
     }
 
+    loadingLockRef.current = true;
     setIsLoadingMore(true);
     setErrorMessage(null);
 
     try {
-      const nextPage = currentPage + 1;
-      const qs = buildSearchApiQuery(query, nextPage, { mediaKind, year, minVote });
-      const response = await fetch(`/api/search?${qs}`);
-      const data = (await response.json()) as SearchResponse;
-      if (!response.ok) {
-        throw new Error(data.error || ui.searchNextPageError);
+      let pageToFetch = currentPage + 1;
+      const aggregated: SearchListItem[] = [];
+      let last: SearchResponse | null = null;
+      const maxSkips = 24;
+
+      for (let attempt = 0; attempt < maxSkips; attempt += 1) {
+        const qs = buildSearchApiQuery(query, pageToFetch, { mediaKind, year, minVote });
+        const response = await fetch(`/api/search?${qs}`);
+        const data = (await response.json()) as SearchResponse;
+        if (!response.ok) {
+          throw new Error(data.error || ui.searchNextPageError);
+        }
+
+        last = data;
+        aggregated.push(...data.results);
+
+        const exhausted = data.totalPages <= 0 || data.currentPage >= data.totalPages;
+        if (data.results.length > 0 || exhausted) {
+          break;
+        }
+
+        pageToFetch = data.currentPage + 1;
       }
 
-      setResults((prev) => [...prev, ...data.results]);
-      if (!filtersActive) {
-        setTotalResults(data.totalResults);
+      if (!last) {
+        return;
       }
-      setCurrentPage(data.currentPage);
-      setTotalPages(data.totalPages);
+
+      setResults((prev) => appendResultsDeduped(prev, aggregated));
+      if (!filtersActive) {
+        setTotalResults(last.totalResults);
+      }
+      setCurrentPage(last.currentPage);
+      setTotalPages(last.totalPages);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : ui.searchLoadMoreError);
     } finally {
+      loadingLockRef.current = false;
       setIsLoadingMore(false);
     }
-  }, [currentPage, filtersActive, hasMore, isLoadingMore, mediaKind, minVote, query, ui, year]);
+  }, [currentPage, filtersActive, mediaKind, minVote, query, ui, year]);
+
+  loadNextPageRef.current = loadNextPage;
 
   useEffect(() => {
     const element = sentinelRef.current;
@@ -128,7 +184,7 @@ export function SearchResultsInfinite({
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          void loadNextPage();
+          void loadNextPageRef.current();
         }
       },
       { rootMargin: "400px 0px" }
@@ -136,7 +192,7 @@ export function SearchResultsInfinite({
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, [errorMessage, hasMore, loadNextPage]);
+  }, [errorMessage, hasMore, mediaKind, minVote, normalizedQuery, year]);
 
   const pageLine =
     totalPages > 0 ? ui.searchPageOf(currentPage, totalPages) : ui.searchPageCurrent(currentPage);
@@ -161,7 +217,7 @@ export function SearchResultsInfinite({
         </div>
       </header>
 
-      <MovieSection title={ui.searchMatchesSection} movies={results} emptyMessage={emptyCopy} layout="grid" ui={ui} />
+      <SearchResultsGrid title={ui.searchMatchesSection} items={results} emptyMessage={emptyCopy} ui={ui} />
 
       {results.length === 0 && normalizedQuery.length > 0 && (
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4 text-sm text-zinc-300">
