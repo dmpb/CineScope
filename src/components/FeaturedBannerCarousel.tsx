@@ -48,7 +48,7 @@ export function FeaturedBannerCarousel({ slides, autoPlayMs = 8000 }: FeaturedBa
       setActiveIndex((prev) => (prev + 1) % count);
     }, autoPlayMs);
     return () => window.clearInterval(id);
-  }, [count, autoPlayMs, reduceMotion]);
+  }, [count, autoPlayMs, reduceMotion, safeIndex]);
 
   if (count === 0) {
     return null;

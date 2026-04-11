@@ -1,7 +1,15 @@
 import { getOptionalTmdbBearerToken, getTmdbRegion } from "@/lib/env";
 import { resolveTmdbLanguageForRequest } from "@/lib/tmdb-language-server";
 import { filterSearchResults, type SearchMediaKind, type SearchMediaOptions } from "@/lib/search-params";
-import type { CastMember, CrewHighlights, Movie, SearchResult, WatchProvider } from "@/types/movie";
+import type {
+  CastMember,
+  CrewHighlights,
+  Movie,
+  PersonSearchHit,
+  SearchListItem,
+  SearchResult,
+  WatchProvider
+} from "@/types/movie";
 import type {
   PersonCastCredit,
   PersonCombinedCredits,
@@ -13,6 +21,14 @@ import type {
 } from "@/types/person";
 
 export type { SearchMediaKind, SearchMediaOptions } from "@/lib/search-params";
+
+/** Una pagina de resultados Discover por genero (peliculas o TV). */
+export type DiscoverByGenrePageResult = {
+  results: Movie[];
+  totalResults: number;
+  currentPage: number;
+  totalPages: number;
+};
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/original";
@@ -73,10 +89,16 @@ type TmdbTvDto = {
 
 type TmdbMovieListResponse = {
   results?: TmdbMovieDto[];
+  page?: number;
+  total_pages?: number;
+  total_results?: number;
 };
 
 type TmdbTvListResponse = {
   results?: TmdbTvDto[];
+  page?: number;
+  total_pages?: number;
+  total_results?: number;
 };
 
 type TmdbSearchResponse = {
@@ -93,7 +115,22 @@ type TmdbTvSearchResponse = {
   total_pages?: number;
 };
 
-type TmdbMultiSearchRecord = (TmdbMovieDto | TmdbTvDto) & { media_type?: string };
+type TmdbPersonSearchListDto = {
+  id?: number;
+  name?: string;
+  profile_path?: string | null;
+  popularity?: number;
+  known_for_department?: string | null;
+};
+
+type TmdbPersonSearchResponse = {
+  results?: TmdbPersonSearchListDto[];
+  total_results?: number;
+  page?: number;
+  total_pages?: number;
+};
+
+type TmdbMultiSearchRecord = (TmdbMovieDto | TmdbTvDto | TmdbPersonSearchListDto) & { media_type?: string };
 
 type TmdbMultiSearchResponse = {
   results?: TmdbMultiSearchRecord[];
@@ -399,6 +436,21 @@ function mapTvDto(dto: TmdbTvDto): Movie {
     networkNames: networkNames.length > 0 ? networkNames : undefined,
     lastAirDate: dto.last_air_date?.trim() || undefined,
     episodeRunTimes: episodeRunTimes.length > 0 ? episodeRunTimes : undefined
+  };
+}
+
+function mapPersonSearchHit(dto: TmdbPersonSearchListDto): PersonSearchHit | null {
+  if (dto.id === undefined || !Number.isFinite(dto.id) || dto.id <= 0) {
+    return null;
+  }
+  const id = dto.id;
+  return {
+    mediaType: "person",
+    id,
+    name: typeof dto.name === "string" ? dto.name.trim() : "",
+    profilePath: buildImageUrl(dto.profile_path),
+    popularity: typeof dto.popularity === "number" ? dto.popularity : 0,
+    knownForDepartment: dto.known_for_department?.trim() || undefined
   };
 }
 
@@ -845,30 +897,131 @@ export async function getMovieGenres(): Promise<MovieGenre[]> {
     }));
 }
 
-export async function getMoviesByGenre(genreId: number): Promise<Movie[]> {
-  if (!Number.isInteger(genreId) || genreId <= 0) {
-    return [];
+const MOCK_GENRE_DISCOVER_PAGE_SIZE = 2;
+
+function paginateMockGenreDiscover(all: Movie[], page: number, pageSize: number): DiscoverByGenrePageResult {
+  const normalizedPage = Number.isInteger(page) && page > 0 ? page : 1;
+  const start = (normalizedPage - 1) * pageSize;
+  const results = all.slice(start, start + pageSize);
+  const totalResults = all.length;
+  const totalPages = totalResults === 0 ? 0 : Math.ceil(totalResults / pageSize);
+  return { results, totalResults, currentPage: normalizedPage, totalPages };
+}
+
+function mockMoviesPoolForGenre(genreId: number): Movie[] {
+  const movies = getMockMovies();
+  if (genreId === 28) {
+    return [movies[0], movies[2], movies[3]].filter(Boolean) as Movie[];
   }
+  if (genreId === 35) {
+    return [movies[4], movies[1], movies[5]].filter(Boolean) as Movie[];
+  }
+  return movies.slice(0, 5);
+}
+
+function mockTvPoolForGenre(genreId: number): Movie[] {
+  const shows = getMockTvShows();
+  if (genreId === 28) {
+    return [shows[0], shows[2]].filter(Boolean) as Movie[];
+  }
+  if (genreId === 35) {
+    return [shows[0], shows[1]].filter(Boolean) as Movie[];
+  }
+  return shows.slice(0, 5);
+}
+
+export async function getDiscoverMoviesByGenrePage(genreId: number, page = 1): Promise<DiscoverByGenrePageResult> {
+  if (!Number.isInteger(genreId) || genreId <= 0) {
+    return { results: [], totalResults: 0, currentPage: 1, totalPages: 0 };
+  }
+
+  const normalizedPage = Number.isInteger(page) && page > 0 ? page : 1;
 
   if (isTmdbMockMode) {
-    const movies = getMockMovies();
-    if (genreId === 28) {
-      return [movies[0], movies[2], movies[3]].filter(Boolean);
-    }
-    if (genreId === 35) {
-      return [movies[4], movies[1], movies[5]].filter(Boolean);
-    }
-    return movies.slice(0, 5);
+    return paginateMockGenreDiscover(mockMoviesPoolForGenre(genreId), normalizedPage, MOCK_GENRE_DISCOVER_PAGE_SIZE);
   }
 
-  const path = `/discover/movie?${new URLSearchParams({ with_genres: String(genreId) }).toString()}`;
+  const path = `/discover/movie?${new URLSearchParams({
+    with_genres: String(genreId),
+    page: String(normalizedPage)
+  }).toString()}`;
   const data = await tmdbFetchJson<TmdbMovieListResponse>(path);
-  if (!data?.results?.length) {
+  if (!data) {
+    return { results: [], totalResults: 0, currentPage: normalizedPage, totalPages: 0 };
+  }
+
+  const raw = (data.results ?? []).map(mapMovieDto);
+  const enrichLimit = normalizedPage === 1 ? RUNTIME_ENRICH_LIMIT : 6;
+  const results = await enrichMoviesWithDetails(raw, enrichLimit);
+  const totalResults = data.total_results ?? results.length;
+  const totalPages = normalizeSearchTotalPages(totalResults, data.total_pages ?? 0);
+  return {
+    results,
+    totalResults,
+    currentPage: data.page ?? normalizedPage,
+    totalPages
+  };
+}
+
+export async function getMoviesByGenre(genreId: number): Promise<Movie[]> {
+  const page = await getDiscoverMoviesByGenrePage(genreId, 1);
+  return page.results;
+}
+
+export async function getTvGenres(): Promise<MovieGenre[]> {
+  if (isTmdbMockMode) {
+    return getMockGenres();
+  }
+
+  const data = await tmdbFetchJson<TmdbGenreListResponse>("/genre/tv/list");
+  if (!data?.genres?.length) {
     return [];
   }
 
-  const movies = data.results.map(mapMovieDto);
-  return enrichMoviesWithDetails(movies);
+  return data.genres
+    .filter((genre) => Number.isInteger(genre.id))
+    .map((genre) => ({
+      id: genre.id,
+      name: genre.name ?? `Genre ${genre.id}`
+    }));
+}
+
+export async function getDiscoverTvByGenrePage(genreId: number, page = 1): Promise<DiscoverByGenrePageResult> {
+  if (!Number.isInteger(genreId) || genreId <= 0) {
+    return { results: [], totalResults: 0, currentPage: 1, totalPages: 0 };
+  }
+
+  const normalizedPage = Number.isInteger(page) && page > 0 ? page : 1;
+
+  if (isTmdbMockMode) {
+    return paginateMockGenreDiscover(mockTvPoolForGenre(genreId), normalizedPage, MOCK_GENRE_DISCOVER_PAGE_SIZE);
+  }
+
+  const path = `/discover/tv?${new URLSearchParams({
+    with_genres: String(genreId),
+    page: String(normalizedPage)
+  }).toString()}`;
+  const data = await tmdbFetchJson<TmdbTvListResponse>(path);
+  if (!data) {
+    return { results: [], totalResults: 0, currentPage: normalizedPage, totalPages: 0 };
+  }
+
+  const raw = (data.results ?? []).map(mapTvDto);
+  const enrichLimit = normalizedPage === 1 ? RUNTIME_ENRICH_LIMIT : 6;
+  const results = await enrichTvWithDetails(raw, enrichLimit);
+  const totalResults = data.total_results ?? results.length;
+  const totalPages = normalizeSearchTotalPages(totalResults, data.total_pages ?? 0);
+  return {
+    results,
+    totalResults,
+    currentPage: data.page ?? normalizedPage,
+    totalPages
+  };
+}
+
+export async function getTvShowsByGenre(genreId: number): Promise<Movie[]> {
+  const page = await getDiscoverTvByGenrePage(genreId, 1);
+  return page.results;
 }
 
 function selectYouTubeTrailer(videos: TmdbVideoDto[]): TmdbVideoDto | null {
@@ -1183,6 +1336,33 @@ export async function getSimilarTvById(id: number): Promise<Movie[]> {
 
 const MOCK_SEARCH_PAGE_SIZE = 2;
 
+const MOCK_PERSON_SEARCH_HITS_LIST: readonly PersonSearchHit[] = [
+  {
+    mediaType: "person",
+    id: 1,
+    name: "Keanu Reeves",
+    profilePath: buildImageUrl("/rRdru6REr9i3WIHv2mntpcgxnoY.jpg"),
+    popularity: 18.5,
+    knownForDepartment: "Acting"
+  },
+  {
+    mediaType: "person",
+    id: 2,
+    name: "Carrie-Anne Moss",
+    profilePath: buildImageUrl("/xD4jTA3KmVp5Rq3aHcymL9DUGjD.jpg"),
+    popularity: 12.3,
+    knownForDepartment: "Acting"
+  },
+  {
+    mediaType: "person",
+    id: 3,
+    name: "Laurence Fishburne",
+    profilePath: buildImageUrl("/8SuOhUmPbfKqDQ17jQ1Gy0mIvof.jpg"),
+    popularity: 9.8,
+    knownForDepartment: "Acting"
+  }
+];
+
 function mockSearchMovieHits(trimmed: string): Movie[] {
   const queryLower = trimmed.toLowerCase();
   return getMockMovies().filter((movie) => movie.title.toLowerCase().includes(queryLower));
@@ -1197,13 +1377,19 @@ function mockSearchTvHits(trimmed: string): Movie[] {
   );
 }
 
-function mockSearchMultiHits(trimmed: string): Movie[] {
-  const movies = mockSearchMovieHits(trimmed);
-  const tvs = mockSearchTvHits(trimmed);
-  return [...movies, ...tvs].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+function mockSearchPersonHits(trimmed: string): PersonSearchHit[] {
+  const q = trimmed.toLowerCase();
+  return MOCK_PERSON_SEARCH_HITS_LIST.filter((p) => p.name.toLowerCase().includes(q)).map((p) => ({ ...p }));
 }
 
-function paginateMockSearchResults(allResults: Movie[], normalizedPage: number): SearchResult {
+function mockSearchMultiHits(trimmed: string): SearchListItem[] {
+  const movies = mockSearchMovieHits(trimmed);
+  const tvs = mockSearchTvHits(trimmed);
+  const people = mockSearchPersonHits(trimmed);
+  return [...movies, ...tvs, ...people].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+}
+
+function paginateMockSearchResults(allResults: SearchListItem[], normalizedPage: number): SearchResult {
   const pageSize = MOCK_SEARCH_PAGE_SIZE;
   const start = (normalizedPage - 1) * pageSize;
   const results = allResults.slice(start, start + pageSize);
@@ -1214,6 +1400,24 @@ function paginateMockSearchResults(allResults: Movie[], normalizedPage: number):
     currentPage: normalizedPage,
     totalPages
   };
+}
+
+const TMDB_SEARCH_PAGE_SIZE = 20;
+
+/** TMDb a veces omite o envía `total_pages` en 0; evita `hasMore` incorrecto en el cliente. */
+function normalizeSearchTotalPages(totalResults: number, reportedTotalPages: number): number {
+  const safeTotal = Math.max(0, Math.floor(Number(totalResults)) || 0);
+  let pages = Math.floor(Number(reportedTotalPages));
+  if (!Number.isFinite(pages) || pages < 0) {
+    pages = 0;
+  }
+  if (pages > 0) {
+    return pages;
+  }
+  if (safeTotal <= 0) {
+    return 0;
+  }
+  return Math.max(1, Math.ceil(safeTotal / TMDB_SEARCH_PAGE_SIZE));
 }
 
 async function fetchSearchMoviesFromApi(trimmed: string, normalizedPage: number): Promise<SearchResult> {
@@ -1229,11 +1433,12 @@ async function fetchSearchMoviesFromApi(trimmed: string, normalizedPage: number)
 
   const rawResults = (data.results ?? []).map(mapMovieDto);
   const results = await enrichMoviesWithDetails(rawResults, 6);
+  const totalResults = data.total_results ?? results.length;
   return {
     results,
-    totalResults: data.total_results ?? results.length,
+    totalResults,
     currentPage: data.page ?? normalizedPage,
-    totalPages: data.total_pages ?? 0
+    totalPages: normalizeSearchTotalPages(totalResults, data.total_pages ?? 0)
   };
 }
 
@@ -1250,11 +1455,33 @@ async function fetchSearchTvFromApi(trimmed: string, normalizedPage: number): Pr
 
   const rawResults = (data.results ?? []).map(mapTvDto);
   const results = await enrichTvWithDetails(rawResults, 6);
+  const totalResults = data.total_results ?? results.length;
   return {
     results,
-    totalResults: data.total_results ?? results.length,
+    totalResults,
     currentPage: data.page ?? normalizedPage,
-    totalPages: data.total_pages ?? 0
+    totalPages: normalizeSearchTotalPages(totalResults, data.total_pages ?? 0)
+  };
+}
+
+async function fetchSearchPersonFromApi(trimmed: string, normalizedPage: number): Promise<SearchResult> {
+  const path = `/search/person?${new URLSearchParams({
+    query: trimmed,
+    page: String(normalizedPage)
+  }).toString()}`;
+  const data = await tmdbFetchJson<TmdbPersonSearchResponse>(path);
+
+  if (!data) {
+    return { results: [], totalResults: 0, currentPage: normalizedPage, totalPages: 0 };
+  }
+
+  const rawResults = (data.results ?? []).map(mapPersonSearchHit).filter((p): p is PersonSearchHit => p != null);
+  const totalResults = data.total_results ?? rawResults.length;
+  return {
+    results: rawResults,
+    totalResults,
+    currentPage: data.page ?? normalizedPage,
+    totalPages: normalizeSearchTotalPages(totalResults, data.total_pages ?? 0)
   };
 }
 
@@ -1272,7 +1499,9 @@ async function fetchSearchMultiFromApi(trimmed: string, normalizedPage: number):
   const records = data.results ?? [];
   const movies: Movie[] = [];
   const tvs: Movie[] = [];
-  const order: Array<{ kind: "movie" | "tv"; index: number }> = [];
+  const persons: PersonSearchHit[] = [];
+  type OrderSlot = { kind: "movie" | "tv" | "person"; index: number };
+  const order: OrderSlot[] = [];
 
   for (const raw of records) {
     const mt = raw.media_type;
@@ -1282,22 +1511,37 @@ async function fetchSearchMultiFromApi(trimmed: string, normalizedPage: number):
     } else if (mt === "tv") {
       order.push({ kind: "tv", index: tvs.length });
       tvs.push(mapTvDto(raw as TmdbTvDto));
+    } else if (mt === "person") {
+      const hit = mapPersonSearchHit(raw as TmdbPersonSearchListDto);
+      if (hit) {
+        order.push({ kind: "person", index: persons.length });
+        persons.push(hit);
+      }
     }
   }
 
   const enrichedMovies = await enrichMoviesWithDetails(movies, 6);
   const enrichedTvs = await enrichTvWithDetails(tvs, 6);
-  const byKind = { movie: enrichedMovies, tv: enrichedTvs };
-  const results = order.map((o) => byKind[o.kind][o.index]);
-  results.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+  const byKind: { movie: Movie[]; tv: Movie[]; person: PersonSearchHit[] } = {
+    movie: enrichedMovies,
+    tv: enrichedTvs,
+    person: persons
+  };
+  const results: SearchListItem[] = order.map((o) => byKind[o.kind][o.index]);
+
+  const totalResults = data.total_results ?? results.length;
+  const totalPages = normalizeSearchTotalPages(totalResults, data.total_pages ?? 0);
+  const currentPage = totalPages > 0 ? Math.min(normalizedPage, totalPages) : normalizedPage;
 
   return {
     results,
-    totalResults: data.total_results ?? results.length,
-    currentPage: data.page ?? normalizedPage,
-    totalPages: data.total_pages ?? 0
+    totalResults,
+    currentPage,
+    totalPages
   };
 }
+
+
 
 export async function searchMedia(query: string, page = 1, options?: SearchMediaOptions): Promise<SearchResult> {
   const trimmed = query.trim();
@@ -1317,6 +1561,8 @@ export async function searchMedia(query: string, page = 1, options?: SearchMedia
       base = paginateMockSearchResults(mockSearchMovieHits(trimmed), normalizedPage);
     } else if (kind === "tv") {
       base = paginateMockSearchResults(mockSearchTvHits(trimmed), normalizedPage);
+    } else if (kind === "person") {
+      base = paginateMockSearchResults(mockSearchPersonHits(trimmed), normalizedPage);
     } else {
       base = paginateMockSearchResults(mockSearchMultiHits(trimmed), normalizedPage);
     }
@@ -1324,6 +1570,8 @@ export async function searchMedia(query: string, page = 1, options?: SearchMedia
     base = await fetchSearchMoviesFromApi(trimmed, normalizedPage);
   } else if (kind === "tv") {
     base = await fetchSearchTvFromApi(trimmed, normalizedPage);
+  } else if (kind === "person") {
+    base = await fetchSearchPersonFromApi(trimmed, normalizedPage);
   } else {
     base = await fetchSearchMultiFromApi(trimmed, normalizedPage);
   }

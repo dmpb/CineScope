@@ -1,28 +1,23 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MovieCard } from "@/components/MovieCard";
+import { StateMessage } from "@/components/StateMessage";
 import { useUiMessages } from "@/components/LocaleProvider";
-import { SearchResultsGrid } from "@/components/SearchResultsGrid";
-import type { SearchMediaKind } from "@/lib/search-params";
-import type { Movie, SearchListItem } from "@/types/movie";
+import type { Movie } from "@/types/movie";
 
-function searchHitDedupeKey(item: SearchListItem): string {
-  if (item.mediaType === "person") {
-    return `person-${item.id}`;
-  }
-  const m = item as Movie;
-  return `${m.mediaType ?? "movie"}-${m.id}`;
+function movieDedupeKey(movie: Movie): string {
+  return `${movie.mediaType ?? "movie"}-${movie.id}`;
 }
 
-function appendResultsDeduped(prev: SearchListItem[], batch: SearchListItem[]): SearchListItem[] {
+function appendMoviesDeduped(prev: Movie[], batch: Movie[]): Movie[] {
   if (batch.length === 0) {
     return prev;
   }
-  const seen = new Set(prev.map(searchHitDedupeKey));
+  const seen = new Set(prev.map(movieDedupeKey));
   const next = [...prev];
   for (const m of batch) {
-    const key = searchHitDedupeKey(m);
+    const key = movieDedupeKey(m);
     if (!seen.has(key)) {
       seen.add(key);
       next.push(m);
@@ -31,55 +26,39 @@ function appendResultsDeduped(prev: SearchListItem[], batch: SearchListItem[]): 
   return next;
 }
 
-function buildSearchApiQuery(
-  query: string,
-  page: number,
-  opts: { mediaKind: SearchMediaKind; year?: number; minVote?: number }
-): string {
-  const params = new URLSearchParams({ q: query, page: String(page) });
-  if (opts.mediaKind !== "all") {
-    params.set("type", opts.mediaKind);
-  }
-  if (opts.year !== undefined) {
-    params.set("year", String(opts.year));
-  }
-  if (opts.minVote !== undefined) {
-    params.set("minVote", String(opts.minVote));
-  }
-  return params.toString();
-}
-
-type SearchResultsInfiniteProps = {
-  query: string;
-  mediaKind: SearchMediaKind;
-  year?: number;
-  minVote?: number;
-  initialResults: SearchListItem[];
-  initialTotalResults: number;
-  initialPage: number;
-  initialTotalPages: number;
-};
-
-type SearchResponse = {
-  results: SearchListItem[];
+type DiscoverGenreApiResponse = {
+  results: Movie[];
   totalResults: number;
   currentPage: number;
   totalPages: number;
   error?: string;
 };
 
-export function SearchResultsInfinite({
-  query,
-  mediaKind,
-  year,
-  minVote,
+type GenreDiscoverInfiniteProps = {
+  kind: "movie" | "tv";
+  genreId: number;
+  genreName: string;
+  sectionTitle: string;
+  emptyMessage: string;
+  initialResults: Movie[];
+  initialTotalResults: number;
+  initialPage: number;
+  initialTotalPages: number;
+};
+
+export function GenreDiscoverInfinite({
+  kind,
+  genreId,
+  genreName,
+  sectionTitle,
+  emptyMessage,
   initialResults,
   initialTotalResults,
   initialPage,
   initialTotalPages
-}: SearchResultsInfiniteProps) {
+}: GenreDiscoverInfiniteProps) {
   const ui = useUiMessages();
-  const [results, setResults] = useState<SearchListItem[]>(initialResults);
+  const [results, setResults] = useState<Movie[]>(initialResults);
   const [totalResults, setTotalResults] = useState(initialTotalResults);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
@@ -89,19 +68,8 @@ export function SearchResultsInfinite({
   const loadNextPageRef = useRef<() => Promise<void>>(async () => {});
   const loadingLockRef = useRef(false);
   const hasMoreRef = useRef(false);
-  const normalizedQuery = query.trim();
-  const filtersActive = year !== undefined || minVote !== undefined;
-  const displayedResultCount = filtersActive ? results.length : totalResults;
-  const queryLabel = normalizedQuery || ui.searchQueryFallback;
 
-  const emptyCopy =
-    mediaKind === "tv"
-      ? ui.searchEmptyTv(query)
-      : mediaKind === "movie"
-        ? ui.searchEmptyMovie(query)
-        : mediaKind === "person"
-          ? ui.searchEmptyPerson(query)
-          : ui.searchEmptyAll(query);
+  const headingId = `genre-discover-${kind}-${genreId}`;
 
   useEffect(() => {
     setResults(initialResults);
@@ -110,7 +78,7 @@ export function SearchResultsInfinite({
     setTotalPages(initialTotalPages);
     setErrorMessage(null);
     loadingLockRef.current = false;
-  }, [query, mediaKind, year, minVote, initialResults, initialTotalResults, initialPage, initialTotalPages]);
+  }, [genreId, kind, initialResults, initialTotalResults, initialPage, initialTotalPages]);
 
   const hasMore = useMemo(() => {
     if (totalPages > 0) {
@@ -132,14 +100,18 @@ export function SearchResultsInfinite({
 
     try {
       let pageToFetch = currentPage + 1;
-      const aggregated: SearchListItem[] = [];
-      let last: SearchResponse | null = null;
+      const aggregated: Movie[] = [];
+      let last: DiscoverGenreApiResponse | null = null;
       const maxSkips = 24;
 
       for (let attempt = 0; attempt < maxSkips; attempt += 1) {
-        const qs = buildSearchApiQuery(query, pageToFetch, { mediaKind, year, minVote });
-        const response = await fetch(`/api/search?${qs}`);
-        const data = (await response.json()) as SearchResponse;
+        const qs = new URLSearchParams({
+          kind,
+          genreId: String(genreId),
+          page: String(pageToFetch)
+        });
+        const response = await fetch(`/api/discover/by-genre?${qs.toString()}`);
+        const data = (await response.json()) as DiscoverGenreApiResponse;
         if (!response.ok) {
           throw new Error(data.error || ui.searchNextPageError);
         }
@@ -159,10 +131,8 @@ export function SearchResultsInfinite({
         return;
       }
 
-      setResults((prev) => appendResultsDeduped(prev, aggregated));
-      if (!filtersActive) {
-        setTotalResults(last.totalResults);
-      }
+      setResults((prev) => appendMoviesDeduped(prev, aggregated));
+      setTotalResults(last.totalResults);
       setCurrentPage(last.currentPage);
       setTotalPages(last.totalPages);
     } catch (error) {
@@ -171,13 +141,13 @@ export function SearchResultsInfinite({
       loadingLockRef.current = false;
       setIsLoadingMore(false);
     }
-  }, [currentPage, filtersActive, mediaKind, minVote, query, ui, year]);
+  }, [currentPage, genreId, kind, ui]);
 
   loadNextPageRef.current = loadNextPage;
 
   useEffect(() => {
     const element = sentinelRef.current;
-    if (!element || !hasMore || Boolean(errorMessage)) {
+    if (element == null || !hasMore || errorMessage != null) {
       return;
     }
 
@@ -192,51 +162,44 @@ export function SearchResultsInfinite({
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, [errorMessage, hasMore, mediaKind, minVote, normalizedQuery, year]);
+  }, [errorMessage, hasMore, genreId, kind]);
 
   const pageLine =
     totalPages > 0 ? ui.searchPageOf(currentPage, totalPages) : ui.searchPageCurrent(currentPage);
 
+  const listClassName =
+    "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6";
+
   return (
-    <section className="w-full max-w-none space-y-4 sm:space-y-5" aria-labelledby="search-results-title">
+    <section className="space-y-4 sm:space-y-5" aria-labelledby={headingId}>
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <h2 id="search-results-title" className="text-xl font-semibold text-zinc-100 sm:text-2xl">
-          {ui.searchResultsFor(query)}
+        <h2 id={headingId} className="text-xl font-semibold text-zinc-100 sm:text-2xl">
+          {sectionTitle}
         </h2>
         <div className="text-sm text-zinc-400">
           <p>
-            {displayedResultCount}{" "}
-            {displayedResultCount === 1 ? ui.searchResultCount : ui.searchResultCountPlural}
-            {filtersActive ? ui.searchShownWithFilters : ""}
+            {totalResults}{" "}
+            {totalResults === 1 ? ui.searchResultCount : ui.searchResultCountPlural}
           </p>
           <p className="text-xs uppercase tracking-wide text-zinc-500">
-            {filtersActive ? ui.searchLocalFilter : ""}
             {ui.searchGridView}
             {pageLine}
           </p>
         </div>
       </header>
 
-      <SearchResultsGrid title={ui.searchMatchesSection} items={results} emptyMessage={emptyCopy} ui={ui} />
-
-      {results.length === 0 && normalizedQuery.length > 0 && (
-        <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4 text-sm text-zinc-300">
-          <p className="font-medium text-zinc-200">{ui.searchSuggestionsTitle}</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-zinc-400">
-            <li>{ui.searchSuggestion1}</li>
-            <li>{ui.searchSuggestion2}</li>
-            <li>{ui.searchSuggestion3}</li>
-          </ul>
-          <div className="mt-3 flex flex-wrap gap-3 text-xs">
-            <Link href="/movies" className="focus-ring rounded border border-zinc-700 px-2.5 py-1.5 hover:border-zinc-500">
-              {ui.searchGoMovies}
-            </Link>
-            <Link href="/series" className="focus-ring rounded border border-zinc-700 px-2.5 py-1.5 hover:border-zinc-500">
-              {ui.searchGoSeries}
-            </Link>
-          </div>
-        </div>
+      {results.length > 0 ? (
+        <ul className={listClassName} role="list" aria-label={ui.sectionAriaGrid(sectionTitle)}>
+          {results.map((movie, index) => (
+            <li key={`${movieDedupeKey(movie)}-${index}`} className="min-w-0">
+              <MovieCard movie={movie} ui={ui} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <StateMessage variant="empty">{emptyMessage}</StateMessage>
       )}
+
       {errorMessage && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3 text-sm text-amber-200">
           <p>{errorMessage}</p>
@@ -273,9 +236,7 @@ export function SearchResultsInfinite({
       <p aria-live="polite" className="sr-only">
         {errorMessage
           ? ui.searchAnnounceError(errorMessage)
-          : filtersActive
-            ? ui.searchAnnounceFiltered(results.length, queryLabel)
-            : ui.searchAnnounceDefault(results.length, totalResults, queryLabel)}
+          : ui.searchAnnounceDefault(results.length, totalResults, genreName)}
       </p>
       <div ref={sentinelRef} aria-hidden="true" className="h-4 w-full" />
     </section>

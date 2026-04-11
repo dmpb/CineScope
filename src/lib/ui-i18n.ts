@@ -19,6 +19,14 @@ export type UiMessages = {
   languageAriaLabel: string;
   genreTitle: (name: string) => string;
   genreEmpty: (name: string) => string;
+  genreEmptySeries: (name: string) => string;
+  genreResultsMovies: string;
+  genreResultsTv: string;
+  genreRailAriaMovies: string;
+  genreRailAriaSeries: string;
+  genreBrowseHint: string;
+  genreRailScrollPrev: string;
+  genreRailScrollNext: string;
   sectionTrendingMovies: string;
   emptyTrendingMovies: string;
   sectionTrendingTv: string;
@@ -54,6 +62,7 @@ export type UiMessages = {
   searchEmptyPrompt: string;
   searchErrorTv: string;
   searchErrorMovie: string;
+  searchErrorPerson: string;
   searchErrorAll: string;
   searchFetchError: (kindPhrase: string) => string;
   searchHeading: string;
@@ -64,6 +73,7 @@ export type UiMessages = {
   metaSearchDescriptionWithQuery: (query: string, typeNote: string) => string;
   searchTypeNoteMovie: string;
   searchTypeNoteTv: string;
+  searchTypeNotePerson: string;
   searchTypeNoteAll: string;
   filtersFormAria: string;
   filterContentTypeGroup: string;
@@ -74,6 +84,8 @@ export type UiMessages = {
   filterTypeMovieTitle: string;
   filterTypeTv: string;
   filterTypeTvTitle: string;
+  filterTypePerson: string;
+  filterTypePersonTitle: string;
   filterYearLabel: string;
   filterYearAny: string;
   filterMinVoteLabel: string;
@@ -99,6 +111,7 @@ export type UiMessages = {
   searchLoadMore: string;
   searchEmptyMovie: (query: string) => string;
   searchEmptyTv: (query: string) => string;
+  searchEmptyPerson: (query: string) => string;
   searchEmptyAll: (query: string) => string;
   searchNextPageError: string;
   searchLoadMoreError: string;
@@ -128,9 +141,12 @@ export type UiMessages = {
   trailerWatch: string;
   trailerClose: string;
   trailerDialogTitle: (title: string) => string;
-  cardSeeDetailAria: (kind: "movie" | "tv", title: string) => string;
+  cardSeeDetailAria: (kind: "movie" | "tv" | "person", title: string) => string;
   cardPosterAlt: (title: string) => string;
   cardPosterMissing: string;
+  cardPersonDepartmentNA: string;
+  cardPersonProfileAlt: (name: string) => string;
+  cardPersonPhotoMissing: string;
   cardOverviewMissing: string;
   cardRuntimeNA: string;
   cardYearNA: string;
@@ -257,6 +273,14 @@ const ES: UiMessages = {
   languageAriaLabel: "Idioma del contenido",
   genreTitle: (name) => `Género: ${name}`,
   genreEmpty: (name) => `No hay películas para el género ${name} en este momento.`,
+  genreEmptySeries: (name) => `No hay series para el género ${name} en este momento.`,
+  genreResultsMovies: "Películas en esta categoría",
+  genreResultsTv: "Series en esta categoría",
+  genreRailAriaMovies: "Categorías de películas",
+  genreRailAriaSeries: "Categorías de series",
+  genreBrowseHint: "Desliza para ver más categorías",
+  genreRailScrollPrev: "Ver categorías anteriores",
+  genreRailScrollNext: "Ver categorías siguientes",
   sectionTrendingMovies: "Tendencias de películas",
   emptyTrendingMovies: "No hay películas en tendencia para mostrar en este momento.",
   sectionTrendingTv: "Series en tendencia",
@@ -292,26 +316,30 @@ const ES: UiMessages = {
   searchEmptyPrompt: "Ingresa un término para comenzar la búsqueda.",
   searchErrorTv: "series",
   searchErrorMovie: "películas",
-  searchErrorAll: "películas o series",
+  searchErrorPerson: "personas",
+  searchErrorAll: "películas, series o personas",
   searchFetchError: (kind) => `Ocurrió un error al buscar ${kind}. Intenta nuevamente.`,
   searchHeading: "Búsqueda",
   searchMatchesSection: "Coincidencias",
   metaSearchTitle: "Búsqueda",
-  metaSearchDescription: "Busca películas y series con filtros por tipo, año y valoración.",
+  metaSearchDescription: "Busca películas, series y personas con filtros por tipo, año y valoración.",
   metaSearchTitleWithQuery: (query) => `"${query}"`,
   metaSearchDescriptionWithQuery: (query, typeNote) => `Resultados para «${query}»${typeNote} en CineScope.`,
   searchTypeNoteMovie: " (solo películas)",
   searchTypeNoteTv: " (solo series)",
+  searchTypeNotePerson: " (solo personas)",
   searchTypeNoteAll: "",
   filtersFormAria: "Filtros de resultados de búsqueda",
   filterContentTypeGroup: "Tipo de contenido",
   filterTypeLabel: "Tipo",
   filterTypeAll: "Todo",
-  filterTypeAllTitle: "Películas y series",
+  filterTypeAllTitle: "Películas, series y personas",
   filterTypeMovie: "Películas",
   filterTypeMovieTitle: "Solo películas",
   filterTypeTv: "Series",
   filterTypeTvTitle: "Solo series",
+  filterTypePerson: "Personas",
+  filterTypePersonTitle: "Solo personas",
   filterYearLabel: "Año",
   filterYearAny: "Cualquiera",
   filterMinVoteLabel: "Valoración mín.",
@@ -339,8 +367,10 @@ const ES: UiMessages = {
     `No se encontraron películas para "${q}". Intenta con menos palabras, el título original o un término más general.`,
   searchEmptyTv: (q) =>
     `No se encontraron series para "${q}". Prueba el título original o un término más corto.`,
+  searchEmptyPerson: (q) =>
+    `No se encontraron personas para "${q}". Prueba el nombre completo o un apellido.`,
   searchEmptyAll: (q) =>
-    `No se encontraron películas ni series para "${q}". Intenta con menos palabras, el título original o un término más general.`,
+    `No se encontraron películas, series ni personas para "${q}". Intenta con menos palabras o un término más general.`,
   searchNextPageError: "No se pudo cargar la siguiente página.",
   searchLoadMoreError: "No se pudieron cargar más resultados.",
   searchAnnounceError: (msg) => `Error: ${msg}`,
@@ -370,9 +400,14 @@ const ES: UiMessages = {
   trailerClose: "Cerrar",
   trailerDialogTitle: (title) => `Tráiler de ${title}`,
   cardSeeDetailAria: (kind, title) =>
-    `Ver detalle de ${kind === "tv" ? "serie" : "película"} ${title}`,
+    kind === "person"
+      ? `Ver ficha de la persona ${title}`
+      : `Ver detalle de ${kind === "tv" ? "serie" : "película"} ${title}`,
   cardPosterAlt: (title) => `Póster de ${title}`,
   cardPosterMissing: "Póster no disponible",
+  cardPersonDepartmentNA: "Créditos N/D",
+  cardPersonProfileAlt: (name) => `Foto de ${name}`,
+  cardPersonPhotoMissing: "Foto no disponible",
   cardOverviewMissing: "Sinopsis no disponible.",
   cardRuntimeNA: "Duración N/D",
   cardYearNA: "N/D",
@@ -507,6 +542,14 @@ const EN: UiMessages = {
   languageAriaLabel: "Content language",
   genreTitle: (name) => `Genre: ${name}`,
   genreEmpty: (name) => `No movies for genre ${name} right now.`,
+  genreEmptySeries: (name) => `No TV shows for genre ${name} right now.`,
+  genreResultsMovies: "Movies in this category",
+  genreResultsTv: "TV shows in this category",
+  genreRailAriaMovies: "Movie categories",
+  genreRailAriaSeries: "TV categories",
+  genreBrowseHint: "Swipe to see more categories",
+  genreRailScrollPrev: "Show previous categories",
+  genreRailScrollNext: "Show next categories",
   sectionTrendingMovies: "Trending movies",
   emptyTrendingMovies: "No trending movies to show right now.",
   sectionTrendingTv: "Trending TV shows",
@@ -542,26 +585,30 @@ const EN: UiMessages = {
   searchEmptyPrompt: "Enter a search term to get started.",
   searchErrorTv: "TV shows",
   searchErrorMovie: "movies",
-  searchErrorAll: "movies or TV shows",
+  searchErrorPerson: "people",
+  searchErrorAll: "movies, TV shows, or people",
   searchFetchError: (kind) => `Something went wrong while searching ${kind}. Please try again.`,
   searchHeading: "Search",
   searchMatchesSection: "Matches",
   metaSearchTitle: "Search",
-  metaSearchDescription: "Search movies and TV with filters by type, year, and rating.",
+  metaSearchDescription: "Search movies, TV shows, and people with filters by type, year, and rating.",
   metaSearchTitleWithQuery: (query) => `"${query}"`,
   metaSearchDescriptionWithQuery: (query, typeNote) => `Results for “${query}”${typeNote} on CineScope.`,
   searchTypeNoteMovie: " (movies only)",
   searchTypeNoteTv: " (TV only)",
+  searchTypeNotePerson: " (people only)",
   searchTypeNoteAll: "",
   filtersFormAria: "Search result filters",
   filterContentTypeGroup: "Content type",
   filterTypeLabel: "Type",
   filterTypeAll: "All",
-  filterTypeAllTitle: "Movies and TV",
+  filterTypeAllTitle: "Movies, TV, and people",
   filterTypeMovie: "Movies",
   filterTypeMovieTitle: "Movies only",
   filterTypeTv: "TV shows",
   filterTypeTvTitle: "TV only",
+  filterTypePerson: "People",
+  filterTypePersonTitle: "People only",
   filterYearLabel: "Year",
   filterYearAny: "Any",
   filterMinVoteLabel: "Min. rating",
@@ -589,8 +636,10 @@ const EN: UiMessages = {
     `No movies found for “${q}”. Try fewer words, the original title, or a broader term.`,
   searchEmptyTv: (q) =>
     `No TV shows found for “${q}”. Try the original title or a shorter term.`,
+  searchEmptyPerson: (q) =>
+    `No people found for “${q}”. Try a full name or last name.`,
   searchEmptyAll: (q) =>
-    `No movies or TV shows found for “${q}”. Try fewer words, the original title, or a broader term.`,
+    `No movies, TV shows, or people found for “${q}”. Try fewer words or a broader term.`,
   searchNextPageError: "Could not load the next page.",
   searchLoadMoreError: "Could not load more results.",
   searchAnnounceError: (msg) => `Error: ${msg}`,
@@ -619,9 +668,15 @@ const EN: UiMessages = {
   trailerWatch: "Watch trailer",
   trailerClose: "Close",
   trailerDialogTitle: (title) => `Trailer: ${title}`,
-  cardSeeDetailAria: (kind, title) => `View ${kind === "tv" ? "TV show" : "movie"} details for ${title}`,
+  cardSeeDetailAria: (kind, title) =>
+    kind === "person"
+      ? `View person profile for ${title}`
+      : `View ${kind === "tv" ? "TV show" : "movie"} details for ${title}`,
   cardPosterAlt: (title) => `Poster for ${title}`,
   cardPosterMissing: "No poster",
+  cardPersonDepartmentNA: "Department N/A",
+  cardPersonProfileAlt: (name) => `Photo of ${name}`,
+  cardPersonPhotoMissing: "No photo",
   cardOverviewMissing: "No overview available.",
   cardRuntimeNA: "Runtime N/A",
   cardYearNA: "N/A",

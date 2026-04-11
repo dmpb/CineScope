@@ -1,6 +1,6 @@
-import type { Movie } from "@/types/movie";
+import type { Movie, SearchListItem } from "@/types/movie";
 
-export type SearchMediaKind = "all" | "movie" | "tv";
+export type SearchMediaKind = "all" | "movie" | "tv" | "person";
 
 /** Next.js puede entregar string o string[] si el parametro se repite en la URL. */
 export function normalizeSearchParam(value: string | string[] | undefined): string | undefined {
@@ -17,7 +17,7 @@ export type SearchMediaOptions = {
 };
 
 export function parseSearchMediaKind(value: string | null | undefined): SearchMediaKind {
-  if (value === "movie" || value === "tv" || value === "all") {
+  if (value === "movie" || value === "tv" || value === "all" || value === "person") {
     return value;
   }
   return "all";
@@ -45,17 +45,21 @@ export function parseMinVoteParam(value: string | null | undefined): number | un
   return undefined;
 }
 
-/** Refina resultados por pagina (TMDb no filtra ano/valoracion en /search). */
+/** Refina resultados por pagina (TMDb no filtra ano/valoracion en /search). Las personas se omiten si hay filtros de titulo. */
 export function filterSearchResults(
-  results: Movie[],
+  results: SearchListItem[],
   opts: { year?: number; minVote?: number }
-): Movie[] {
+): SearchListItem[] {
   const { year, minVote } = opts;
   if (year === undefined && minVote === undefined) {
     return results;
   }
 
-  return results.filter((m) => {
+  return results.filter((item) => {
+    if (item.mediaType === "person") {
+      return false;
+    }
+    const m = item as Movie;
     if (minVote !== undefined && m.rating < minVote) {
       return false;
     }
