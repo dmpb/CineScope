@@ -25,6 +25,8 @@ export type UiMessages = {
   genreRailAriaMovies: string;
   genreRailAriaSeries: string;
   genreBrowseHint: string;
+  genreRailScrollPrev: string;
+  genreRailScrollNext: string;
   sectionTrendingMovies: string;
   emptyTrendingMovies: string;
   sectionTrendingTv: string;
@@ -277,6 +279,8 @@ const ES: UiMessages = {
   genreRailAriaMovies: "Categorías de películas",
   genreRailAriaSeries: "Categorías de series",
   genreBrowseHint: "Desliza para ver más categorías",
+  genreRailScrollPrev: "Ver categorías anteriores",
+  genreRailScrollNext: "Ver categorías siguientes",
   sectionTrendingMovies: "Tendencias de películas",
   emptyTrendingMovies: "No hay películas en tendencia para mostrar en este momento.",
   sectionTrendingTv: "Series en tendencia",
@@ -544,6 +548,8 @@ const EN: UiMessages = {
   genreRailAriaMovies: "Movie categories",
   genreRailAriaSeries: "TV categories",
   genreBrowseHint: "Swipe to see more categories",
+  genreRailScrollPrev: "Show previous categories",
+  genreRailScrollNext: "Show next categories",
   sectionTrendingMovies: "Trending movies",
   emptyTrendingMovies: "No trending movies to show right now.",
   sectionTrendingTv: "Trending TV shows",
