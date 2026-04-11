@@ -68,6 +68,8 @@ Required Endpoints:
 * GET `/movie/popular`
 * GET `/movie/top_rated`
 * GET `/search/movie?query={query}`
+* GET `/search/multi?query={query}&page={page}`
+* GET `/search/person?query={query}&page={page}`
 * GET `/movie/{id}`
 * GET `/trending/tv/week`
 * GET `/tv/popular`
@@ -87,6 +89,17 @@ https://image.tmdb.org/t/p/original
 * Do NOT call APIs directly from components
 * Always handle loading, empty, and error states
 * Normalize API responses before using them in UI
+
+## Search endpoints (CineScope usage)
+
+The search UI (`/search`) maps filter **type** to TMDb as follows (all wiring and normalization live in `/lib/tmdb.ts` via `searchMedia()`):
+
+* **Todo (all)** — `GET /search/multi`: one request per page; results may include `movie`, `tv`, and `person` records. The app keeps TMDb order, maps each row to internal models, and enriches only movies and TV (same enrichment limits as elsewhere).
+* **Películas** — `GET /search/movie` (existing rule).
+* **Series** — `GET /search/tv` (existing rule).
+* **Personas** — `GET /search/person`: one request per page; normalized to a dedicated person search model for cards and `/person/{id}` links.
+
+Year and minimum rating filters apply only to movie/TV rows; when those filters are active, person rows are omitted after fetch (TMDb does not apply those filters on `/search`).
 
 ---
 
@@ -118,6 +131,10 @@ For mixed Home experiences, the project MUST support a normalized media contract
 * rating: number
 
 All Movie/TV normalization MUST happen in `/lib/tmdb.ts`.
+
+### Search list (movies, TV, people)
+
+Search result pages MAY return a mixed list. The domain type is `SearchListItem` in `/types/movie.ts`: either the existing **Movie** shape (with `mediaType` `"movie"` \| `"tv"`) or **PersonSearchHit** (`mediaType: "person"`, name, profile image path, popularity, optional known-for department). All mapping from multi/person/movie/tv search DTOs MUST happen in `/lib/tmdb.ts`.
 
 ---
 

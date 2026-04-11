@@ -33,7 +33,8 @@ export function SearchFiltersBar({ query, mediaKind, year, minVote }: SearchFilt
       [
         { value: "all" as const, label: ui.filterTypeAll, title: ui.filterTypeAllTitle },
         { value: "movie" as const, label: ui.filterTypeMovie, title: ui.filterTypeMovieTitle },
-        { value: "tv" as const, label: ui.filterTypeTv, title: ui.filterTypeTvTitle }
+        { value: "tv" as const, label: ui.filterTypeTv, title: ui.filterTypeTvTitle },
+        { value: "person" as const, label: ui.filterTypePerson, title: ui.filterTypePersonTitle }
       ] as const,
     [ui]
   );
