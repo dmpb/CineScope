@@ -909,6 +909,50 @@ export async function getMoviesByGenre(genreId: number): Promise<Movie[]> {
   return enrichMoviesWithDetails(movies);
 }
 
+export async function getTvGenres(): Promise<MovieGenre[]> {
+  if (isTmdbMockMode) {
+    return getMockGenres();
+  }
+
+  const data = await tmdbFetchJson<TmdbGenreListResponse>("/genre/tv/list");
+  if (!data?.genres?.length) {
+    return [];
+  }
+
+  return data.genres
+    .filter((genre) => Number.isInteger(genre.id))
+    .map((genre) => ({
+      id: genre.id,
+      name: genre.name ?? `Genre ${genre.id}`
+    }));
+}
+
+export async function getTvShowsByGenre(genreId: number): Promise<Movie[]> {
+  if (!Number.isInteger(genreId) || genreId <= 0) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    const shows = getMockTvShows();
+    if (genreId === 28) {
+      return [shows[0], shows[2]].filter(Boolean);
+    }
+    if (genreId === 35) {
+      return [shows[0], shows[1]].filter(Boolean);
+    }
+    return shows.slice(0, 5);
+  }
+
+  const path = `/discover/tv?${new URLSearchParams({ with_genres: String(genreId) }).toString()}`;
+  const data = await tmdbFetchJson<TmdbTvListResponse>(path);
+  if (!data?.results?.length) {
+    return [];
+  }
+
+  const shows = data.results.map(mapTvDto);
+  return enrichTvWithDetails(shows);
+}
+
 function selectYouTubeTrailer(videos: TmdbVideoDto[]): TmdbVideoDto | null {
   if (videos.length === 0) {
     return null;

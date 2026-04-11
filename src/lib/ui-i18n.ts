@@ -19,6 +19,12 @@ export type UiMessages = {
   languageAriaLabel: string;
   genreTitle: (name: string) => string;
   genreEmpty: (name: string) => string;
+  genreEmptySeries: (name: string) => string;
+  genreResultsMovies: string;
+  genreResultsTv: string;
+  genreRailAriaMovies: string;
+  genreRailAriaSeries: string;
+  genreBrowseHint: string;
   sectionTrendingMovies: string;
   emptyTrendingMovies: string;
   sectionTrendingTv: string;
@@ -265,6 +271,12 @@ const ES: UiMessages = {
   languageAriaLabel: "Idioma del contenido",
   genreTitle: (name) => `Género: ${name}`,
   genreEmpty: (name) => `No hay películas para el género ${name} en este momento.`,
+  genreEmptySeries: (name) => `No hay series para el género ${name} en este momento.`,
+  genreResultsMovies: "Películas en esta categoría",
+  genreResultsTv: "Series en esta categoría",
+  genreRailAriaMovies: "Categorías de películas",
+  genreRailAriaSeries: "Categorías de series",
+  genreBrowseHint: "Desliza para ver más categorías",
   sectionTrendingMovies: "Tendencias de películas",
   emptyTrendingMovies: "No hay películas en tendencia para mostrar en este momento.",
   sectionTrendingTv: "Series en tendencia",
@@ -526,6 +538,12 @@ const EN: UiMessages = {
   languageAriaLabel: "Content language",
   genreTitle: (name) => `Genre: ${name}`,
   genreEmpty: (name) => `No movies for genre ${name} right now.`,
+  genreEmptySeries: (name) => `No TV shows for genre ${name} right now.`,
+  genreResultsMovies: "Movies in this category",
+  genreResultsTv: "TV shows in this category",
+  genreRailAriaMovies: "Movie categories",
+  genreRailAriaSeries: "TV categories",
+  genreBrowseHint: "Swipe to see more categories",
   sectionTrendingMovies: "Trending movies",
   emptyTrendingMovies: "No trending movies to show right now.",
   sectionTrendingTv: "Trending TV shows",
