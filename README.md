@@ -1,8 +1,8 @@
 ## 🎬 CineScope
 
 <p align="center">
-  <img src="docs/images/portada-izquierda.jpeg" alt="Portada CineScope izquierda" width="49%" />
   <img src="docs/images/portada-derecha.jpeg" alt="Portada CineScope derecha" width="49%" />
+  <img src="docs/images/portada-izquierda.jpeg" alt="Portada CineScope izquierda" width="49%" />
 </p>
 
 CineScope es una aplicación web inspirada en Netflix que permite explorar películas de forma dinámica utilizando datos en tiempo real.
