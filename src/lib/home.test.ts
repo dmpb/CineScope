@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Movie } from "@/types/movie";
 import { getHomeData, selectHomeStripMovies, type HomeData } from "@/lib/home";
 
+vi.mock("@/lib/taste-server", () => ({
+  resolveTasteRefsForRequest: vi.fn().mockResolvedValue([])
+}));
+
 vi.mock("@/lib/tmdb", () => ({
   getAiringTodayTv: vi.fn(),
   getMovieById: vi.fn(),
@@ -12,6 +16,8 @@ vi.mock("@/lib/tmdb", () => ({
   getOnTheAirTv: vi.fn(),
   getPopularMovies: vi.fn(),
   getPopularTv: vi.fn(),
+  getSimilarMoviesById: vi.fn(),
+  getSimilarTvById: vi.fn(),
   getTopRatedMovies: vi.fn(),
   getTopRatedTv: vi.fn(),
   getTrendingMovies: vi.fn(),
@@ -31,6 +37,8 @@ import {
   getOnTheAirTv,
   getPopularMovies,
   getPopularTv,
+  getSimilarMoviesById,
+  getSimilarTvById,
   getTopRatedMovies,
   getTopRatedTv,
   getTrendingMovies,
@@ -89,10 +97,13 @@ describe("home orchestration", () => {
     vi.mocked(getMovieById).mockResolvedValue(movieFixture);
     vi.mocked(getTvTrailerById).mockResolvedValue(null);
     vi.mocked(getTvById).mockResolvedValue(null);
+    vi.mocked(getSimilarMoviesById).mockResolvedValue([]);
+    vi.mocked(getSimilarTvById).mockResolvedValue([]);
 
     const data = await getHomeData();
 
     expect(data.trending).toHaveLength(1);
+    expect(data.forYou).toBeNull();
     expect(data.popular).toHaveLength(0);
     expect(data.hasError).toBe(true);
   });
@@ -114,6 +125,10 @@ describe("home orchestration", () => {
       { id: 99, name: "Documentary Duplicate" }
     ]);
     vi.mocked(getMoviesByGenre).mockResolvedValue([]);
+    vi.mocked(getMovieTrailerById).mockResolvedValue(null);
+    vi.mocked(getTvTrailerById).mockResolvedValue(null);
+    vi.mocked(getSimilarMoviesById).mockResolvedValue([]);
+    vi.mocked(getSimilarTvById).mockResolvedValue([]);
 
     await getHomeData();
 
@@ -134,6 +149,7 @@ describe("home orchestration", () => {
       onTheAirTv: [{ ...movieFixture, id: 8, mediaType: "tv" }],
       airingTodayTv: [{ ...movieFixture, id: 9, mediaType: "tv" }],
       genreSections: [],
+      forYou: null,
       featuredSlides: [{ movie: movieFixture, trailerUrl: null }],
       hasError: false
     };

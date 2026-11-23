@@ -71,7 +71,7 @@ export default function AboutPage() {
                 <Link href="/" className={featureCardLink}>
                   <span className="text-base font-semibold text-zinc-100">Inicio</span>
                   <span className="mt-2 block text-sm leading-relaxed text-zinc-400">
-                    Carruseles y filas con tendencias, populares y más.
+                    Carruseles, filas y recomendaciones “Para ti” según tus favoritos.
                   </span>
                 </Link>
               </li>
@@ -102,15 +102,24 @@ export default function AboutPage() {
                 <div className={`${featureCardBase} cursor-default`}>
                   <span className="text-base font-semibold text-zinc-100">Fichas de detalle</span>
                   <span className="mt-2 block text-sm leading-relaxed text-zinc-400">
-                    Reparto, galería y trailers cuando la API aporta datos.
+                    Reparto, galería, trailers, dónde verlo (plataformas legales), sagas y temporadas.
                   </span>
                 </div>
               </li>
-              <li className="sm:col-span-2">
+              <li>
+                <Link href="/estrenos" className={featureCardLink}>
+                  <span className="text-base font-semibold text-zinc-100">Estrenos</span>
+                  <span className="mt-2 block text-sm leading-relaxed text-zinc-400">
+                    Calendario de estrenos del mes (cine y series) por fecha.
+                  </span>
+                </Link>
+              </li>
+              <li>
                 <Link href="/favoritos" className={featureCardLink}>
                   <span className="text-base font-semibold text-zinc-100">Favoritos</span>
                   <span className="mt-2 block max-w-2xl text-sm leading-relaxed text-zinc-400">
-                    Guarda películas y series en este dispositivo (almacenamiento local del navegador).
+                    Guarda películas y series en este dispositivo. Puedes cambiar el idioma del contenido
+                    desde la barra superior.
                   </span>
                 </Link>
               </li>

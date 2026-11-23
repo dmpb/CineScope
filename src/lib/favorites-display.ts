@@ -3,6 +3,10 @@ import type { Movie } from "@/types/movie";
 export type FavoritesFilterMode = "todos" | "movie" | "tv";
 export type FavoritesSortMode = "orden" | "titulo" | "valoracion" | "estreno";
 
+export function movieFavoriteKey(movie: Movie): string {
+  return `${movie.mediaType === "tv" ? "tv" : "movie"}:${movie.id}`;
+}
+
 export function applyFavoritesSortAndFilter(
   list: Movie[],
   filter: FavoritesFilterMode,

@@ -18,11 +18,13 @@ vi.mock("@/lib/tmdb", () => ({
   getMovieCrewHighlightsById: vi.fn(),
   getMovieWatchProvidersById: vi.fn(),
   getMovieImagesById: vi.fn(),
-  getSimilarMoviesById: vi.fn()
+  getSimilarMoviesById: vi.fn(),
+  getCollectionById: vi.fn()
 }));
 
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import {
+  getCollectionById,
   getMovieById,
   getMovieCastById,
   getMovieCrewHighlightsById,
@@ -63,7 +65,10 @@ describe("Movie detail page", () => {
       directors: ["Christopher Nolan"],
       writers: ["Jonathan Nolan", "Christopher Nolan"]
     });
-    vi.mocked(getMovieWatchProvidersById).mockResolvedValue([{ id: 8, name: "Netflix", logoPath: "https://image.tmdb.org/t/p/original/a.png", category: "flatrate" }]);
+    vi.mocked(getMovieWatchProvidersById).mockResolvedValue({
+      providers: [{ id: 8, name: "Netflix", logoPath: "https://image.tmdb.org/t/p/original/a.png", category: "flatrate" }],
+      link: "https://www.justwatch.com/us/movie/interstellar"
+    });
     vi.mocked(getMovieImagesById).mockResolvedValue(["https://image.tmdb.org/t/p/original/c.jpg"]);
     vi.mocked(getSimilarMoviesById).mockResolvedValue([
       {
@@ -72,6 +77,7 @@ describe("Movie detail page", () => {
         title: "The Martian"
       }
     ]);
+    vi.mocked(getCollectionById).mockResolvedValue(null);
 
     render(await MoviePage({ params: Promise.resolve({ id: "1" }) }));
 
@@ -92,9 +98,10 @@ describe("Movie detail page", () => {
     vi.mocked(getMovieTrailerById).mockResolvedValue(null);
     vi.mocked(getMovieCastById).mockResolvedValue([]);
     vi.mocked(getMovieCrewHighlightsById).mockResolvedValue({ directors: [], writers: [] });
-    vi.mocked(getMovieWatchProvidersById).mockResolvedValue([]);
+    vi.mocked(getMovieWatchProvidersById).mockResolvedValue({ providers: [], link: null });
     vi.mocked(getMovieImagesById).mockResolvedValue([]);
     vi.mocked(getSimilarMoviesById).mockResolvedValue([]);
+    vi.mocked(getCollectionById).mockResolvedValue(null);
 
     render(await MoviePage({ params: Promise.resolve({ id: "1" }) }));
 

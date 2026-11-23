@@ -5,19 +5,25 @@
   <img src="docs/images/portada-izquierda.jpeg" alt="Portada CineScope izquierda" width="49%" />
 </p>
 
-CineScope es una aplicación web inspirada en Netflix que permite explorar películas de forma dinámica utilizando datos en tiempo real.
+CineScope es una aplicación web inspirada en Netflix que permite explorar películas y series con datos en tiempo real de The Movie Database (TMDb).
 
 El proyecto está enfocado en ofrecer una experiencia de usuario moderna, rápida y visualmente atractiva, aplicando buenas prácticas de desarrollo frontend, arquitectura limpia y optimización de rendimiento.
 
 
 ## 🚀 Funcionalidades
 
-- 🎥 Navegación por categorías (Tendencias, Populares, Mejor valoradas)
-- 🔍 Búsqueda dinámica de películas
-- 📄 Vista detallada de cada película
-- 🎨 Interfaz moderna inspirada en Netflix
+- 🎥 Navegación por categorías (tendencias, populares, mejor valoradas, cartelera, en emisión)
+- 📺 Catálogo de películas y series, con géneros e scroll infinito
+- 🔍 Búsqueda de películas, series y personas con filtros
+- 📄 Fichas de detalle: sinopsis, reparto, galería, trailer, similares
+- 🛰️ Dónde verlo: logos de plataformas legales y enlace JustWatch (región vía `TMDB_REGION`)
+- 🌍 Selector de idioma del contenido
+- 📚 Sagas/colecciones en películas y temporadas/episodios en series
+- ⭐ Favoritos en el navegador (localStorage)
+- 📅 Calendario de estrenos
+- 🏠 Home personalizada (“Para ti”) a partir de favoritos
 - ⚡ Carga optimizada de datos (ISR)
-- 📱 Diseño completamente responsive
+- 📱 Diseño responsive
 
 
 ## 🧱 Tecnologías
@@ -35,7 +41,7 @@ Este proyecto demuestra:
 
 - Uso de Server Components en Next.js
 - Incremental Static Regeneration (ISR)
-- Arquitectura escalable y modular
+- Arquitectura en capas: UI → lib → `tmdb.ts` → TMDb
 - Consumo y abstracción de APIs
 - Diseño basado en componentes reutilizables
 
@@ -47,26 +53,19 @@ El proyecto utiliza Docker para garantizar un entorno de desarrollo consistente 
 ```bash
 cp .env.example .env.local
 # Edita .env.local y pega tu Read Access Token y (opcional) API Key de TMDb
-docker compose up --build -d
-docker compose logs -f web
+docker compose up --build
 ```
-
-La primera subida puede tardar (build + dependencias). Los reinicios siguientes arrancan sin reinstalar si el volumen `node_modules` ya existe.
 
 Luego abre:
 
 - http://localhost:3000
 
-Para detener:
-
-```bash
-docker compose down
-```
-
 Variables en `.env.local` (no se suben a git):
 
 - `TMDB_BEARER_TOKEN` (obligatorio para la capa `tmdb`)
 - `TMDB_API_KEY` (opcional; la app actual usa solo Bearer)
+- `TMDB_LANGUAGE` (opcional; por defecto `es-ES`; la cookie de usuario tiene prioridad)
+- `TMDB_REGION` (opcional; por defecto `ES`; cartelera y disponibilidad)
 
 No hace falta un archivo `.env` aparte: Next.js y Docker usan `.env.local` según las reglas del proyecto.
 
@@ -102,5 +101,6 @@ La orquestación de Home registra tiempos por bloque en logs server-side con pre
 - `trending`, `popular`, `top-rated`, `now-playing`, `upcoming`, `genres`
 - `genre-<id>` para rails por género
 - `featured-detail` y `featured-trailer`
+- `for-you-*` cuando hay cookie de gustos
 
 Si una fuente falla, Home mantiene render parcial y registra el bloque afectado sin romper toda la página.

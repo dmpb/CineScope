@@ -96,7 +96,7 @@ html {
   }
 
   .horizontal-scroll-row {
-    @apply flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-2 sm:gap-4;
+    @apply flex items-start snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-2 sm:gap-4;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
     scrollbar-width: thin;
@@ -104,7 +104,7 @@ html {
   }
 
   .horizontal-scroll-item {
-    @apply snap-start;
+    @apply snap-start shrink-0 self-start;
   }
 
   .horizontal-scroll-row::-webkit-scrollbar {

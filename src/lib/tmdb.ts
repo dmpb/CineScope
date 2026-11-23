@@ -5,10 +5,16 @@ import type {
   CastMember,
   CrewHighlights,
   Movie,
+  MovieCollection,
+  MovieCollectionRef,
   PersonSearchHit,
   SearchListItem,
   SearchResult,
-  WatchProvider
+  TvEpisode,
+  TvSeasonDetail,
+  TvSeasonSummary,
+  WatchProvider,
+  WatchProvidersResult
 } from "@/types/movie";
 import type {
   PersonCastCredit,
@@ -35,6 +41,13 @@ const IMAGE_BASE = "https://image.tmdb.org/t/p/original";
 const isTmdbMockMode = process.env.TMDB_MOCK_MODE === "1";
 const RUNTIME_ENRICH_LIMIT = 8;
 
+type TmdbCollectionRefDto = {
+  id?: number;
+  name?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+};
+
 type TmdbMovieDto = {
   id: number;
   title?: string;
@@ -52,6 +65,48 @@ type TmdbMovieDto = {
   original_language?: string;
   runtime?: number;
   genres?: TmdbGenreDto[];
+  belongs_to_collection?: TmdbCollectionRefDto | null;
+};
+
+type TmdbCollectionDto = {
+  id?: number;
+  name?: string;
+  overview?: string | null;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  parts?: TmdbMovieDto[];
+};
+
+type TmdbSeasonSummaryDto = {
+  id?: number;
+  season_number?: number;
+  name?: string;
+  overview?: string | null;
+  episode_count?: number;
+  air_date?: string | null;
+  poster_path?: string | null;
+};
+
+type TmdbEpisodeDto = {
+  id?: number;
+  season_number?: number;
+  episode_number?: number;
+  name?: string;
+  overview?: string | null;
+  air_date?: string | null;
+  runtime?: number | null;
+  still_path?: string | null;
+  vote_average?: number;
+};
+
+type TmdbSeasonDetailDto = {
+  id?: number;
+  season_number?: number;
+  name?: string;
+  overview?: string | null;
+  air_date?: string | null;
+  poster_path?: string | null;
+  episodes?: TmdbEpisodeDto[];
 };
 
 type TmdbCreatedByPerson = {
@@ -85,6 +140,7 @@ type TmdbTvDto = {
   original_language?: string;
   episode_run_time?: number[];
   genres?: TmdbGenreDto[];
+  seasons?: TmdbSeasonSummaryDto[];
 };
 
 type TmdbMovieListResponse = {
@@ -180,6 +236,7 @@ type TmdbWatchProvidersResponse = {
   results?: Record<
     string,
     {
+      link?: string | null;
       flatrate?: Array<{ provider_id?: number; provider_name?: string; logo_path?: string | null }>;
       rent?: Array<{ provider_id?: number; provider_name?: string; logo_path?: string | null }>;
       buy?: Array<{ provider_id?: number; provider_name?: string; logo_path?: string | null }>;
@@ -211,7 +268,13 @@ const MOCK_MOVIES: TmdbMovieDto[] = [
     genres: [
       { id: 28, name: "Action" },
       { id: 878, name: "Science Fiction" }
-    ]
+    ],
+    belongs_to_collection: {
+      id: 2344,
+      name: "The Matrix Collection",
+      poster_path: "/bV9qTVHTVf0gkW0j7p7MwsRxDE9.jpg",
+      backdrop_path: "/bV9qTVHTVf0gkW0j7p7MwsRxDE9.jpg"
+    }
   },
   {
     id: 27205,
@@ -316,6 +379,24 @@ const MOCK_TV: TmdbTvDto[] = [
     genres: [
       { id: 10765, name: "Sci-Fi & Fantasy" },
       { id: 18, name: "Drama" }
+    ],
+    seasons: [
+      {
+        season_number: 1,
+        name: "Season 1",
+        overview: "The struggle for the Iron Throne begins.",
+        episode_count: 10,
+        air_date: "2011-04-17",
+        poster_path: "/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg"
+      },
+      {
+        season_number: 2,
+        name: "Season 2",
+        overview: "Alliances shift across the Seven Kingdoms.",
+        episode_count: 10,
+        air_date: "2012-04-01",
+        poster_path: "/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg"
+      }
     ]
   },
   {
@@ -372,10 +453,60 @@ function buildImageUrl(path: string | null | undefined): string {
   return `${IMAGE_BASE}${normalized}`;
 }
 
+function mapCollectionRef(dto: TmdbCollectionRefDto | null | undefined): MovieCollectionRef | undefined {
+  if (!dto || typeof dto.id !== "number" || !Number.isFinite(dto.id) || dto.id <= 0) {
+    return undefined;
+  }
+  const name = dto.name?.trim() ?? "";
+  if (!name) {
+    return undefined;
+  }
+  return {
+    id: dto.id,
+    name,
+    posterPath: buildImageUrl(dto.poster_path),
+    backdropPath: buildImageUrl(dto.backdrop_path)
+  };
+}
+
+function mapSeasonSummary(dto: TmdbSeasonSummaryDto): TvSeasonSummary | null {
+  if (typeof dto.season_number !== "number" || !Number.isInteger(dto.season_number) || dto.season_number < 0) {
+    return null;
+  }
+  return {
+    seasonNumber: dto.season_number,
+    name: dto.name?.trim() || `Season ${dto.season_number}`,
+    overview: dto.overview ?? "",
+    episodeCount: typeof dto.episode_count === "number" ? dto.episode_count : 0,
+    airDate: dto.air_date?.trim() || "",
+    posterPath: buildImageUrl(dto.poster_path)
+  };
+}
+
+function mapEpisodeDto(dto: TmdbEpisodeDto): TvEpisode | null {
+  if (typeof dto.id !== "number" || !Number.isFinite(dto.id) || dto.id <= 0) {
+    return null;
+  }
+  const seasonNumber = typeof dto.season_number === "number" ? dto.season_number : 0;
+  const episodeNumber = typeof dto.episode_number === "number" ? dto.episode_number : 0;
+  return {
+    id: dto.id,
+    seasonNumber,
+    episodeNumber,
+    name: dto.name?.trim() || "",
+    overview: dto.overview ?? "",
+    airDate: dto.air_date?.trim() || "",
+    runtime: typeof dto.runtime === "number" && dto.runtime > 0 ? dto.runtime : 0,
+    stillPath: buildImageUrl(dto.still_path),
+    rating: typeof dto.vote_average === "number" ? dto.vote_average : 0
+  };
+}
+
 function mapMovieDto(dto: TmdbMovieDto): Movie {
   const productionCountries = (dto.production_countries ?? [])
     .map((country) => country.name ?? country.iso_3166_1 ?? "")
     .filter(Boolean);
+  const collection = mapCollectionRef(dto.belongs_to_collection);
 
   return {
     id: dto.id,
@@ -394,7 +525,8 @@ function mapMovieDto(dto: TmdbMovieDto): Movie {
     genres: (dto.genres ?? []).map((genre) => genre.name ?? "").filter(Boolean),
     runtime: typeof dto.runtime === "number" ? dto.runtime : 0,
     language: dto.original_language ?? "",
-    voteCount: typeof dto.vote_count === "number" ? dto.vote_count : 0
+    voteCount: typeof dto.vote_count === "number" ? dto.vote_count : 0,
+    ...(collection ? { collection } : {})
   };
 }
 
@@ -411,6 +543,10 @@ function mapTvDto(dto: TmdbTvDto): Movie {
   const runtimeFromEpisode = episodeRunTimes[0] ?? 0;
   const creators = normalizeNames((dto.created_by ?? []).map((person) => person.name ?? ""));
   const networkNames = normalizeNames((dto.networks ?? []).map((network) => network.name ?? ""));
+  const seasons = (dto.seasons ?? [])
+    .map(mapSeasonSummary)
+    .filter((season): season is TvSeasonSummary => season != null)
+    .filter((season) => season.seasonNumber > 0);
 
   return {
     id: dto.id,
@@ -435,7 +571,8 @@ function mapTvDto(dto: TmdbTvDto): Movie {
     numberOfEpisodes: typeof dto.number_of_episodes === "number" ? dto.number_of_episodes : undefined,
     networkNames: networkNames.length > 0 ? networkNames : undefined,
     lastAirDate: dto.last_air_date?.trim() || undefined,
-    episodeRunTimes: episodeRunTimes.length > 0 ? episodeRunTimes : undefined
+    episodeRunTimes: episodeRunTimes.length > 0 ? episodeRunTimes : undefined,
+    seasons: seasons.length > 0 ? seasons : undefined
   };
 }
 
@@ -502,19 +639,25 @@ function getMockCrewHighlightsByMovieId(id: number): CrewHighlights {
   return byMovieId[id] ?? { directors: [], writers: [] };
 }
 
-function getMockWatchProvidersByMovieId(id: number): WatchProvider[] {
+function getMockWatchProvidersByMovieId(id: number): WatchProvidersResult {
   const providerLogo = (path: string) => buildImageUrl(path);
-  const byMovieId: Record<number, WatchProvider[]> = {
-    603: [
-      { id: 8, name: "Netflix", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" },
-      { id: 2, name: "Apple TV", logoPath: providerLogo("/peURlLlr8jggOwK53fJ5wdQl05y.jpg"), category: "rent" }
-    ],
-    27205: [
-      { id: 337, name: "Disney+", logoPath: providerLogo("/7rwgEsKTfFC0rQ1HfGZ7s2nP6kG.jpg"), category: "flatrate" }
-    ]
+  const byMovieId: Record<number, WatchProvidersResult> = {
+    603: {
+      link: "https://www.justwatch.com/us/movie/the-matrix",
+      providers: [
+        { id: 8, name: "Netflix", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" },
+        { id: 2, name: "Apple TV", logoPath: providerLogo("/peURlLlr8jggOwK53fJ5wdQl05y.jpg"), category: "rent" }
+      ]
+    },
+    27205: {
+      link: "https://www.justwatch.com/us/movie/inception",
+      providers: [
+        { id: 337, name: "Disney+", logoPath: providerLogo("/7rwgEsKTfFC0rQ1HfGZ7s2nP6kG.jpg"), category: "flatrate" }
+      ]
+    }
   };
 
-  return byMovieId[id] ?? [];
+  return byMovieId[id] ?? { providers: [], link: null };
 }
 
 function getMockMovieImagesById(id: number): string[] {
@@ -532,18 +675,31 @@ function getMockMovieImagesById(id: number): string[] {
   return byMovieId[id] ?? [];
 }
 
-function getMockWatchProvidersByTvId(id: number): WatchProvider[] {
+function getMockWatchProvidersByTvId(id: number): WatchProvidersResult {
   const providerLogo = (path: string) => buildImageUrl(path);
-  const byTvId: Record<number, WatchProvider[]> = {
-    1399: [
-      { id: 8, name: "HBO Max", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" },
-      { id: 2, name: "Apple TV", logoPath: providerLogo("/peURlLlr8jggOwK53fJ5wdQl05y.jpg"), category: "rent" }
-    ],
-    1396: [{ id: 8, name: "Netflix", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" }],
-    87108: [{ id: 8, name: "HBO Max", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" }]
+  const byTvId: Record<number, WatchProvidersResult> = {
+    1399: {
+      link: "https://www.justwatch.com/us/tv-show/game-of-thrones",
+      providers: [
+        { id: 8, name: "HBO Max", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" },
+        { id: 2, name: "Apple TV", logoPath: providerLogo("/peURlLlr8jggOwK53fJ5wdQl05y.jpg"), category: "rent" }
+      ]
+    },
+    1396: {
+      link: "https://www.justwatch.com/us/tv-show/breaking-bad",
+      providers: [
+        { id: 8, name: "Netflix", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" }
+      ]
+    },
+    87108: {
+      link: null,
+      providers: [
+        { id: 8, name: "HBO Max", logoPath: providerLogo("/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"), category: "flatrate" }
+      ]
+    }
   };
 
-  return byTvId[id] ?? [];
+  return byTvId[id] ?? { providers: [], link: null };
 }
 
 function getMockTvImagesById(id: number): string[] {
@@ -608,6 +764,40 @@ async function buildTheatricalListQuery(): Promise<string> {
     region: getTmdbRegion()
   });
   return `?${params.toString()}`;
+}
+
+function dedupeWatchProviders(providers: WatchProvider[]): WatchProvider[] {
+  const seen = new Set<string>();
+  return providers.filter((provider) => {
+    const key = `${provider.id}-${provider.category}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function mapWatchProvidersResult(
+  regionData:
+    | {
+        link?: string | null;
+        flatrate?: Array<{ provider_id?: number; provider_name?: string; logo_path?: string | null }>;
+        rent?: Array<{ provider_id?: number; provider_name?: string; logo_path?: string | null }>;
+        buy?: Array<{ provider_id?: number; provider_name?: string; logo_path?: string | null }>;
+      }
+    | undefined
+): WatchProvidersResult {
+  if (!regionData) {
+    return { providers: [], link: null };
+  }
+  const link = typeof regionData.link === "string" && regionData.link.trim() ? regionData.link.trim() : null;
+  const providers = dedupeWatchProviders([
+    ...mapProviderEntries(regionData.flatrate, "flatrate"),
+    ...mapProviderEntries(regionData.rent, "rent"),
+    ...mapProviderEntries(regionData.buy, "buy")
+  ]);
+  return { providers, link };
 }
 
 /** Anexa `language` a toda peticion v3 para titulos, sinopsis y generos localizados. */
@@ -804,6 +994,126 @@ export async function getUpcomingMovies(): Promise<Movie[]> {
 
   const movies = data.results.map(mapMovieDto);
   return enrichMoviesWithDetails(movies);
+}
+
+/** Páginas Discover para el calendario de estrenos (evita el listado corto de /movie/upcoming). */
+const CALENDAR_MOVIE_PAGES = 3;
+const CALENDAR_TV_PAGES = 2;
+/** Tipo TMDb: 3 = Theatrical. */
+const THEATRICAL_RELEASE_TYPE = "3";
+
+function calendarMonthBounds(year: number, monthIndex: number): { prefix: string; gte: string; lte: string } | null {
+  if (!Number.isInteger(year) || year < 1970 || year > 2100) {
+    return null;
+  }
+  if (!Number.isInteger(monthIndex) || monthIndex < 0 || monthIndex > 11) {
+    return null;
+  }
+  const prefix = `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+  const lastDay = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+  return {
+    prefix,
+    gte: `${prefix}-01`,
+    lte: `${prefix}-${String(lastDay).padStart(2, "0")}`
+  };
+}
+
+function isReleaseInMonth(date: string | undefined, prefix: string): boolean {
+  return Boolean(date && date.slice(0, 7) === prefix);
+}
+
+/**
+ * Películas con estreno teatral en el mes (región TMDB_REGION).
+ * Usa Discover + fechas, no /movie/upcoming (ventana corta de TMDb).
+ */
+export async function getMoviesReleasingInMonth(year: number, monthIndex: number): Promise<Movie[]> {
+  const bounds = calendarMonthBounds(year, monthIndex);
+  if (!bounds) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockMovies().filter((movie) => isReleaseInMonth(movie.releaseDate, bounds.prefix));
+  }
+
+  const language = await resolveTmdbLanguageForRequest();
+  const region = getTmdbRegion();
+  const collected: Movie[] = [];
+  const seen = new Set<number>();
+
+  for (let page = 1; page <= CALENDAR_MOVIE_PAGES; page += 1) {
+    const params = new URLSearchParams({
+      language,
+      region,
+      include_adult: "false",
+      sort_by: "popularity.desc",
+      with_release_type: THEATRICAL_RELEASE_TYPE,
+      "primary_release_date.gte": bounds.gte,
+      "primary_release_date.lte": bounds.lte,
+      page: String(page)
+    });
+    const data = await tmdbFetchJson<TmdbMovieListResponse>(`/discover/movie?${params.toString()}`);
+    if (!data?.results?.length) {
+      break;
+    }
+    for (const dto of data.results) {
+      const movie = mapMovieDto(dto);
+      if (seen.has(movie.id) || !isReleaseInMonth(movie.releaseDate, bounds.prefix)) {
+        continue;
+      }
+      seen.add(movie.id);
+      collected.push(movie);
+    }
+    if (page >= (data.total_pages ?? page)) {
+      break;
+    }
+  }
+
+  return collected;
+}
+
+/** Series con primera emisión en el mes. */
+export async function getTvPremieresInMonth(year: number, monthIndex: number): Promise<Movie[]> {
+  const bounds = calendarMonthBounds(year, monthIndex);
+  if (!bounds) {
+    return [];
+  }
+
+  if (isTmdbMockMode) {
+    return getMockTvShows().filter((show) => isReleaseInMonth(show.releaseDate, bounds.prefix));
+  }
+
+  const language = await resolveTmdbLanguageForRequest();
+  const collected: Movie[] = [];
+  const seen = new Set<number>();
+
+  for (let page = 1; page <= CALENDAR_TV_PAGES; page += 1) {
+    const params = new URLSearchParams({
+      language,
+      include_adult: "false",
+      sort_by: "popularity.desc",
+      "first_air_date.gte": bounds.gte,
+      "first_air_date.lte": bounds.lte,
+      page: String(page)
+    });
+    const data = await tmdbFetchJson<TmdbTvListResponse>(`/discover/tv?${params.toString()}`);
+    if (!data?.results?.length) {
+      break;
+    }
+    for (const dto of data.results) {
+      const show = mapTvDto(dto);
+      if (seen.has(show.id) || !isReleaseInMonth(show.releaseDate, bounds.prefix)) {
+        continue;
+      }
+      seen.add(show.id);
+      collected.push(show);
+    }
+    if (page >= (data.total_pages ?? page)) {
+      break;
+    }
+  }
+
+  return collected;
 }
 
 export async function getTrendingTv(): Promise<Movie[]> {
@@ -1184,37 +1494,22 @@ export async function getTvCrewHighlightsById(id: number): Promise<CrewHighlight
   return { directors: [], writers };
 }
 
-export async function getMovieWatchProvidersById(id: number, region = "US"): Promise<WatchProvider[]> {
+export async function getMovieWatchProvidersById(
+  id: number,
+  region?: string
+): Promise<WatchProvidersResult> {
   if (!Number.isFinite(id) || id <= 0) {
-    return [];
+    return { providers: [], link: null };
   }
 
   if (isTmdbMockMode) {
     return getMockWatchProvidersByMovieId(id);
   }
 
-  const normalizedRegion = region.trim().toUpperCase() || "US";
+  const resolvedRegion = (region?.trim() ? region : getTmdbRegion()).toUpperCase();
   const data = await tmdbFetchJson<TmdbWatchProvidersResponse>(`/movie/${id}/watch/providers`);
-  const regionData = data?.results?.[normalizedRegion] ?? data?.results?.US;
-  if (!regionData) {
-    return [];
-  }
-
-  const providers = [
-    ...mapProviderEntries(regionData.flatrate, "flatrate"),
-    ...mapProviderEntries(regionData.rent, "rent"),
-    ...mapProviderEntries(regionData.buy, "buy")
-  ];
-
-  const seen = new Set<string>();
-  return providers.filter((provider) => {
-    const key = `${provider.id}-${provider.category}`;
-    if (seen.has(key)) {
-      return false;
-    }
-    seen.add(key);
-    return true;
-  });
+  const regionData = data?.results?.[resolvedRegion] ?? data?.results?.US;
+  return mapWatchProvidersResult(regionData);
 }
 
 export async function getMovieImagesById(id: number): Promise<string[]> {
@@ -1259,37 +1554,22 @@ export async function getSimilarMoviesById(id: number): Promise<Movie[]> {
   return normalizeSimilarMovies(id, enrichedMovies);
 }
 
-export async function getTvWatchProvidersById(id: number, region = "US"): Promise<WatchProvider[]> {
+export async function getTvWatchProvidersById(
+  id: number,
+  region?: string
+): Promise<WatchProvidersResult> {
   if (!Number.isFinite(id) || id <= 0) {
-    return [];
+    return { providers: [], link: null };
   }
 
   if (isTmdbMockMode) {
     return getMockWatchProvidersByTvId(id);
   }
 
-  const normalizedRegion = region.trim().toUpperCase() || "US";
+  const resolvedRegion = (region?.trim() ? region : getTmdbRegion()).toUpperCase();
   const data = await tmdbFetchJson<TmdbWatchProvidersResponse>(`/tv/${id}/watch/providers`);
-  const regionData = data?.results?.[normalizedRegion] ?? data?.results?.US;
-  if (!regionData) {
-    return [];
-  }
-
-  const providers = [
-    ...mapProviderEntries(regionData.flatrate, "flatrate"),
-    ...mapProviderEntries(regionData.rent, "rent"),
-    ...mapProviderEntries(regionData.buy, "buy")
-  ];
-
-  const seen = new Set<string>();
-  return providers.filter((provider) => {
-    const key = `${provider.id}-${provider.category}`;
-    if (seen.has(key)) {
-      return false;
-    }
-    seen.add(key);
-    return true;
-  });
+  const regionData = data?.results?.[resolvedRegion] ?? data?.results?.US;
+  return mapWatchProvidersResult(regionData);
 }
 
 export async function getTvImagesById(id: number): Promise<string[]> {
@@ -1619,6 +1899,134 @@ export async function getTvById(id: number): Promise<Movie | null> {
   }
 
   return mapTvDto(data);
+}
+
+/** TMDb `/collection` no garantiza orden de saga; ordenamos por fecha de estreno ascendente. */
+function sortCollectionPartsByReleaseDate(parts: Movie[]): Movie[] {
+  return [...parts].sort((a, b) => {
+    const dateA = a.releaseDate?.trim() ?? "";
+    const dateB = b.releaseDate?.trim() ?? "";
+    if (!dateA && !dateB) {
+      return a.id - b.id;
+    }
+    if (!dateA) {
+      return 1;
+    }
+    if (!dateB) {
+      return -1;
+    }
+    const byDate = dateA.localeCompare(dateB);
+    return byDate !== 0 ? byDate : a.id - b.id;
+  });
+}
+
+export async function getCollectionById(id: number): Promise<MovieCollection | null> {
+  if (!Number.isFinite(id) || id <= 0) {
+    return null;
+  }
+
+  if (isTmdbMockMode) {
+    if (id !== 2344) {
+      return null;
+    }
+    const parts = sortCollectionPartsByReleaseDate(
+      getMockMovies().filter((movie) => movie.id === 603 || movie.id === 27205)
+    );
+    return {
+      id: 2344,
+      name: "The Matrix Collection",
+      overview: "The Matrix saga.",
+      posterPath: buildImageUrl("/bV9qTVHTVf0gkW0j7p7MwsRxDE9.jpg"),
+      backdropPath: buildImageUrl("/bV9qTVHTVf0gkW0j7p7MwsRxDE9.jpg"),
+      parts
+    };
+  }
+
+  const data = await tmdbFetchJson<TmdbCollectionDto>(`/collection/${id}`);
+  if (!data || typeof data.id !== "number") {
+    return null;
+  }
+
+  const parts = sortCollectionPartsByReleaseDate((data.parts ?? []).map(mapMovieDto));
+  return {
+    id: data.id,
+    name: data.name?.trim() || "Collection",
+    overview: data.overview ?? "",
+    posterPath: buildImageUrl(data.poster_path),
+    backdropPath: buildImageUrl(data.backdrop_path),
+    parts
+  };
+}
+
+export async function getTvSeasonById(tvId: number, seasonNumber: number): Promise<TvSeasonDetail | null> {
+  if (!Number.isFinite(tvId) || tvId <= 0 || !Number.isInteger(seasonNumber) || seasonNumber < 0) {
+    return null;
+  }
+
+  if (isTmdbMockMode) {
+    if (tvId !== 1399 || seasonNumber !== 1) {
+      return {
+        id: seasonNumber,
+        seasonNumber,
+        name: `Season ${seasonNumber}`,
+        overview: "",
+        airDate: "",
+        posterPath: "",
+        episodes: []
+      };
+    }
+    return {
+      id: 1,
+      seasonNumber: 1,
+      name: "Season 1",
+      overview: "The struggle for the Iron Throne begins.",
+      airDate: "2011-04-17",
+      posterPath: buildImageUrl("/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg"),
+      episodes: [
+        {
+          id: 63056,
+          seasonNumber: 1,
+          episodeNumber: 1,
+          name: "Winter Is Coming",
+          overview: "Ned Stark becomes Hand of the King.",
+          airDate: "2011-04-17",
+          runtime: 62,
+          stillPath: buildImageUrl("/wrGWeW4WKxnaeA8sxJb2T9V96LJ.jpg"),
+          rating: 8.3
+        },
+        {
+          id: 63057,
+          seasonNumber: 1,
+          episodeNumber: 2,
+          name: "The Kingsroad",
+          overview: "The Starks head south.",
+          airDate: "2011-04-24",
+          runtime: 56,
+          stillPath: "",
+          rating: 8.1
+        }
+      ]
+    };
+  }
+
+  const data = await tmdbFetchJson<TmdbSeasonDetailDto>(`/tv/${tvId}/season/${seasonNumber}`);
+  if (!data) {
+    return null;
+  }
+
+  const episodes = (data.episodes ?? [])
+    .map(mapEpisodeDto)
+    .filter((episode): episode is TvEpisode => episode != null);
+
+  return {
+    id: typeof data.id === "number" ? data.id : seasonNumber,
+    seasonNumber: typeof data.season_number === "number" ? data.season_number : seasonNumber,
+    name: data.name?.trim() || `Season ${seasonNumber}`,
+    overview: data.overview ?? "",
+    airDate: data.air_date?.trim() || "",
+    posterPath: buildImageUrl(data.poster_path),
+    episodes
+  };
 }
 
 /* -------------------------------------------------------------------------- */

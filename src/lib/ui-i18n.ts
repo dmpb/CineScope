@@ -17,6 +17,7 @@ export type UiMessages = {
   searchPlaceholder: string;
   languageSrLabel: string;
   languageAriaLabel: string;
+  navCalendar: string;
   genreTitle: (name: string) => string;
   genreEmpty: (name: string) => string;
   genreEmptySeries: (name: string) => string;
@@ -226,7 +227,28 @@ export type UiMessages = {
   detailWatchSubscription: string;
   detailWatchRent: string;
   detailWatchBuy: string;
+  detailWatchJustWatch: string;
   detailNoProviders: string;
+  collectionSectionTitle: (name: string) => string;
+  collectionSectionEmpty: string;
+  seasonsHeading: string;
+  seasonLabel: (n: number) => string;
+  seasonEpisodesEmpty: string;
+  seasonEpisodeUntitled: string;
+  calendarTitle: string;
+  calendarSubtitle: string;
+  calendarPrevMonth: string;
+  calendarNextMonth: string;
+  calendarEmptyMonth: string;
+  calendarMoviesHeading: string;
+  calendarTvHeading: string;
+  calendarMonthNavAria: string;
+  calendarBackToToday: string;
+  calendarStatsLine: (movies: number, series: number, days: number) => string;
+  calendarDayTitles: (count: number) => string;
+  forYouSectionTitle: string;
+  forYouSectionEmpty: string;
+  forYouBecauseTitle: (title: string) => string;
   detailMediaHeading: string;
   detailMediaGalleryMovie: string;
   detailMediaGalleryTv: string;
@@ -271,6 +293,7 @@ const ES: UiMessages = {
   searchPlaceholder: "Busca una película…",
   languageSrLabel: "Idioma del contenido (TMDb)",
   languageAriaLabel: "Idioma del contenido",
+  navCalendar: "Estrenos",
   genreTitle: (name) => `Género: ${name}`,
   genreEmpty: (name) => `No hay películas para el género ${name} en este momento.`,
   genreEmptySeries: (name) => `No hay series para el género ${name} en este momento.`,
@@ -493,7 +516,29 @@ const ES: UiMessages = {
   detailWatchSubscription: "Suscripción:",
   detailWatchRent: "Alquiler:",
   detailWatchBuy: "Compra:",
+  detailWatchJustWatch: "Ver dónde verla",
   detailNoProviders: "No hay proveedores disponibles para la región configurada.",
+  collectionSectionTitle: (name) => `Saga: ${name}`,
+  collectionSectionEmpty: "No se encontraron más títulos de esta saga.",
+  seasonsHeading: "Temporadas",
+  seasonLabel: (n) => `Temporada ${n}`,
+  seasonEpisodesEmpty: "No hay episodios disponibles para esta temporada.",
+  seasonEpisodeUntitled: "Episodio sin título",
+  calendarTitle: "Estrenos",
+  calendarSubtitle: "Estrenos teatrales y series del mes, agrupados por fecha.",
+  calendarPrevMonth: "Mes anterior",
+  calendarNextMonth: "Mes siguiente",
+  calendarEmptyMonth: "No hay estrenos listados para este mes.",
+  calendarMoviesHeading: "Películas",
+  calendarTvHeading: "Series",
+  calendarMonthNavAria: "Navegación de mes",
+  calendarBackToToday: "Ir al mes actual",
+  calendarStatsLine: (movies, series, days) =>
+    `${movies} película${movies === 1 ? "" : "s"} · ${series} serie${series === 1 ? "" : "s"} · ${days} día${days === 1 ? "" : "s"}`,
+  calendarDayTitles: (count) => `${count} título${count === 1 ? "" : "s"}`,
+  forYouSectionTitle: "Para ti",
+  forYouSectionEmpty: "Guarda favoritos para personalizar esta fila.",
+  forYouBecauseTitle: (title) => `Porque guardaste “${title}”`,
   detailMediaHeading: "Medios",
   detailMediaGalleryMovie: "Galería de imágenes de la película",
   detailMediaGalleryTv: "Galería de imágenes de la serie",
@@ -540,6 +585,7 @@ const EN: UiMessages = {
   searchPlaceholder: "Search for a title…",
   languageSrLabel: "Content language (TMDb)",
   languageAriaLabel: "Content language",
+  navCalendar: "Releases",
   genreTitle: (name) => `Genre: ${name}`,
   genreEmpty: (name) => `No movies for genre ${name} right now.`,
   genreEmptySeries: (name) => `No TV shows for genre ${name} right now.`,
@@ -759,7 +805,29 @@ const EN: UiMessages = {
   detailWatchSubscription: "Stream:",
   detailWatchRent: "Rent:",
   detailWatchBuy: "Buy:",
+  detailWatchJustWatch: "See where to watch",
   detailNoProviders: "No providers available for the configured region.",
+  collectionSectionTitle: (name) => `Collection: ${name}`,
+  collectionSectionEmpty: "No other titles found in this collection.",
+  seasonsHeading: "Seasons",
+  seasonLabel: (n) => `Season ${n}`,
+  seasonEpisodesEmpty: "No episodes available for this season.",
+  seasonEpisodeUntitled: "Untitled episode",
+  calendarTitle: "Releases",
+  calendarSubtitle: "Theatrical releases and TV premieres for the month, grouped by date.",
+  calendarPrevMonth: "Previous month",
+  calendarNextMonth: "Next month",
+  calendarEmptyMonth: "No releases listed for this month.",
+  calendarMoviesHeading: "Movies",
+  calendarTvHeading: "TV shows",
+  calendarMonthNavAria: "Month navigation",
+  calendarBackToToday: "Go to current month",
+  calendarStatsLine: (movies, series, days) =>
+    `${movies} movie${movies === 1 ? "" : "s"} · ${series} TV show${series === 1 ? "" : "s"} · ${days} day${days === 1 ? "" : "s"}`,
+  calendarDayTitles: (count) => `${count} title${count === 1 ? "" : "s"}`,
+  forYouSectionTitle: "For you",
+  forYouSectionEmpty: "Save favorites to personalize this row.",
+  forYouBecauseTitle: (title) => `Because you saved “${title}”`,
   detailMediaHeading: "Media",
   detailMediaGalleryMovie: "Movie image gallery",
   detailMediaGalleryTv: "TV show image gallery",
