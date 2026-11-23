@@ -25,7 +25,8 @@ export function MovieSection({ title, headingId, movies, emptyMessage, layout = 
     : "horizontal-scroll-row";
   const itemClassName = isGrid
     ? "min-w-0"
-    : "horizontal-scroll-item min-w-[45%] sm:min-w-[31%] md:min-w-[23%] lg:min-w-[19%] xl:min-w-[16%]";
+    : // Ancho fijo: si solo hay min-w, títulos largos ensanchan la card y el aspect-[2/3] la hace más alta.
+      "horizontal-scroll-item w-[45%] min-w-[45%] max-w-[45%] sm:w-[31%] sm:min-w-[31%] sm:max-w-[31%] md:w-[23%] md:min-w-[23%] md:max-w-[23%] lg:w-[19%] lg:min-w-[19%] lg:max-w-[19%] xl:w-[16%] xl:min-w-[16%] xl:max-w-[16%] [&>*]:h-full [&>*]:w-full";
   const listAriaLabel = isGrid ? ui.sectionAriaGrid(title) : ui.sectionAriaRow(title);
 
   return (

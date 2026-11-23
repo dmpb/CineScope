@@ -18,7 +18,8 @@ vi.mock("@/lib/tmdb", () => ({
   getTvCrewHighlightsById: vi.fn(),
   getTvWatchProvidersById: vi.fn(),
   getTvImagesById: vi.fn(),
-  getSimilarTvById: vi.fn()
+  getSimilarTvById: vi.fn(),
+  getTvSeasonById: vi.fn()
 }));
 
 import { getOptionalTmdbBearerToken } from "@/lib/env";
@@ -28,6 +29,7 @@ import {
   getTvCastById,
   getTvCrewHighlightsById,
   getTvImagesById,
+  getTvSeasonById,
   getTvTrailerById,
   getTvWatchProvidersById
 } from "@/lib/tmdb";
@@ -74,9 +76,12 @@ describe("TV detail page", () => {
       directors: [],
       writers: ["George R. R. Martin"]
     });
-    vi.mocked(getTvWatchProvidersById).mockResolvedValue([
-      { id: 8, name: "HBO Max", logoPath: "https://image.tmdb.org/t/p/original/a.png", category: "flatrate" }
-    ]);
+    vi.mocked(getTvWatchProvidersById).mockResolvedValue({
+      providers: [
+        { id: 8, name: "HBO Max", logoPath: "https://image.tmdb.org/t/p/original/a.png", category: "flatrate" }
+      ],
+      link: "https://www.justwatch.com/us/tv-show/game-of-thrones"
+    });
     vi.mocked(getTvImagesById).mockResolvedValue(["https://image.tmdb.org/t/p/original/c.jpg"]);
     vi.mocked(getSimilarTvById).mockResolvedValue([
       {
@@ -85,6 +90,7 @@ describe("TV detail page", () => {
         title: "Breaking Bad"
       }
     ]);
+    vi.mocked(getTvSeasonById).mockResolvedValue(null);
 
     render(await TvPage({ params: Promise.resolve({ id: "1399" }) }));
 
@@ -122,9 +128,10 @@ describe("TV detail page", () => {
     vi.mocked(getTvTrailerById).mockResolvedValue(null);
     vi.mocked(getTvCastById).mockResolvedValue([]);
     vi.mocked(getTvCrewHighlightsById).mockResolvedValue({ directors: [], writers: [] });
-    vi.mocked(getTvWatchProvidersById).mockResolvedValue([]);
+    vi.mocked(getTvWatchProvidersById).mockResolvedValue({ providers: [], link: null });
     vi.mocked(getTvImagesById).mockResolvedValue([]);
     vi.mocked(getSimilarTvById).mockResolvedValue([]);
+    vi.mocked(getTvSeasonById).mockResolvedValue(null);
 
     render(await TvPage({ params: Promise.resolve({ id: "1399" }) }));
 
@@ -137,9 +144,10 @@ describe("TV detail page", () => {
     vi.mocked(getTvTrailerById).mockResolvedValue(null);
     vi.mocked(getTvCastById).mockResolvedValue([]);
     vi.mocked(getTvCrewHighlightsById).mockResolvedValue({ directors: [], writers: [] });
-    vi.mocked(getTvWatchProvidersById).mockResolvedValue([]);
+    vi.mocked(getTvWatchProvidersById).mockResolvedValue({ providers: [], link: null });
     vi.mocked(getTvImagesById).mockResolvedValue([]);
     vi.mocked(getSimilarTvById).mockResolvedValue([]);
+    vi.mocked(getTvSeasonById).mockResolvedValue(null);
 
     render(await TvPage({ params: Promise.resolve({ id: "1399" }) }));
 
@@ -152,9 +160,10 @@ describe("TV detail page", () => {
     vi.mocked(getTvTrailerById).mockResolvedValue(null);
     vi.mocked(getTvCastById).mockResolvedValue([]);
     vi.mocked(getTvCrewHighlightsById).mockResolvedValue({ directors: [], writers: [] });
-    vi.mocked(getTvWatchProvidersById).mockResolvedValue([]);
+    vi.mocked(getTvWatchProvidersById).mockResolvedValue({ providers: [], link: null });
     vi.mocked(getTvImagesById).mockResolvedValue([]);
     vi.mocked(getSimilarTvById).mockResolvedValue([]);
+    vi.mocked(getTvSeasonById).mockResolvedValue(null);
 
     render(await TvPage({ params: Promise.resolve({ id: "1399" }) }));
 

@@ -85,6 +85,9 @@ export function Navbar({ initialTmdbLanguage }: NavbarProps) {
             <Link href="/series" className={navLinkClassName(pathname === "/series")}>
               {ui.navSeries}
             </Link>
+            <Link href="/estrenos" className={navLinkClassName(pathname === "/estrenos")}>
+              {ui.navCalendar}
+            </Link>
             <Link href="/favoritos" className={navLinkClassName(pathname === "/favoritos")}>
               {ui.navFavorites}
             </Link>

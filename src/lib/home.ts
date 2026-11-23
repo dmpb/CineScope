@@ -1,6 +1,7 @@
 import type { UiMessages } from "@/lib/ui-i18n";
 import type { Movie } from "@/types/movie";
 import { cache } from "react";
+import { resolveTasteRefsForRequest } from "@/lib/taste-server";
 import {
   getAiringTodayTv,
   getMovieById,
@@ -11,6 +12,8 @@ import {
   getOnTheAirTv,
   getPopularMovies,
   getPopularTv,
+  getSimilarMoviesById,
+  getSimilarTvById,
   getTopRatedMovies,
   getTopRatedTv,
   getTrendingMovies,
@@ -31,6 +34,11 @@ export type HomeGenreSection = {
   movies: Movie[];
 };
 
+export type HomeForYouSection = {
+  seedTitle: string;
+  movies: Movie[];
+};
+
 export type HomeData = {
   trending: Movie[];
   popular: Movie[];
@@ -43,6 +51,7 @@ export type HomeData = {
   onTheAirTv: Movie[];
   airingTodayTv: Movie[];
   genreSections: HomeGenreSection[];
+  forYou: HomeForYouSection | null;
   featuredSlides: FeaturedSlide[];
   hasError: boolean;
 };
@@ -316,6 +325,30 @@ export async function getHomeData(): Promise<HomeData> {
   const featuredSlides = featured.slides;
   const featuredHasError = featured.hasError;
 
+  let forYou: HomeForYouSection | null = null;
+  const tasteRefs = await resolveTasteRefsForRequest();
+  const seedRef = tasteRefs[0];
+  if (seedRef) {
+    try {
+      const seed =
+        seedRef.kind === "tv"
+          ? await runTimedSection("for-you-seed-tv", () => getTvByIdCached(seedRef.id))
+          : await runTimedSection("for-you-seed-movie", () => getMovieByIdCached(seedRef.id));
+      if (seed) {
+        const similar =
+          seedRef.kind === "tv"
+            ? await runTimedSection("for-you-similar-tv", () => getSimilarTvById(seedRef.id))
+            : await runTimedSection("for-you-similar-movie", () => getSimilarMoviesById(seedRef.id));
+        const movies = dedupeMedia(similar).slice(0, 18);
+        if (movies.length > 0) {
+          forYou = { seedTitle: seed.title, movies };
+        }
+      }
+    } catch (error) {
+      console.error(`${HOME_LOG_PREFIX} for-you unavailable`, error);
+    }
+  }
+
   const baseHasError = baseResults.some((result) => result.status === "rejected");
   const genreHasError = genreSectionResults.some((result) => result.status === "rejected");
 
@@ -331,6 +364,7 @@ export async function getHomeData(): Promise<HomeData> {
     onTheAirTv,
     airingTodayTv,
     genreSections,
+    forYou,
     featuredSlides,
     hasError: baseHasError || genreHasError || featuredHasError
   };
@@ -426,7 +460,19 @@ export function buildHomeRowSections(data: HomeData, ui: UiMessages): HomeRowSec
     emptyMessage: ui.genreEmpty(genre.name)
   }));
 
+  const forYouSection: HomeRowSection[] = data.forYou
+    ? [
+        {
+          key: "for-you",
+          title: ui.forYouBecauseTitle(data.forYou.seedTitle),
+          movies: dedupeMedia(data.forYou.movies),
+          emptyMessage: ui.forYouSectionEmpty
+        }
+      ]
+    : [];
+
   const candidateSections: HomeRowSection[] = [
+    ...forYouSection,
     {
       key: "trending-movies",
       title: ui.sectionTrendingMovies,

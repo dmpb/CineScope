@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useUiMessages } from "@/components/LocaleProvider";
 import { FAVORITES_CHANGED_EVENT, readFavoritesFromStorage } from "@/lib/favorites-storage";
-import { applyFavoritesSortAndFilter, type FavoritesFilterMode, type FavoritesSortMode } from "@/lib/favorites-display";
+import {
+  applyFavoritesSortAndFilter,
+  movieFavoriteKey,
+  type FavoritesFilterMode,
+  type FavoritesSortMode
+} from "@/lib/favorites-display";
 import { FavoritesPageHeader } from "@/components/FavoritesPageHeader";
 import { FeaturedStrip } from "@/components/FeaturedStrip";
 import { MovieSection } from "@/components/MovieSection";
@@ -78,7 +83,7 @@ export function FavoritesPageClient({ hasToken }: FavoritesPageClientProps) {
       exportedAt: new Date().toISOString(),
       source: "CineScope",
       items: movies.map((m) => ({
-        key: `${m.mediaType === "tv" ? "tv" : "movie"}:${m.id}`,
+        key: movieFavoriteKey(m),
         title: m.title,
         releaseDate: m.releaseDate,
         rating: m.rating

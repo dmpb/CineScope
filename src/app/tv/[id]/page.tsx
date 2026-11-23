@@ -3,6 +3,7 @@ import { cache } from "react";
 import { MovieDetail } from "@/components/MovieDetail";
 import { MovieSection } from "@/components/MovieSection";
 import { StateMessage } from "@/components/StateMessage";
+import { TvSeasonsPanel } from "@/components/TvSeasonsPanel";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import {
   getSimilarTvById,
@@ -10,6 +11,7 @@ import {
   getTvCastById,
   getTvCrewHighlightsById,
   getTvImagesById,
+  getTvSeasonById,
   getTvTrailerById,
   getTvWatchProvidersById
 } from "@/lib/tmdb";
@@ -97,7 +99,7 @@ export default async function TvPage({ params }: TvPageProps) {
   const hasToken = Boolean(getOptionalTmdbBearerToken());
   const ui = getUiMessages(await resolveTmdbLanguageForRequest());
 
-  const [tvShow, trailerUrl, cast, crew, providers, mediaImages, similarTv] = tvId
+  const [tvShow, trailerUrl, cast, crew, watchProviders, mediaImages, similarTv] = tvId
     ? await Promise.all([
         getTvByIdCached(tvId),
         getTvTrailerById(tvId),
@@ -107,7 +109,13 @@ export default async function TvPage({ params }: TvPageProps) {
         getTvImagesById(tvId),
         getSimilarTvById(tvId)
       ])
-    : [null, null, [], { directors: [], writers: [] }, [], [], []];
+    : [null, null, [], { directors: [], writers: [] }, { providers: [], link: null }, [], []];
+
+  const firstSeasonNumber = tvShow?.seasons?.[0]?.seasonNumber;
+  const initialSeason =
+    tvId && typeof firstSeasonNumber === "number"
+      ? await getTvSeasonById(tvId, firstSeasonNumber)
+      : null;
 
   return (
     <main className="-mt-28 lg:-mt-20 home-cinematic-shell">
@@ -134,10 +142,16 @@ export default async function TvPage({ params }: TvPageProps) {
           trailerUrl={trailerUrl}
           cast={cast}
           crew={crew}
-          providers={providers}
+          providers={watchProviders.providers}
+          providersLink={watchProviders.link}
           mediaImages={mediaImages}
         />
       )}
+      {tvShow && tvShow.seasons && tvShow.seasons.length > 0 && tvId ? (
+        <div className="home-content-container home-content-stack">
+          <TvSeasonsPanel tvId={tvId} seasons={tvShow.seasons} initialSeason={initialSeason} />
+        </div>
+      ) : null}
       {tvShow && (
         <div id="similar-titles" className="anchor-target home-content-container home-content-stack">
           <MovieSection

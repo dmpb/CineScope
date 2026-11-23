@@ -14,8 +14,40 @@ type MovieDetailProps = {
   cast?: CastMember[];
   crew?: CrewHighlights;
   providers?: WatchProvider[];
+  providersLink?: string | null;
   mediaImages?: string[];
 };
+
+function ProviderLogoRow({ providers, label }: { providers: WatchProvider[]; label: string }) {
+  if (providers.length === 0) {
+    return null;
+  }
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">{label}</p>
+      <ul className="flex flex-wrap gap-2">
+        {providers.map((provider) => (
+          <li
+            key={`${provider.category}-${provider.id}`}
+            className="flex items-center gap-2 rounded-lg border border-zinc-700/70 bg-black/35 px-2 py-1.5"
+            title={provider.name}
+          >
+            {provider.logoPath ? (
+              <Image
+                src={provider.logoPath}
+                alt=""
+                width={28}
+                height={28}
+                className="h-7 w-7 rounded-md object-cover"
+              />
+            ) : null}
+            <span className="text-sm text-zinc-200">{provider.name}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function formatEpisodeRuntimeDisplay(movie: Movie, ui: UiMessages): string {
   const times =
@@ -42,6 +74,7 @@ export function MovieDetail({
   cast = [],
   crew = { directors: [], writers: [] },
   providers = [],
+  providersLink = null,
   mediaImages = []
 }: MovieDetailProps) {
   const isTv = movie.mediaType === "tv";
@@ -225,12 +258,6 @@ export function MovieDetail({
               <div className="flex flex-wrap gap-3">
                 <TrailerModal trailerUrl={trailerUrl} movieTitle={movieTitle} />
                 <FavoriteButton movieId={movie.id} movieTitle={movieTitle} mediaKind={isTv ? "tv" : "movie"} variant="inline" />
-                <a
-                  href={similarAnchor}
-                  className="focus-ring premium-transition inline-flex items-center rounded-lg border border-zinc-500/70 bg-black/35 px-4 py-2.5 text-sm font-medium text-zinc-100 hover:border-zinc-300 hover:bg-black/55"
-                >
-                  {ui.detailSeeSimilar}
-                </a>
               </div>
             </section>
             <section id="detail-cast" className="anchor-target space-y-2">
@@ -240,28 +267,23 @@ export function MovieDetail({
                 <p className="text-sm text-zinc-400">{ui.detailNoCast}</p>
               )}
             </section>
-            <section className="space-y-2">
+            <section id="detail-watch" className="anchor-target space-y-3">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">{watchHeading}</h2>
               {providers.length > 0 ? (
-                <div className="space-y-2 text-sm text-zinc-300">
-                  {providersByCategory.flatrate.length > 0 && (
-                    <p>
-                      <span className="text-zinc-400">{ui.detailWatchSubscription}</span>{" "}
-                      {providersByCategory.flatrate.map((provider) => provider.name).join(", ")}
-                    </p>
-                  )}
-                  {providersByCategory.rent.length > 0 && (
-                    <p>
-                      <span className="text-zinc-400">{ui.detailWatchRent}</span>{" "}
-                      {providersByCategory.rent.map((provider) => provider.name).join(", ")}
-                    </p>
-                  )}
-                  {providersByCategory.buy.length > 0 && (
-                    <p>
-                      <span className="text-zinc-400">{ui.detailWatchBuy}</span>{" "}
-                      {providersByCategory.buy.map((provider) => provider.name).join(", ")}
-                    </p>
-                  )}
+                <div className="space-y-3">
+                  <ProviderLogoRow providers={providersByCategory.flatrate} label={ui.detailWatchSubscription} />
+                  <ProviderLogoRow providers={providersByCategory.rent} label={ui.detailWatchRent} />
+                  <ProviderLogoRow providers={providersByCategory.buy} label={ui.detailWatchBuy} />
+                  {providersLink ? (
+                    <a
+                      href={providersLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="focus-ring premium-transition inline-flex items-center rounded-lg border border-emerald-500/50 bg-emerald-950/40 px-4 py-2.5 text-sm font-medium text-emerald-100 hover:border-emerald-400 hover:bg-emerald-900/50"
+                    >
+                      {ui.detailWatchJustWatch}
+                    </a>
+                  ) : null}
                 </div>
               ) : (
                 <p className="text-sm text-zinc-400">{ui.detailNoProviders}</p>

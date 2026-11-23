@@ -50,6 +50,7 @@ const homeDataFixture: HomeData = {
     { genre: { id: 28, name: "Action" }, movies: [] },
     { genre: { id: 35, name: "Comedy" }, movies: [] }
   ],
+  forYou: null,
   featuredSlides: [
     {
       movie: {

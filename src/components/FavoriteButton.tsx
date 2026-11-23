@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useUiMessages } from "@/components/LocaleProvider";
-import { readFavoritesFromStorage, toFavoriteKey, writeFavoritesToStorage, type FavoriteMediaKind } from "@/lib/favorites-storage";
+import {
+  FAVORITES_CHANGED_EVENT,
+  readFavoritesFromStorage,
+  toFavoriteKey,
+  writeFavoritesToStorage,
+  type FavoriteMediaKind
+} from "@/lib/favorites-storage";
 
 type FavoriteButtonProps = {
   movieId: number;
@@ -22,20 +28,24 @@ export function FavoriteButton({ movieId, movieTitle, mediaKind = "movie", varia
     [isFavorite, movieTitle, ui]
   );
 
-  useEffect(() => {
+  const syncFromStorage = useCallback(() => {
     const favorites = readFavoritesFromStorage();
     setIsFavorite(favorites.includes(favoriteKey));
   }, [favoriteKey]);
 
   useEffect(() => {
-    const onStorage = () => {
-      const favorites = readFavoritesFromStorage();
-      setIsFavorite(favorites.includes(favoriteKey));
-    };
+    syncFromStorage();
+  }, [syncFromStorage]);
 
+  useEffect(() => {
+    const onStorage = () => syncFromStorage();
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [favoriteKey]);
+    window.addEventListener(FAVORITES_CHANGED_EVENT, onStorage);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(FAVORITES_CHANGED_EVENT, onStorage);
+    };
+  }, [syncFromStorage]);
 
   function toggleFavorite() {
     const favorites = readFavoritesFromStorage();

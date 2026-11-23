@@ -3,6 +3,7 @@ import { cache } from "react";
 import { MovieSection } from "@/components/MovieSection";
 import { getOptionalTmdbBearerToken } from "@/lib/env";
 import {
+  getCollectionById,
   getMovieById,
   getMovieCastById,
   getMovieCrewHighlightsById,
@@ -97,7 +98,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
   const hasToken = Boolean(getOptionalTmdbBearerToken());
   const ui = getUiMessages(await resolveTmdbLanguageForRequest());
 
-  const [movie, trailerUrl, cast, crew, providers, mediaImages, similarMovies] = movieId
+  const [movie, trailerUrl, cast, crew, watchProviders, mediaImages, similarMovies] = movieId
     ? await Promise.all([
         getMovieByIdCached(movieId),
         getMovieTrailerById(movieId),
@@ -107,7 +108,12 @@ export default async function MoviePage({ params }: MoviePageProps) {
         getMovieImagesById(movieId),
         getSimilarMoviesById(movieId)
       ])
-    : [null, null, [], { directors: [], writers: [] }, [], [], []];
+    : [null, null, [], { directors: [], writers: [] }, { providers: [], link: null }, [], []];
+
+  const collection =
+    movie?.collection?.id != null ? await getCollectionById(movie.collection.id) : null;
+  const collectionParts =
+    collection?.parts.filter((part) => part.id !== movie?.id).slice(0, 18) ?? [];
 
   return (
     <main className="-mt-28 lg:-mt-20 home-cinematic-shell">
@@ -134,9 +140,20 @@ export default async function MoviePage({ params }: MoviePageProps) {
           trailerUrl={trailerUrl}
           cast={cast}
           crew={crew}
-          providers={providers}
+          providers={watchProviders.providers}
+          providersLink={watchProviders.link}
           mediaImages={mediaImages}
         />
+      )}
+      {movie && collection && collectionParts.length > 0 && (
+        <div id="collection-movies" className="anchor-target home-content-container home-content-stack">
+          <MovieSection
+            title={ui.collectionSectionTitle(collection.name)}
+            movies={collectionParts}
+            emptyMessage={ui.collectionSectionEmpty}
+            ui={ui}
+          />
+        </div>
       )}
       {movie && (
         <div id="similar-movies" className="anchor-target home-content-container home-content-stack">
