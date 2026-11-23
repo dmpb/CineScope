@@ -119,7 +119,9 @@ export function SearchResultsInfinite({
     return results.length < totalResults;
   }, [currentPage, results.length, totalPages, totalResults]);
 
-  hasMoreRef.current = hasMore;
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
 
   const loadNextPage = useCallback(async () => {
     if (loadingLockRef.current || !hasMoreRef.current) {
@@ -173,7 +175,9 @@ export function SearchResultsInfinite({
     }
   }, [currentPage, filtersActive, mediaKind, minVote, query, ui, year]);
 
-  loadNextPageRef.current = loadNextPage;
+  useEffect(() => {
+    loadNextPageRef.current = loadNextPage;
+  }, [loadNextPage]);
 
   useEffect(() => {
     const element = sentinelRef.current;

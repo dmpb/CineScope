@@ -1,0 +1,37 @@
+---
+description: Capa de datos TMDb, tipos y normalización
+globs: src/lib/**/*.{ts,tsx},src/types/**/*.ts
+alwaysApply: false
+---
+
+# Capa de datos TMDb
+
+## Responsabilidades
+
+- Toda I/O TMDb y mapeo DTO → dominio vive en `src/lib/tmdb.ts` (o módulos que él use/exporte).
+- DTOs (`Tmdb*`) privados en la capa; dominio en `src/types` (`movie.ts`, `person.ts`).
+- Components/pages nunca usan respuestas crudas de TMDb.
+
+## Modelos actuales (no inventar otros)
+
+- TV reutiliza shape `Movie` + `mediaType: "movie" | "tv"`.
+- Búsqueda: `SearchListItem` (`Movie` | `PersonSearchHit`).
+- No introducir `TVSeries` / `MediaItem` / `types/media.ts` sin migración explícita pedida.
+
+## Imágenes y fetch
+
+```ts
+// ❌ BAD — path crudo a la UI
+return { posterPath: dto.poster_path };
+
+// ✅ GOOD — URL completa desde la data layer
+return { posterPath: dto.poster_path ? `${IMAGE_BASE}${dto.poster_path}` : "" };
+```
+
+- Fetch con `next: { revalidate: 60 }`.
+- Fallos: `null`/fallback + `console.error("[tmdb] …")`; no tumbar la UI.
+
+## Naming
+
+- `getTrendingMovies`, `getPopularTv`, `getMovieById`, `getTvById`, `searchMedia`, etc.
+- Reutilizar mappers/helpers existentes al añadir endpoints; no duplicar movie/TV a ciegas.

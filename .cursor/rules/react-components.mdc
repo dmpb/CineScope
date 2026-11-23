@@ -1,0 +1,35 @@
+---
+description: Patrones de componentes React en CineScope
+globs: src/components/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Componentes React
+
+## Forma
+
+- Named exports PascalCase; props tipadas con `type XProps`.
+- Server por defecto; `"use client"` solo si hay interacción/estado.
+
+## Reutilización (antes de crear uno nuevo)
+
+- Media (movie/TV): `MovieCard`, `MovieSection`, `MovieDetail` vía `mediaType`.
+- Personas: `PersonCard`, `PersonDetail`.
+- Estados: `StateMessage` (`info` | `empty` | `error` | `warning`).
+- Listas infinitas / favoritos: componentes existentes (`SearchResultsInfinite`, etc.).
+
+## i18n
+
+```tsx
+// ✅ Server: recibir mensajes
+export function MovieSection({ ui, ... }: { ui: UiMessages }) { ... }
+
+// ✅ Client: hook del LocaleProvider
+const ui = useUiMessages();
+```
+
+## UI
+
+- Sin estilos inline; Tailwind (+ tokens/clases de `globals.css` si ya existen).
+- Imágenes con `next/image`.
+- Loading / empty / error siempre visibles al usuario vía `StateMessage` o equivalentes.

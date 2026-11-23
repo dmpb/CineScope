@@ -47,12 +47,21 @@ El proyecto utiliza Docker para garantizar un entorno de desarrollo consistente 
 ```bash
 cp .env.example .env.local
 # Edita .env.local y pega tu Read Access Token y (opcional) API Key de TMDb
-docker compose up --build
+docker compose up --build -d
+docker compose logs -f web
 ```
+
+La primera subida puede tardar (build + dependencias). Los reinicios siguientes arrancan sin reinstalar si el volumen `node_modules` ya existe.
 
 Luego abre:
 
 - http://localhost:3000
+
+Para detener:
+
+```bash
+docker compose down
+```
 
 Variables en `.env.local` (no se suben a git):
 

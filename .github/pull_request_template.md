@@ -31,7 +31,7 @@ Closes #
 
 ## ✅ Checklist
 
-* [ ] Sigue `PROJECT_RULES.md`
+* [ ] Sigue `.cursor/rules/`
 * [ ] No rompe funcionalidades existentes
 * [ ] Maneja correctamente loading / error / empty
 * [ ] Tests pasan

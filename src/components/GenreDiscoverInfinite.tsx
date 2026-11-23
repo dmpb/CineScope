@@ -87,7 +87,9 @@ export function GenreDiscoverInfinite({
     return results.length < totalResults;
   }, [currentPage, results.length, totalPages, totalResults]);
 
-  hasMoreRef.current = hasMore;
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
 
   const loadNextPage = useCallback(async () => {
     if (loadingLockRef.current || !hasMoreRef.current) {
@@ -143,7 +145,9 @@ export function GenreDiscoverInfinite({
     }
   }, [currentPage, genreId, kind, ui]);
 
-  loadNextPageRef.current = loadNextPage;
+  useEffect(() => {
+    loadNextPageRef.current = loadNextPage;
+  }, [loadNextPage]);
 
   useEffect(() => {
     const element = sentinelRef.current;
