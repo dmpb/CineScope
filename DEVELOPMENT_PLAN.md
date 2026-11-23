@@ -3,7 +3,7 @@
 ## 1) Current State Summary
 
 - `Status`: `In Progress` (proyecto inicial).
-- Existe definición de arquitectura, stack, reglas de capa y endpoints en `PROJECT_RULES.md`.
+- Existe definición de arquitectura, stack, reglas de capa y endpoints en `.cursor/rules/`.
 - Existe descripción funcional de alto nivel en `README.md` (home/listados, detalle, búsqueda, ISR, Docker).
 - Existe capa de datos TMDb en `src/lib/tmdb.ts` (Phase 1.B). Aún no hay UI de listados/detalles/búsqueda conectada (Phase 2).
 - No hay auth (alineado con reglas: frontend-only con API externa).
@@ -1019,7 +1019,7 @@
      - Verificación: tests estables tras refactor.
 - **Risks / dependencies**
   - Riesgo bajo de regresión accidental por movimiento de funciones.
-  - Depende de mantener reglas de arquitectura de `PROJECT_RULES.md`.
+  - Depende de mantener reglas de arquitectura de `.cursor/rules/`.
 
 #### Phase 16.C — Featured Banner Fetch Optimization ✅
 

@@ -1,0 +1,39 @@
+---
+description: Arquitectura y convenciones globales de CineScope
+alwaysApply: true
+---
+
+# Arquitectura CineScope
+
+Stack: Next.js App Router, React, Tailwind, TMDb (única API), Docker. Sin backend/DB propia.
+
+## Capas (obligatorio)
+
+```
+UI (src/components) → lib (orquestación) → tmdb.ts → TMDb
+```
+
+- Componentes: solo UI; reciben datos normalizados por props.
+- `src/lib/tmdb.ts`: única puerta de I/O TMDb y mapeo DTO → dominio.
+- Orquestadores (`home.ts`, parsers, favoritos) pueden componer `tmdb`; no llamar TMDb desde components.
+- No inventar carpetas `services/`, `repositories/` o `hooks/` sin justificación fuerte pedida explícitamente.
+
+## Anti-duplicación
+
+- Extender código existente; antes de crear, reutilizar componentes y `get*` movie/TV.
+- No introducir patrones nuevos (ORM, state global, Zod, etc.) sin pedirlo.
+
+## Secrets y entorno
+
+- Tokens solo en `.env.local` (`TMDB_BEARER_TOKEN`). Nunca hardcodear.
+- Comandos de calidad dentro de Docker: `docker compose exec web npm run …`
+
+## Validación
+
+- Durante subtareas: lint/tests enfocados a lo tocado.
+- Al cerrar un lote: `lint`, `type-check`, `test`; e2e si cambió UI (`test:e2e:docker`).
+
+## Comportamiento del agente
+
+- Si hay duda, no adivinar: preguntar o seguir el patrón más cercano del repo.
+- No sobrescribir código que funciona ni ampliar el alcance del pedido.

@@ -1,0 +1,30 @@
+---
+description: Convenciones de tests Vitest, MSW y Playwright
+globs: **/*.{test,spec}.{ts,tsx},e2e/**/*.{ts,tsx},src/test/**/*
+alwaysApply: false
+---
+
+# Testing
+
+## Unit / UI
+
+- Vitest + Testing Library.
+- Tests colocalizados: `*.test.ts` / `*.test.tsx` junto al archivo.
+- HTTP TMDb: handlers MSW en `src/test/msw` (+ setup `src/test/setupTests.tsx`).
+- No inventar mocks ad-hoc de TMDb en components si ya hay handlers MSW.
+
+## E2E
+
+- Playwright smoke en `e2e/`; ampliar solo si el cambio toca flujos críticos (Home → Detail, Search, etc.).
+- En Docker/CI: `npm run test:e2e:docker` cuando aplique.
+
+## Alcance
+
+```ts
+// ❌ BAD — mock fetch local ignorando MSW
+vi.stubGlobal("fetch", vi.fn());
+
+// ✅ GOOD — dejar que MSW intercepte según src/test/msw
+```
+
+- Preferir tests enfocados al área tocada; suite completa al cerrar el lote.

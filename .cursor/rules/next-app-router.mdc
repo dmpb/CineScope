@@ -1,0 +1,39 @@
+---
+description: Convenciones Next.js App Router, páginas y API routes
+globs: src/app/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Next.js App Router
+
+## Components
+
+- Default: Server Components.
+- `"use client"` solo por interacción o estado local (no para fetch principal).
+
+## Rutas
+
+- Lowercase; IDs dinámicos: `/movie/[id]`, `/tv/[id]`, `/person/[id]`.
+- Catálogos: `/movies`, `/series` (+ `genre/[id]`).
+- No añadir rutas nuevas mezclando ES/EN; mantener la convención existente del repo.
+
+## Data fetching
+
+- Fetch en `page.tsx` o `src/lib/*`; no `useEffect` para datos principales.
+- Reutilizar `loading.tsx` / metadata / patrones App Router ya presentes.
+
+## API routes (`src/app/api/**`)
+
+```ts
+// ❌ BAD — params sin validar / filtrar secrets
+return NextResponse.json({ items, token: process.env.TMDB_BEARER_TOKEN });
+
+// ✅ GOOD — validar, JSON tipado, error sin secrets
+const page = Number(url.searchParams.get("page"));
+if (!Number.isFinite(page) || page < 1) {
+  return NextResponse.json({ error: "Invalid page" }, { status: 400 });
+}
+```
+
+- Reutilizar parsers de `src/lib/search-params.ts` cuando apliquen.
+- Errores: 400/500 con mensaje seguro; try/catch alrededor de la capa lib.
