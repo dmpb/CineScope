@@ -24,7 +24,7 @@ vi.mock("next/link", () => ({
 }));
 
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: "warn" });
+  server.listen({ onUnhandledFrame: "warn" });
 });
 
 beforeAll(() => {
